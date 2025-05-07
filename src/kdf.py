@@ -1,15 +1,19 @@
 import os
-from argon2.low_level import hash_secret_raw, Type
+import hashlib
+from typing import Tuple
 
-def derive_key(passphrase: str) -> tuple[bytes, bytes]:
-    salt = os.urandom(32)
-    key = hash_secret_raw(
-        secret=passphrase.encode("utf-8"),
-        salt=salt,
-        time_cost=3,
-        memory_cost=64 * 1024,
-        parallelism=1,
-        hash_len=32,
-        type=Type.ID
+def derive_key(passphrase: str, salt: bytes = None) -> Tuple[bytes, bytes]:
+    """
+    Derives a 32-byte key from the given passphrase using PBKDF2-HMAC-SHA256.
+    Returns (key, salt). If salt is not provided, a new 32-byte salt is generated.
+    """
+    if salt is None:
+        salt = os.urandom(32)
+    key = hashlib.pbkdf2_hmac(
+        'sha256',
+        passphrase.encode('utf-8'),
+        salt,
+        390_000,   # число итераций — современный рекомендованный минимум
+        dklen=32
     )
     return key, salt

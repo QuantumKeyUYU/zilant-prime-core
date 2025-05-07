@@ -1,36 +1,41 @@
-import os, sys
 import click
-from src.kdf import derive_key
 from src.zil import create_zil, unpack_zil
 
+
 @click.group()
-def cli(): pass
+def main():
+    """UYUBox — мгновенное .zil в один клик."""
+    pass
 
-@cli.command()
-@click.argument("input", type=click.Path(exists=True))
-@click.argument("output", type=click.Path())
-@click.option("-p","--passphrase", required=True)
-@click.option("-v","--vdf-iters", default=100)
-@click.option("-t","--tries", default=1)
-@click.option("-m","--meta", default="", help="Original filename")
-def pack(input, output, passphrase, vdf_iters, tries, meta):
-    data = open(input,"rb").read()
-    cont = create_zil(data, passphrase, vdf_iters, tries, metadata=meta.encode())
-    with open(output,"wb") as f: f.write(cont)
-    click.echo(f"✅ Packed: {output}")
 
-@cli.command()
-@click.argument("input", type=click.Path(exists=True))
-@click.option("-p","--passphrase", required=True)
-@click.option("-m","--meta", default="", help="Original filename")
-def unpack(input, passphrase, meta):
-    cont = open(input,"rb").read()
-    pt, _ = unpack_zil(cont, passphrase, metadata=meta.encode())
-    if pt is None:
-        click.echo("❌ Wrong passphrase or self-destruct.")
-        sys.exit(1)
-    # выводим в stdout:
+@main.command()
+@click.argument("input", type=click.Path(exists=True, dir_okay=False))
+@click.argument("output", type=click.Path(dir_okay=False))
+@click.option("-p", "--passphrase", required=True, help="Пароль для шифрования")
+@click.option("-v", "--vdf-iters", default=100, help="Итераций VDF")
+@click.option("-t", "--tries", default=3, help="Повторов VDF")
+@click.option("-m", "--metadata", default="", help="Доп. данные (metadata)")
+def pack(input, output, passphrase, vdf_iters, tries, metadata):
+    """Упаковать INPUT → OUTPUT.zil"""
+    data = open(input, "rb").read()
+    z = create_zil(data, passphrase, vdf_iters, tries, metadata.encode())
+    with open(output, "wb") as f:
+        f.write(z)
+    click.echo(f"✅ Упаковано: {output}")
+
+
+@main.command()
+@click.argument("input", type=click.Path(exists=True, dir_okay=False))
+@click.option("-p", "--passphrase", required=True, help="Пароль для расшифровки")
+@click.option("-m", "--metadata", default="", help="Доп. данные (metadata)")
+def unpack(input, passphrase, metadata):
+    """Распаковать INPUT.zil → stdout"""
+    z = open(input, "rb").read()
+    pt, _ = unpack_zil(z, passphrase, metadata.encode())
+    # Выводим сырые байты в stdout
+    import sys
     sys.stdout.buffer.write(pt)
 
+
 if __name__ == "__main__":
-    cli()
+    main()

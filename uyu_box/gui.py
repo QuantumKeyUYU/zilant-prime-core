@@ -1,57 +1,54 @@
-import os, time, struct, tkinter as tk
-from tkinter import filedialog, simpledialog, messagebox
+import pathlib
+import tkinter as tk
+from tkinter import filedialog, messagebox
+
+from src.kdf import derive_key
 from src.zil import create_zil, unpack_zil
 
-class UYUBoxApp(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("UYUBox")
-        tk.Button(self, text="Pack",   command=self.pack_file).pack(pady=10)
-        tk.Button(self, text="Unpack", command=self.unpack_file).pack(pady=10)
 
-    def pack_file(self):
-        inp = filedialog.askopenfilename(title="Select file to pack")
-        if not inp: return
-        pwd = simpledialog.askstring("Passphrase","Enter passphrase:",show="*")
-        if pwd is None: return
-        vdf_i = simpledialog.askinteger("VDF iters","Iterations:",initialvalue=100)
-        tries = simpledialog.askinteger("Tries","Allowed tries:",initialvalue=1)
-        meta = os.path.basename(inp)
-        out = filedialog.asksaveasfilename(
-            initialfile=meta + ".zil",
-            defaultextension=".zil",
-            filetypes=[("ZILANT","*.zil"),("All","*.*")],
-            title="Save .zil as"
-        )
-        if not out: return
-        blob = create_zil(open(inp,"rb").read(), pwd, vdf_i, tries, metadata=meta.encode())
-        open(out,"wb").write(blob)
-        messagebox.showinfo("UYUBox", f"✅ Packed:\n{out}")
+def pack_file():
+    inp = filedialog.askopenfilename(title="Выбрать файл")
+    if not inp:
+        return
+    out, _ = filedialog.asksaveasfilename(
+        defaultextension=".zil",
+        filetypes=[("All files", "*.*")],
+        title="Сохранить .zil как",
+    ), None
+    if not out:
+        return
+    pw = pw_entry.get()
+    try:
+        data = open(inp, "rb").read()
+        z = create_zil(data, pw, vdf_iters=100, tries=3, metadata=b"")
+        open(out, "wb").write(z)
+        messagebox.showinfo("UYUBox", f"✅ Упаковано: {pathlib.Path(out).name}")
+    except Exception as e:
+        messagebox.showerror("UYUBox", str(e))
 
-    def unpack_file(self):
-        inp = filedialog.askopenfilename(title="Select .zil to unpack", filetypes=[("ZILANT","*.zil")])
-        if not inp: return
-        pwd = simpledialog.askstring("Passphrase","Enter passphrase:",show="*")
-        if pwd is None: return
-        # распаковываем
-        pt, meta = unpack_zil(open(inp,"rb").read(), pwd, metadata=b"")
-        if pt is None:
-            messagebox.showerror("UYUBox","❌ Wrong passphrase or self-destruct.")
-            return
 
-        # определяем имя и фильтр
-        default = meta.decode() if meta else "output"
-        ext = os.path.splitext(default)[1] or ""
-        ftypes = [("All files","*.*")]
-        out = filedialog.asksaveasfilename(
-            initialfile=default,
-            defaultextension=ext,
-            filetypes=ftypes,
-            title="Save output as"
-        )
-        if not out: return
-        open(out,"wb").write(pt)
-        messagebox.showinfo("UYUBox", f"✅ Unpacked:\n{out}")
+def unpack_file():
+    inp = filedialog.askopenfilename(title="Выбрать .zil")
+    if not inp:
+        return
+    pw = pw_entry.get()
+    out = filedialog.asksaveasfilename(filetypes=[("All files", "*.*")])
+    if not out:
+        return
+    try:
+        z = open(inp, "rb").read()
+        pt, _ = unpack_zil(z, pw, metadata=b"")
+        open(out, "wb").write(pt)
+        messagebox.showinfo("UYUBox", f"✅ Распаковано: {pathlib.Path(out).name}")
+    except Exception as e:
+        messagebox.showerror("UYUBox", str(e))
 
-if __name__ == "__main__":
-    UYUBoxApp().mainloop()
+
+root = tk.Tk()
+root.title("UYUBox")
+tk.Label(root, text="Passphrase:").pack(pady=2)
+pw_entry = tk.Entry(root, show="*")
+pw_entry.pack(pady=2)
+tk.Button(root, text="Pack", command=pack_file).pack(pady=5)
+tk.Button(root, text="Unpack", command=unpack_file).pack(pady=5)
+root.mainloop()

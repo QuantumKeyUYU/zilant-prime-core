@@ -1,3 +1,16 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "zilant-prime-core"
+version = "0.1.0"
+description = "Core engine for ZILANT Prime™"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+  "cryptography>=40.0.0",
+  "click>=8.0.0",
+]
+[project.scripts]
+uyu-box = "uyu_box.cli:main"

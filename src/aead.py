@@ -1,18 +1,18 @@
 import os
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 
-def encrypt(key: bytes, data: bytes, aad: bytes = b"") -> tuple[bytes, bytes]:
+def encrypt(key: bytes, plaintext: bytes, associated_data: bytes = b'') -> tuple[bytes, bytes]:
     """
-    Возвращает (nonce:12B, ciphertext+tag).
+    Шифрует ChaCha20-Poly1305, возвращает (nonce, ciphertext).
     """
-    nonce = os.urandom(12)
     aead = ChaCha20Poly1305(key)
-    ct = aead.encrypt(nonce, data, aad)
+    nonce = os.urandom(12)
+    ct = aead.encrypt(nonce, plaintext, associated_data)
     return nonce, ct
 
-def decrypt(key: bytes, nonce: bytes, ct: bytes, aad: bytes = b"") -> bytes:
+def decrypt(key: bytes, nonce: bytes, ciphertext: bytes, associated_data: bytes = b'') -> bytes:
     """
-    Расшифровка ChaCha20-Poly1305.
+    Расшифровывает ChaCha20-Poly1305, кидает InvalidTag при неверном ключе/AD.
     """
     aead = ChaCha20Poly1305(key)
-    return aead.decrypt(nonce, ct, aad)
+    return aead.decrypt(nonce, ciphertext, associated_data)
