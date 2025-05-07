@@ -1,33 +1,48 @@
 import hashlib
-from typing import Tuple
 
-def vdf(data: bytes, iterations: int) -> bytes:
-    """
-    Очень простая VDF-функция для тестов:
-    повторно хеширует SHA-256 входные данные заданное число итераций.
-    """
-    h = data
-    for _ in range(iterations):
-        h = hashlib.sha256(h).digest()
-    return h
+def sha256(data: bytes) -> bytes:
+    return hashlib.sha256(data).digest()
 
-def compute_vdf(tries: int, iterations: int) -> bytes:
+def generate_vdf(seed: bytes, steps: int) -> bytes:
     """
-    Генерирует VDF-доказательство для ZIL:
-    1) Представляем `tries` в big-endian виде (хотя бы 1 байт).
-    2) Повторно хешируем SHA-256 `iterations` раз.
-    Возвращаем 32-байтный proof.
-    """
-    # определяем, сколько байт нужно для хранения tries:
-    length = (tries.bit_length() + 7) // 8 or 1
-    h = tries.to_bytes(length, 'big')
-    for _ in range(iterations):
-        h = hashlib.sha256(h).digest()
-    return h
+    Генерирует полное VDF-доказательство.
 
-def verify_vdf(proof: bytes, tries: int, iterations: int) -> bool:
+    :param seed: Начальные данные.
+    :param steps: Количество шагов итерации.
+    :return: Финальный хеш после шагов.
     """
-    Проверяет валидность VDF-доказательства:
-    просто сравниваем с вновь сгенерированным compute_vdf.
+    result = seed
+    for _ in range(steps):
+        result = sha256(result)
+    return result
+
+def generate_partial_proofs(seed: bytes, steps: int, interval: int) -> dict:
     """
-    return proof == compute_vdf(tries, iterations)
+    Генерирует промежуточные доказательства каждые 'interval' шагов.
+
+    :param seed: Начальные данные.
+    :param steps: Общее число шагов.
+    :param interval: Интервал для промежуточных доказательств.
+    :return: Словарь {step_number: proof}.
+    """
+    result = seed
+    proofs = {0: seed}
+    for step in range(1, steps + 1):
+        result = sha256(result)
+        if step % interval == 0 or step == steps:
+            proofs[step] = result
+    return proofs
+
+def verify_partial_proof(start_proof: bytes, end_proof: bytes, steps: int) -> bool:
+    """
+    Проверяет, что от начального до конечного доказательства ровно steps шагов.
+
+    :param start_proof: Начальное доказательство.
+    :param end_proof: Конечное доказательство.
+    :param steps: Количество шагов между ними.
+    :return: True, если доказательство корректно.
+    """
+    current = start_proof
+    for _ in range(steps):
+        current = sha256(current)
+    return current == end_proof
