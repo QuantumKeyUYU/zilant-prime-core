@@ -1,78 +1,121 @@
+"""
+ZIL-контейнер: упаковка / распаковка данных с VDF-защитой
+формат v2 (без поля tries)
+
+MAGIC (4) | salt (32) | vdf_iters (4 BE) | proof (32) |
+nonce (12) | metadata_len (4 BE) | metadata (…) | ciphertext+tag (…)
+"""
+
+import os
 import struct
 from typing import Tuple
+
 from cryptography.exceptions import InvalidTag
 
 from .kdf import derive_key
-from .vdf import compute_vdf, verify_vdf
+from .vdf import generate_vdf, verify_partial_proof
 from .aead import encrypt, decrypt
 
-MAGIC = b'ZIL1'  # 4 байта "магии" для быстрой проверки формата
+MAGIC = b"ZIL1"            # сигнатура формата
+SALT_LEN = 32
+NONCE_LEN = 12
+PROOF_LEN = 32
 
+
+# ─────────────────────────── helpers ────────────────────────────
+def _pack_uint32(value: int) -> bytes:
+    return struct.pack(">I", value)
+
+
+def _unpack_uint32(buf: bytes, offset: int) -> Tuple[int, int]:
+    """Возвращает (значение, новый offset)."""
+    return struct.unpack(">I", buf[offset : offset + 4])[0], offset + 4
+
+
+# ─────────────────────── основной API ───────────────────────────
 def create_zil(
     data: bytes,
     passphrase: str,
     vdf_iters: int,
-    tries: int,
-    metadata: bytes = b''
+    metadata: bytes = b"",
 ) -> bytes:
     """
-    Упаковывает данные в формат ZIL:
-    MAGIC (4) |
-    salt (32) |
-    tries (4 BE) |
-    vdf_iters (4 BE) |
-    proof (32) |
-    nonce (12) |
-    metadata_length (4 BE) |
-    metadata (…) |
-    ciphertext_and_tag (…)
-    """
-    key, salt = derive_key(passphrase)
-    proof = compute_vdf(tries, vdf_iters)
-    # связываем proof + metadata как AD, чтобы при любом изменении метаданных шифрование ломалось
-    nonce, ct = encrypt(key, data, proof + metadata)
+    Упаковать данные в .zil-контейнер.
 
+    :param data:        произвольные данные
+    :param passphrase:  пароль (строка)
+    :param vdf_iters:   количество итераций HR-VDF
+    :param metadata:    необязательные метаданные (байты)
+    :return:            байтовый контейнер
+    """
+    # 1) соль и ключ
+    salt = os.urandom(SALT_LEN)
+    key = derive_key(passphrase.encode(), salt=salt)
+
+    # 2) VDF-доказательство строим от самой соли
+    proof = generate_vdf(salt, vdf_iters)  # 32 байта
+
+    # 3) AEAD-шифрование (proof+metadata → Associated Data)
+    nonce, ciphertext = encrypt(key, data, proof + metadata)
+
+    # 4) сборка контейнера
     buf = bytearray()
     buf += MAGIC
     buf += salt
-    buf += struct.pack(">I", tries)
-    buf += struct.pack(">I", vdf_iters)
+    buf += _pack_uint32(vdf_iters)
     buf += proof
     buf += nonce
-    buf += struct.pack(">I", len(metadata))
+    buf += _pack_uint32(len(metadata))
     buf += metadata
-    buf += ct
+    buf += ciphertext
     return bytes(buf)
+
 
 def unpack_zil(zil_bytes: bytes, passphrase: str) -> Tuple[bytes | None, bytes | None]:
     """
-    Распаковывает ZIL. Если что-то не так (магия, VDF, AD-тег), возвращает (None, None).
-    Иначе — (plaintext, metadata).
+    Распаковать .zil-контейнер.
+    Возвращает (plaintext, metadata) либо (None, None) при ошибке проверки.
     """
     try:
         idx = 0
-        if zil_bytes[:4] != MAGIC:
+
+        # ── MAGIC
+        if zil_bytes[idx : idx + 4] != MAGIC:
             return None, None
         idx += 4
 
-        salt = zil_bytes[idx:idx+32]; idx += 32
-        tries = struct.unpack(">I", zil_bytes[idx:idx+4])[0]; idx += 4
-        vdf_iters = struct.unpack(">I", zil_bytes[idx:idx+4])[0]; idx += 4
-        proof = zil_bytes[idx:idx+32]; idx += 32
+        # ── salt
+        salt = zil_bytes[idx : idx + SALT_LEN]
+        idx += SALT_LEN
 
-        # проверяем VDF-доказательство
-        if not verify_vdf(proof, tries, vdf_iters):
+        # ── vdf_iters
+        vdf_iters, idx = _unpack_uint32(zil_bytes, idx)
+
+        # ── proof
+        proof = zil_bytes[idx : idx + PROOF_LEN]
+        idx += PROOF_LEN
+
+        # ── VDF-проверка
+        if not verify_partial_proof(salt, proof, vdf_iters):
             return None, None
 
-        nonce = zil_bytes[idx:idx+12]; idx += 12
-        meta_len = struct.unpack(">I", zil_bytes[idx:idx+4])[0]; idx += 4
-        metadata = zil_bytes[idx:idx+meta_len]; idx += meta_len
+        # ── nonce
+        nonce = zil_bytes[idx : idx + NONCE_LEN]
+        idx += NONCE_LEN
+
+        # ── metadata
+        meta_len, idx = _unpack_uint32(zil_bytes, idx)
+        metadata = zil_bytes[idx : idx + meta_len]
+        idx += meta_len
+
+        # ── ciphertext + tag
         ciphertext = zil_bytes[idx:]
 
-        key, _ = derive_key(passphrase, salt)
+        # ── дешифрование
+        key = derive_key(passphrase.encode(), salt=salt)
         plaintext = decrypt(key, nonce, ciphertext, proof + metadata)
         return plaintext, metadata
 
     except (InvalidTag, Exception):
-        # любая ошибка разбора или проверки тегов = неверный ZIL или пароль
+        # Ошибка пароля, VDF, формата или тегов аутентичности
         return None, None

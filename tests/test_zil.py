@@ -2,12 +2,24 @@ from src.zil import create_zil, unpack_zil
 
 def test_zil_roundtrip():
     data = b"secret data"
-    z = create_zil(data, "pw", vdf_iters=10, tries=2, metadata=b"ali")
-    pt, _ = unpack_zil(z, "pw")
-    assert pt == data
+    passphrase = "pw"
+    vdf_iters = 10
+    metadata = b"ali"
+
+    z = create_zil(data, passphrase, vdf_iters, metadata=metadata)
+    plaintext, meta_out = unpack_zil(z, passphrase)
+
+    assert plaintext == data
+    assert meta_out == metadata
 
 def test_zil_wrong_pass():
     data = b"x"
-    z = create_zil(data, "pw", vdf_iters=1, tries=1)
-    pt, _ = unpack_zil(z, "bad")
-    assert pt is None
+    passphrase = "pw"
+    wrong_passphrase = "wrong_pw"
+    vdf_iters = 1
+
+    z = create_zil(data, passphrase, vdf_iters)
+    plaintext, meta_out = unpack_zil(z, wrong_passphrase)
+
+    assert plaintext is None
+    assert meta_out is None
