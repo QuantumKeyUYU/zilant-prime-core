@@ -23,3 +23,5 @@ ascii.*
 .vscode/
 .idea/
 .venv/
+# PyInstaller spec files
+*.spec
