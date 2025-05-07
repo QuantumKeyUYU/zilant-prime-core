@@ -1,16 +1,28 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "zilant-prime-core"
 version = "0.1.0"
-description = "Core engine for ZILANT Prime™"
+description = "ZILANT Prime™ cryptographic core (AEAD, Argon2id, HR‑VDF, ZIL container, CLI)"
 readme = "README.md"
-requires-python = ">=3.8"
-dependencies = [
-  "cryptography>=40.0.0",
-  "click>=8.0.0",
-]
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [{name="QuantumKey UYU", email="dev@uyu.ai"}]
+
+dependencies = ["cryptography>=42", "argon2-cffi>=23", "click>=8.1"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "hypothesis>=6", "bandit>=1.7", "flake8>=6"]
+
 [project.scripts]
-uyu-box = "uyu_box.cli:main"
+uyi = "uyi:cli"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+py-modules = ["aead", "kdf", "vdf", "tlv", "zil", "uyi"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
