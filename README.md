@@ -1,6 +1,10 @@
-### KDF (Argon2id)
+# ZILANT Prime™ Core & UYUBox
 
-```python
-from src.kdf import derive_key
+Универсальный крипто-движок и мгновенный GUI/CLI для упаковки `.zil`-контейнеров.
 
-key, salt = derive_key("my passphrase")
+## Установка
+
+```bash
+git clone …/zilant-prime-core
+cd zilant-prime-core
+pip install -r requirements.txt

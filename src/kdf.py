@@ -1,19 +1,15 @@
 import os
-from cryptography.hazmat.primitives.kdf.argon2 import Argon2id
+from argon2.low_level import hash_secret_raw, Type
 
 def derive_key(passphrase: str) -> tuple[bytes, bytes]:
-    # Генерируем соль 32 байта
     salt = os.urandom(32)
-
-    # Настраиваем KDF: 32-байтовый ключ, 64 MiB памяти, 3 прохода, 1 lane
-    kdf = Argon2id(
+    key = hash_secret_raw(
+        secret=passphrase.encode("utf-8"),
         salt=salt,
-        length=32,
-        memory_cost=64 * 1024,  # в Kibibytes: 64 MiB
-        iterations=3,           # количество проходов (time_cost)
-        lanes=1                 # степень параллелизма
+        time_cost=3,
+        memory_cost=64 * 1024,
+        parallelism=1,
+        hash_len=32,
+        type=Type.ID
     )
-
-    # Деривация ключа
-    key = kdf.derive(passphrase.encode("utf-8"))
     return key, salt

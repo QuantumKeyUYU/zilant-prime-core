@@ -1,12 +1,18 @@
-from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 import os
+from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 
-def encrypt(key: bytes, plaintext: bytes, aad: bytes = b"") -> tuple[bytes, bytes]:
+def encrypt(key: bytes, data: bytes, aad: bytes = b"") -> tuple[bytes, bytes]:
+    """
+    Возвращает (nonce:12B, ciphertext+tag).
+    """
     nonce = os.urandom(12)
-    cipher = ChaCha20Poly1305(key)
-    ciphertext = cipher.encrypt(nonce, plaintext, aad)
-    return nonce, ciphertext
+    aead = ChaCha20Poly1305(key)
+    ct = aead.encrypt(nonce, data, aad)
+    return nonce, ct
 
-def decrypt(key: bytes, nonce: bytes, ciphertext: bytes, aad: bytes = b"") -> bytes:
-    cipher = ChaCha20Poly1305(key)
-    return cipher.decrypt(nonce, ciphertext, aad)
+def decrypt(key: bytes, nonce: bytes, ct: bytes, aad: bytes = b"") -> bytes:
+    """
+    Расшифровка ChaCha20-Poly1305.
+    """
+    aead = ChaCha20Poly1305(key)
+    return aead.decrypt(nonce, ct, aad)

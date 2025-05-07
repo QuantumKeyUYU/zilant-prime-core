@@ -1,2 +1,4 @@
 argon2-cffi>=21.3.0
-cryptography
+cryptography>=40.0.0
+click>=8.0.0
+pytest>=7.0.0

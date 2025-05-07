@@ -1,88 +1,73 @@
-# src/zil.py
-import os
-import time
 import struct
-import hashlib
-from src.kdf import derive_key
-from src.vdf import vdf
-from src.aead import encrypt, decrypt
-from cryptography.exceptions import InvalidTag
+from .kdf import derive_key
+from .vdf import vdf
+from .aead import encrypt, decrypt
 
-MAGIC   = b"ZIL1"
-VERSION = 1
+MAGIC = b"ZIL1"
 
-def create_zil(plaintext: bytes,
-               passphrase: str,
-               vdf_iters: int = 100000,
-               tries: int = 3,
-               metadata: bytes = b"") -> bytes:
-    # 1) ключ и соль KDF
-    key, salt_kdf = derive_key(passphrase)
+def create_zil(
+    data: bytes,
+    passphrase: str,
+    vdf_iters: int,
+    tries: int,
+    metadata: bytes = b""
+) -> bytes:
+    # 1) KDF
+    key, salt = derive_key(passphrase)
 
-    # 2) AEAD шифрование
-    nonce, ciphertext = encrypt(key, plaintext, metadata)
+    # 2) VDF barrier state
+    vstate = vdf(key + metadata, vdf_iters)
 
-    # 3) VDF на salt
-    vstate = vdf(salt_kdf, vdf_iters)
-    watermark = hashlib.sha256(vstate + key + metadata).digest()[:16]
+    # 3) AEAD
+    nonce, ct = encrypt(key, data, metadata)
 
-    timestamp = int(time.time())
+    # 4) Phase fingerprint & watermark
+    fp = __import__("hashlib").sha256(vstate + key + metadata).digest()[:16]
 
-    # 4) собираем заголовок (4+1+1+4+8+32+12+16 = 78 байт)
-    fmt = ">4s B B I Q 32s 12s 16s"
-    header = struct.pack(
-        fmt,
-        MAGIC,
-        VERSION,
-        tries,
-        vdf_iters,
-        timestamp,
-        salt_kdf,
-        nonce,
-        watermark
+    # 5) Собираем .zil контейнер
+    header = (
+        MAGIC +                                    # 4B
+        struct.pack("B", 1) +                      # version=1
+        struct.pack("B", tries) +                  # tries_left
+        struct.pack(">I", vdf_iters) +             # 4B big-endian
+        struct.pack(">Q", int(__import__("time").time())) +  # timestamp 8B
+        salt +                                     # 32B
+        nonce +                                    # 12B
+        fp                                         # 16B
     )
-    return header + ciphertext
+    return header + ct
 
-def unpack_zil(container: bytes,
-               passphrase: str,
-               metadata: bytes = b""):
-    fmt = ">4s B B I Q 32s 12s 16s"
-    header_size = struct.calcsize(fmt)
-
-    # разбираем заголовок
-    magic, version, tries_left, vdf_iters, timestamp, salt_kdf, nonce, watermark = \
-        struct.unpack(fmt, container[:header_size])
-    ciphertext = container[header_size:]
-
-    if magic != MAGIC or version != VERSION:
-        return None, None
-
-    # деривация того же ключа
-    key, _ = derive_key(passphrase, salt=salt_kdf)
-
-    # проверка VDF + watermark
-    vstate = vdf(salt_kdf, vdf_iters)
-    expected = hashlib.sha256(vstate + key + metadata).digest()[:16]
-
-    # декремент попыток
-    tries_left -= 1
-
-    # если ключ верный → пробуем расшифровать
-    if expected == watermark:
-        try:
-            pt = decrypt(key, nonce, ciphertext, metadata)
-            return pt, None
-        except InvalidTag:
-            pass
-
-    # если попыток не осталось → self-destruct
-    if tries_left <= 0:
-        return None, None
-
-    # иначе возвращаем новый контейнер с уменьшенным tries_left
-    new_header = struct.pack(
-        fmt,
-        MAGIC, VERSION, tries_left, vdf_iters,
-        timestamp, salt_kdf, nonce, watermark
+def unpack_zil(blob: bytes, passphrase: str, metadata: bytes = b"") -> tuple[bytes, bytes]:
+    # Парсим шапку
+    (
+        magic, version, tries_left, vdf_iters,
+        timestamp, salt, nonce, fp
+    ) = (
+        blob[0:4], blob[4], blob[5], struct.unpack(">I", blob[6:10])[0],
+        struct.unpack(">Q", blob[10:18])[0], blob[18:50],
+        blob[50:62], blob[62:78]
     )
-    return None, new_header + ciphertext
+    if magic != MAGIC or version != 1:
+        raise ValueError("Invalid .zil format")
+
+    # KDF
+    from .kdf import derive_key as _kdf
+    key, _ = _kdf(passphrase)
+
+    # VDF
+    vstate = vdf(key + metadata, vdf_iters)
+
+    # Проверяем watermark
+    expected_fp = __import__("hashlib").sha256(vstate + key + metadata).digest()[:16]
+    if expected_fp != fp:
+        return None, metadata  # zero-feedback
+
+    # AEAD
+    ct = blob[78:]
+    try:
+        pt = decrypt(key, nonce, ct, metadata)
+    except:
+        return None, metadata
+
+    # self-destruct условия можно здесь
+    return pt, metadata
