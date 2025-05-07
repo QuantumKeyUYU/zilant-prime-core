@@ -2,24 +2,19 @@ from src.zil import create_zil, unpack_zil
 
 def test_zil_roundtrip():
     data = b"secret data"
-    passphrase = "pw"
-    vdf_iters = 10
-    metadata = b"ali"
-
-    z = create_zil(data, passphrase, vdf_iters, metadata=metadata)
-    plaintext, meta_out = unpack_zil(z, passphrase)
-
-    assert plaintext == data
-    assert meta_out == metadata
+    z = create_zil(data, "pw", vdf_iters=10, metadata=b"m")
+    plain, meta = unpack_zil(z, "pw")
+    assert plain == data and meta == b"m"
 
 def test_zil_wrong_pass():
-    data = b"x"
-    passphrase = "pw"
-    wrong_passphrase = "wrong_pw"
-    vdf_iters = 1
+    z = create_zil(b"x", "pw", vdf_iters=1)
+    plain, _ = unpack_zil(z, "wrong")
+    assert plain is None
 
-    z = create_zil(data, passphrase, vdf_iters)
-    plaintext, meta_out = unpack_zil(z, wrong_passphrase)
-
-    assert plaintext is None
-    assert meta_out is None
+def test_one_shot_behavior():
+    data = b"top"
+    z = create_zil(data, "pw", vdf_iters=5, one_shot=True)
+    first, _ = unpack_zil(z, "pw")
+    second, _ = unpack_zil(z, "pw")
+    assert first == data
+    assert second is None  # повторное вскрытие блокируется

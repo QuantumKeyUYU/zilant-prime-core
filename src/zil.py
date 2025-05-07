@@ -1,9 +1,7 @@
 """
-ZIL-контейнер: упаковка / распаковка данных с VDF-защитой
-формат v2 (без поля tries)
-
-MAGIC (4) | salt (32) | vdf_iters (4 BE) | proof (32) |
-nonce (12) | metadata_len (4 BE) | metadata (…) | ciphertext+tag (…)
+ZIL-контейнер v3
+MAGIC(4) | FLAGS(1) | SALT(32) | VDF_ITERS(4) | PROOF(32) |
+NONCE(12) | META_LEN(4) | META | CIPHERTEXT+TAG
 """
 
 import os
@@ -16,106 +14,117 @@ from .kdf import derive_key
 from .vdf import generate_vdf, verify_partial_proof
 from .aead import encrypt, decrypt
 
-MAGIC = b"ZIL1"            # сигнатура формата
+# ─────────────────────────── константы ───────────────────────────
+MAGIC = b"ZIL1"
+FLAG_ONE_SHOT = 0b0000_0001
+
 SALT_LEN = 32
 NONCE_LEN = 12
 PROOF_LEN = 32
 
-
-# ─────────────────────────── helpers ────────────────────────────
-def _pack_uint32(value: int) -> bytes:
-    return struct.pack(">I", value)
+_consumed: set[bytes] = set()  # proof-ы уже вскрытых one-shot контейнеров
 
 
-def _unpack_uint32(buf: bytes, offset: int) -> Tuple[int, int]:
-    """Возвращает (значение, новый offset)."""
-    return struct.unpack(">I", buf[offset : offset + 4])[0], offset + 4
+# ─────────────────────────── helpers ─────────────────────────────
+def _u32(num: int) -> bytes:
+    return struct.pack(">I", num)
 
 
-# ─────────────────────── основной API ───────────────────────────
+def _get_u32(buf: bytes, idx: int) -> Tuple[int, int]:
+    return struct.unpack(">I", buf[idx : idx + 4])[0], idx + 4
+
+
+# ─────────────────────────── API ─────────────────────────────────
 def create_zil(
     data: bytes,
     passphrase: str,
     vdf_iters: int,
+    *,
     metadata: bytes = b"",
+    one_shot: bool = False,
 ) -> bytes:
-    """
-    Упаковать данные в .zil-контейнер.
-
-    :param data:        произвольные данные
-    :param passphrase:  пароль (строка)
-    :param vdf_iters:   количество итераций HR-VDF
-    :param metadata:    необязательные метаданные (байты)
-    :return:            байтовый контейнер
-    """
-    # 1) соль и ключ
+    """Упаковать данные в ZIL-v3 контейнер."""
+    # ключ
     salt = os.urandom(SALT_LEN)
     key = derive_key(passphrase.encode(), salt=salt)
 
-    # 2) VDF-доказательство строим от самой соли
-    proof = generate_vdf(salt, vdf_iters)  # 32 байта
+    # VDF-доказательство (от соли)
+    proof = generate_vdf(salt, vdf_iters)
 
-    # 3) AEAD-шифрование (proof+metadata → Associated Data)
+    # AEAD
     nonce, ciphertext = encrypt(key, data, proof + metadata)
 
-    # 4) сборка контейнера
+    flags = FLAG_ONE_SHOT if one_shot else 0
+
     buf = bytearray()
     buf += MAGIC
+    buf += bytes([flags])
     buf += salt
-    buf += _pack_uint32(vdf_iters)
+    buf += _u32(vdf_iters)
     buf += proof
     buf += nonce
-    buf += _pack_uint32(len(metadata))
+    buf += _u32(len(metadata))
     buf += metadata
     buf += ciphertext
     return bytes(buf)
 
 
-def unpack_zil(zil_bytes: bytes, passphrase: str) -> Tuple[bytes | None, bytes | None]:
-    """
-    Распаковать .zil-контейнер.
-    Возвращает (plaintext, metadata) либо (None, None) при ошибке проверки.
-    """
+def unpack_zil(
+    zil_bytes: bytes,
+    passphrase: str,
+) -> Tuple[bytes | None, bytes | None]:
+    """Распаковать контейнер. Для one-shot возвращает None при повторном вскрытии."""
     try:
         idx = 0
 
-        # ── MAGIC
+        # MAGIC
         if zil_bytes[idx : idx + 4] != MAGIC:
             return None, None
         idx += 4
 
-        # ── salt
+        # FLAGS
+        flags = zil_bytes[idx]
+        idx += 1
+        one_shot = bool(flags & FLAG_ONE_SHOT)
+
+        # SALT
         salt = zil_bytes[idx : idx + SALT_LEN]
         idx += SALT_LEN
 
-        # ── vdf_iters
-        vdf_iters, idx = _unpack_uint32(zil_bytes, idx)
+        # VDF_ITERS
+        vdf_iters, idx = _get_u32(zil_bytes, idx)
 
-        # ── proof
+        # PROOF
         proof = zil_bytes[idx : idx + PROOF_LEN]
         idx += PROOF_LEN
 
-        # ── VDF-проверка
+        # one-shot: проверяем повторное вскрытие
+        if one_shot and proof in _consumed:
+            return None, None
+
+        # VDF verify
         if not verify_partial_proof(salt, proof, vdf_iters):
             return None, None
 
-        # ── nonce
+        # NONCE
         nonce = zil_bytes[idx : idx + NONCE_LEN]
         idx += NONCE_LEN
 
-        # ── metadata
-        meta_len, idx = _unpack_uint32(zil_bytes, idx)
+        # METADATA
+        meta_len, idx = _get_u32(zil_bytes, idx)
         metadata = zil_bytes[idx : idx + meta_len]
         idx += meta_len
 
-        # ── ciphertext + tag
         ciphertext = zil_bytes[idx:]
 
-        # ── дешифрование
         key = derive_key(passphrase.encode(), salt=salt)
         plaintext = decrypt(key, nonce, ciphertext, proof + metadata)
+
+        # mark consumed
+        if one_shot:
+            _consumed.add(proof)
+
         return plaintext, metadata
 
     except (InvalidTag, Exception):
-        # Ошибка пароля, VDF, формата или тегов аутентичности
         return None, None
