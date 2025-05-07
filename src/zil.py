@@ -1,90 +1,88 @@
+# src/zil.py
 import os
 import time
 import struct
 import hashlib
-
+from src.kdf import derive_key
 from src.vdf import vdf
 from src.aead import encrypt, decrypt
 from cryptography.exceptions import InvalidTag
 
-MAGIC = b"ZIL1"
+MAGIC   = b"ZIL1"
 VERSION = 1
 
 def create_zil(plaintext: bytes,
-               key: bytes,
-               vdf_iters: int,
+               passphrase: str,
+               vdf_iters: int = 100000,
                tries: int = 3,
                metadata: bytes = b"") -> bytes:
-    """
-    Упаковать данные в .zil-контейнер:
-    [magic(4) | version(1) | tries(1) | vdf_iters(4) | timestamp(8)
-     | salt(32) | nonce(12) | watermark(16) | ciphertext+tag ]
-    """
-    salt = os.urandom(32)
+    # 1) ключ и соль KDF
+    key, salt_kdf = derive_key(passphrase)
+
+    # 2) AEAD шифрование
     nonce, ciphertext = encrypt(key, plaintext, metadata)
 
-    # VDF на salt
-    vstate = vdf(salt, vdf_iters)
-    # Phase fingerprint
-    F = hashlib.sha256(vstate + key + metadata).digest()
-    watermark = F[:16]
+    # 3) VDF на salt
+    vstate = vdf(salt_kdf, vdf_iters)
+    watermark = hashlib.sha256(vstate + key + metadata).digest()[:16]
 
     timestamp = int(time.time())
 
+    # 4) собираем заголовок (4+1+1+4+8+32+12+16 = 78 байт)
+    fmt = ">4s B B I Q 32s 12s 16s"
     header = struct.pack(
-        ">4s B B I Q 32s 12s 16s",
+        fmt,
         MAGIC,
         VERSION,
         tries,
         vdf_iters,
         timestamp,
-        salt,
+        salt_kdf,
         nonce,
         watermark
     )
     return header + ciphertext
 
-
-def unpack_zil(container: bytes, key: bytes, metadata: bytes = b""):
-    """
-    Попытаться распаковать .zil-контейнер.
-    - Если ключ верный → возвращает (plaintext, None)
-    - Если ключ неверный → возвращает (None, new_container_bytes) (tries--, zero-feedback)
-    - Если попыток не осталось → возвращает (None, None) (self-destruct)
-    """
-    # Разбор заголовка
+def unpack_zil(container: bytes,
+               passphrase: str,
+               metadata: bytes = b""):
     fmt = ">4s B B I Q 32s 12s 16s"
     header_size = struct.calcsize(fmt)
-    magic, version, tries, vdf_iters, timestamp, salt, nonce, watermark = \
+
+    # разбираем заголовок
+    magic, version, tries_left, vdf_iters, timestamp, salt_kdf, nonce, watermark = \
         struct.unpack(fmt, container[:header_size])
     ciphertext = container[header_size:]
 
-    # Проверки формата
     if magic != MAGIC or version != VERSION:
         return None, None
 
-    # Выполняем VDF и проверяем watermark
-    vstate = vdf(salt, vdf_iters)
-    expected_F = hashlib.sha256(vstate + key + metadata).digest()[:16]
-    # Убираем одну попытку
-    tries -= 1
+    # деривация того же ключа
+    key, _ = derive_key(passphrase, salt=salt_kdf)
 
-    # Если watermark совпал — правильный ключ
-    if expected_F == watermark:
+    # проверка VDF + watermark
+    vstate = vdf(salt_kdf, vdf_iters)
+    expected = hashlib.sha256(vstate + key + metadata).digest()[:16]
+
+    # декремент попыток
+    tries_left -= 1
+
+    # если ключ верный → пробуем расшифровать
+    if expected == watermark:
         try:
-            plaintext = decrypt(key, nonce, ciphertext, metadata)
-            return plaintext, None
+            pt = decrypt(key, nonce, ciphertext, metadata)
+            return pt, None
         except InvalidTag:
-            # На случай, если AEAD провалит аутентификацию
             pass
 
-    # Неправильный ключ или ошибка → zero-feedback, self-destruct при tries<=0
-    if tries <= 0:
+    # если попыток не осталось → self-destruct
+    if tries_left <= 0:
         return None, None
 
-    # Собираем новый контейнер с декрементом tries
+    # иначе возвращаем новый контейнер с уменьшенным tries_left
     new_header = struct.pack(
-        ">4s B B I Q 32s 12s 16s",
-        MAGIC, VERSION, tries, vdf_iters, timestamp, salt, nonce, watermark
+        fmt,
+        MAGIC, VERSION, tries_left, vdf_iters,
+        timestamp, salt_kdf, nonce, watermark
     )
     return None, new_header + ciphertext
