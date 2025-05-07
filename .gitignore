@@ -1,0 +1,25 @@
+# ✂ Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ✂ Build artifacts
+build/
+dist/
+*.egg-info/
+
+# ✂ Pytest cache
+pytest_cache/
+
+# ✂ Локальные файлы и примеры
+*.txt
+*.png
+*.zil
+out.*
+secret.*
+ascii.*
+
+# ✂ Ваши IDE/варианты виртуальных окружений
+.vscode/
+.idea/
+.venv/
