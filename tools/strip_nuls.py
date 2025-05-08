@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """
-Strip NUL bytes from Python source files.
-Usage: python tools/strip_nuls.py path/to/file1.py path/to/dir/*.py
+Strip all null bytes (\x00) from one or more files in place.
+Usage:
+    ./tools/strip_nuls.py path/to/file1 path/to/file2 ...
 """
 import sys
-from pathlib import Path
 
-def strip_file(path: Path):
-    data = path.read_bytes().replace(b'\x00', b'')
-    path.write_bytes(data)
+def strip_nuls(path: str) -> None:
+    data = open(path, 'rb').read().replace(b'\x00', b'')
+    open(path, 'wb').write(data)
 
 if __name__ == "__main__":
-    for arg in sys.argv[1:]:
-        for p in Path(arg).parent.glob(Path(arg).name) if '*' in arg else [Path(arg)]:
-            strip_file(p)
+    if len(sys.argv) < 2:
+        print("Usage: strip_nuls.py <file1> [file2 ...]")
+        sys.exit(1)
+    for fn in sys.argv[1:]:
+        strip_nuls(fn)

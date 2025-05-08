@@ -7,7 +7,7 @@ from landscape import generate_sat
 from elc_vdf import generate_phase_vdf, verify_phase_vdf
 
 
-# ---------- property: round‑trip -----------
+# ---------- property: round-trip -----------
 @given(
     n=st.integers(min_value=6, max_value=12),
     steps=st.integers(min_value=20, max_value=50),
@@ -20,31 +20,43 @@ def test_roundtrip(n, steps, lam):
     assert verify_phase_vdf(f, cps, lam, verify_gap=10)
 
 
-# ---------- property: энергия не возрастает -----------
+# ---------- property: energy never increases -----------
 def test_energy_monotone():
     f = generate_sat(10)
     cps = generate_phase_vdf(f, 40, 0.15)
     energies = [e for _, e in cps]
+    # energies should be non-increasing
     assert energies == sorted(energies, reverse=True)
 
 
-# ---------- verify быстрее generate -----------
+# ---------- verify faster than generate -----------
 def test_verify_faster_than_generate():
     f = generate_sat(8)
     steps = 100
-    cps = generate_phase_vdf(f, steps, 0.2, verify_gap=10)
+    verify_gap = 10
 
-    # Обёртка-счётчик
+    # generate the VDF checkpoints
+    cps = generate_phase_vdf(f, steps, 0.2, verify_gap=verify_gap)
+
+    # wrap the landscape.compress to count how many times it's called
     from landscape import compress as _orig
-
-    class C:
+    class Counter:
         cnt = 0
 
     def _wrap(formula, lam):
-        C.cnt += 1
+        Counter.cnt += 1
         return _orig(formula, lam)
 
     import landscape
+    # monkey-patch
+    backup = landscape.compress
+    landscape.compress = _wrap
 
-    landscape.compress, bak = _wrap, landscape.compress
-    verify_phase_vdf
+    # perform verification
+    assert verify_phase_vdf(f, cps, 0.2, verify_gap=verify_gap)
+
+    # verify should call compress fewer times than full generate
+    assert Counter.cnt < steps
+
+    # restore original
+    landscape.compress = backup

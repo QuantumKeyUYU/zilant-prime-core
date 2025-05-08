@@ -1,42 +1,56 @@
-# src/elc_vdf.py (реальная реализация из коммита d294cfa)
-"""
-Полная реализация Phase-VDF (Hierarchical-Resistant VDF) с частичными доказательствами.
-"""
+from typing import Any, List, Tuple
 
-from __future__ import annotations
-from typing import List, Tuple, Any
-import hashlib
+from landscape import compress, energy, Formula
 
+def phase_transition(f: Formula, lam: float) -> Formula:
+    """
+    One deterministic Phase-VDF step:
+    compress the landscape instance into a new state
+    whose energy is guaranteed <= the old one.
+    """
+    new = compress(f, lam)
+    e_old = energy(f, lam)
+    e_new = energy(new, lam)
+    assert e_new <= e_old, f"Energy must not increase: {e_new} > {e_old}"
+    return new
 
 def generate_phase_vdf(
-    f: List[Tuple[int, int, int]],
+    f: Formula,
     steps: int,
     lam: float,
     verify_gap: int = 1
-) -> List[Tuple[int, bytes]]:
+) -> List[Tuple[int, float]]:
     """
-    Генерирует полный VDF и возвращает список checkpoint'ов (step, proof_hash).
+    Run `steps` iterations of the Phase-VDF.
+    Every `verify_gap` steps record a checkpoint (step, energy).
     """
-    cps: List[Tuple[int, bytes]] = []
-    state = b"".join(int.to_bytes(abs(lit), 4, 'big') for clause in f for lit in clause)
-    for i in range(steps):
-        # Простейший VDF: хэш многократно
-        for _ in range(verify_gap):
-            state = hashlib.sha256(state).digest()
-        if (i + 1) % verify_gap == 0:
-            cps.append((i + 1, state))
+    cur = f
+    cps: List[Tuple[int, float]] = []
+    for i in range(1, steps + 1):
+        cur = phase_transition(cur, lam)
+        if i % verify_gap == 0:
+            e = energy(cur, lam)
+            cps.append((i, e))
     return cps
 
-
 def verify_phase_vdf(
-    f: List[Tuple[int, int, int]],
-    cps: List[Tuple[int, bytes]],
+    f: Any,
+    cps: List[Tuple[int, float]],
     lam: float,
     verify_gap: int = 1
 ) -> bool:
     """
-    Проверяет каждый checkpoint, повторно хэшируя и сравнивая.
+    Replay the VDF: starting from `f`, perform `phase_transition` in chunks of
+    `verify_gap` steps, and check that each recorded energy matches the true
+    energy (within a tiny tolerance).
     """
-    # Рекомпутивание полной цепочки
-    full = generate_phase_vdf(f, cps[-1][0], lam, verify_gap)
-    return all(cp in full for cp in cps)
+    cur = f
+    tol = 1e-9
+    for step, claimed_e in cps:
+        # advance by verify_gap steps
+        for _ in range(verify_gap):
+            cur = phase_transition(cur, lam)
+        actual_e = energy(cur, lam)
+        if abs(actual_e - claimed_e) > tol:
+            return False
+    return True
