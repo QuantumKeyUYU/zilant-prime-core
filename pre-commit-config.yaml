@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: strip-nuls
+        name: Strip NUL bytes
+        entry: python tools/strip_nuls.py
+        language: system
+        files: \.py$
