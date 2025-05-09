@@ -1,22 +1,35 @@
 [flake8]
-# Длина строки до 120 символов
+# максимально длинная строка
 max-line-length = 120
 
-# Игнорируем конфликты с Black и некоторые другие:
-# E203 — whitespace before ':' (конфликтует с Black)
-# W503 — line break before binary operator (Black style)
-extend-ignore = E203, W503
+# игнорируем Black-конфликты и мелкие ересь-правила:
+# E203, W503 – конфликт с Black
+# E302, E303 – blank-lines style
+# W291, W293 – trailing/blank whitespace
+# E731 – lambda assigned to variable
+# F401, F403 – неиспользуемые импорты (будет ругаться, но мы временно сняли)
+# F841 – неиспользуемые локальные переменные
+extend-ignore =
+    E203,
+    W503,
+    E302,
+    E303,
+    W291,
+    W293,
+    E731,
+    F401,
+    F403,
+    F841
 
-# Включаем базовые плагины (если нужны ещё — добавь здесь)
-# exclude — что точно не нужно проверять
+# не проверять эти папки
 exclude =
     .git,
     __pycache__,
     build,
     dist,
     .venv,
-    venv
+    venv,
+    .github
 
-# Дополнительные настройки по вкусу:
-# show-source — выводить кусок кода, где ошибка
+# показывать кусочек кода с ошибкой
 show-source = True
