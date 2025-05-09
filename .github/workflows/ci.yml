@@ -1,4 +1,4 @@
-name: CI
+name: ZILANT Prime CI
 
 on:
   push:
@@ -10,28 +10,50 @@ on:
 
 jobs:
   lint-and-test:
-    name: Lint & Test on Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.9, 3.10, 3.11]
+        python-version: [3.8, 3.9, 3.11]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          # если у вас в pyproject.toml или setup.cfg есть extras "dev"
-          pip install -e .[dev] --no-deps
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        pip install -e .[dev]
 
-      - name: Lint with flake8
-        run: flake8
+    - name: Run lint
+      run: |
+        flake8 src tests
 
-      - name: Run pytest
-        run: pytest -q
+    - name: Run tests
+      run: |
+        pytest
+
+  lint-and-security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        pip install -e .[dev]
+
+    - name: Run security scan
+      run: |
+        bandit -r src
+
+    - name: Run code lint
+      run: |
+        flake8 src tests
