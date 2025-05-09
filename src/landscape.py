@@ -1,44 +1,44 @@
-"""
-Stub-модуль landscape для прохождения тестов test_landscape.py и test_elc_vdf.py.
-"""
-
+import random
 from typing import List, Tuple
 
-def generate_sat(n: int, density: float = 0.0) -> List[Tuple[int, int, int]]:
-    """
-    Генерирует n клауз для 3-SAT: игнорирует density,
-    возвращает детерминированные клаузы (1, -1, 1).
-    """
-    return [(1, -1, 1) for _ in range(n)]
 
-def compress(
-    f: List[Tuple[int, int, int]],
-    lam: float
-) -> List[List[Tuple[int, int, int]]]:
-    """
-    Если lam > 0: возвращает префиксы f длиной 1..n-1 (size = n-1).
-    Если lam == 0: возвращает префиксы длиной 1..n   (size = n).
-    Это гарантирует len(c) < len(f) при lam>0.
-    """
-    size = len(f)
-    limit = size - 1 if lam > 0 else size
-    return [f[:i] for i in range(1, limit + 1)]
+Clause = Tuple[int, int, int]
 
-def energy(
-    f: List[Tuple[int, int, int]],
-    lam: float
-) -> float:
-    """
-    Энергия = lam * len(f). Монотонно растёт с |f|.
-    """
-    return lam * len(f)
 
-def find_phase_transition(
-    n: int,
-    lam: float,
-    steps: int
-) -> List[Tuple[int, float]]:
+class Formula:
+    def __init__(self, n: int, clauses: List[Clause]):
+        self.n = n
+        self.clauses = clauses
+
+    def __iter__(self):
+        return iter(self.clauses)
+
+    def __len__(self):
+        return len(self.clauses)
+
+
+def generate_sat(n: int, density: float = 4.0) -> Formula:
+    num_clauses = max(1, int(n * density))
+    clauses = set()
+
+    # Генерируем уникальные клаузы
+    while len(clauses) < num_clauses:
+        clause = tuple(sorted(random.randint(1, n) for _ in range(3)))
+        if clause not in clauses and len(set(clause)) == 3:
+            clauses.add(clause)
+
+    return Formula(n, list(clauses))
+
+
+def compress(formula: Formula, lam: float) -> Formula:
+    # Простейший вариант — просто возвращаем исходную формулу
+    return formula
+
+
+def energy(formula: Formula, lam: float) -> float:
     """
-    Возвращает [(d, lam * d) for d in 1..steps].
+    Энергия Σ_λ: число несатисфied клауз при all-false + λ * число клауз.
     """
-    return [(d, lam * d) for d in range(1, steps + 1)]
+    m = len(formula.clauses)
+    unsat = sum(1 for clause in formula.clauses if not any(lit > 0 for lit in clause))
+    return unsat + lam * m

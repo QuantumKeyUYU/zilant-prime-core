@@ -1,0 +1,4 @@
+# file: C:\Users\User\zilant-prime-core\src\tlv.py
+# hypothesis_version: 6.131.14
+
+[255, 65535, '>H', 'TLV value too long']

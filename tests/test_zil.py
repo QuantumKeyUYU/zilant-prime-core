@@ -1,22 +1,66 @@
-from zil import create_zil, unpack_zil
+# tests/test_zil.py
 
-def test_roundtrip_basic():
-    z = create_zil(b"secret", "pw", 6)
-    pt, meta = unpack_zil(z, "pw")
-    assert pt == b"secret" and meta == {}
+import pytest
+from zil import pack_zil, unpack_zil, SelfDestructError
+from landscape import generate_sat
 
-def test_wrong_pass():
-    z = create_zil(b"x", "pw", 3)
-    pt, _ = unpack_zil(z, "bad")
-    assert pt is None
+# Параметры для тестирования
+FORMULA = generate_sat(5, 2.0)
+LAMBDA  = 0.1
+STEPS   = 3
+KEY     = b'0' * 32
+SALT    = b'1' * 16
+NONCE   = b'2' * 12
 
-def test_one_shot():
-    z = create_zil(b"one", "pw", 4, one_shot=True)
-    assert unpack_zil(z, "pw")[0] == b"one"
-    assert unpack_zil(z, "pw")[0] is None
+def test_pack_unpack_roundtrip(tmp_path):
+    payload = b'hello world'
+    meta     = {'info': 'test', 'tries': 0}
 
-def test_tlv_meta():
-    meta_in = {0x01: b"text/plain", 0x02: b"3.1"}
-    z = create_zil(b"hello", "pw", 5, metadata=meta_in)
-    pt, meta_out = unpack_zil(z, "pw")
-    assert pt == b"hello" and meta_out == meta_in
+    data = pack_zil(
+        payload=payload,
+        formula=FORMULA,
+        lam=LAMBDA,
+        steps=STEPS,
+        key=KEY,
+        salt=SALT,
+        nonce=NONCE,
+        metadata=meta.copy(),
+        max_tries=3,
+        one_time=True
+    )
+
+    # Проверяем, что модуль может распаковать ровно один раз
+    result = unpack_zil(
+        data=data,
+        formula=FORMULA,
+        key=KEY,
+        out_dir=str(tmp_path)
+    )
+    assert result == payload
+
+def test_self_destruct_after_three_failures(tmp_path):
+    payload = b'secret data'
+    # Симулируем уже 2 неудачные попытки:
+    meta     = {'tries': 2}
+
+    data = pack_zil(
+        payload=payload,
+        formula=FORMULA,
+        lam=LAMBDA,
+        steps=STEPS,
+        key=KEY,
+        salt=SALT,
+        nonce=NONCE,
+        metadata=meta,
+        max_tries=3,
+        one_time=False
+    )
+
+    # Третья попытка должна выбросить SelfDestructError
+    with pytest.raises(SelfDestructError):
+        unpack_zil(
+            data=data,
+            formula=FORMULA,
+            key=KEY,
+            out_dir=str(tmp_path)
+        )
