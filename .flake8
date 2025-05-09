@@ -1,14 +1,7 @@
 [flake8]
-# максимально длинная строка
 max-line-length = 120
 
-# игнорируем Black-конфликты и мелкие ересь-правила:
-# E203, W503 – конфликт с Black
-# E302, E303 – blank-lines style
-# W291, W293 – trailing/blank whitespace
-# E731 – lambda assigned to variable
-# F401, F403 – неиспользуемые импорты (будет ругаться, но мы временно сняли)
-# F841 – неиспользуемые локальные переменные
+# Black-конфликты, пустые строки и мелкие whitespace-ошибки
 extend-ignore =
     E203,
     W503,
@@ -21,7 +14,6 @@ extend-ignore =
     F403,
     F841
 
-# не проверять эти папки
 exclude =
     .git,
     __pycache__,
@@ -31,5 +23,4 @@ exclude =
     venv,
     .github
 
-# показывать кусочек кода с ошибкой
 show-source = True
