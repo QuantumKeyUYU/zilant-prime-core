@@ -1,3 +1,14 @@
 [flake8]
+# Максимальная длина строки
 max-line-length = 88
+
+# Игнорировать конфликты стиля, которые мешают автоформатеру Black
 extend-ignore = E203, W503
+
+# Не запускать проверку в служебных каталогах
+exclude =
+    .git,
+    __pycache__,
+    .hypothesis,
+    build,
+    dist
