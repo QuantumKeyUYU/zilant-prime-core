@@ -1,52 +1,32 @@
 name: VDF Benchmark
 
+# Запускаем по расписанию и вручную
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'  # каждый день в UTC 00:00
 
 jobs:
   benchmark:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.x'
 
-      - name: Install deps
-        run: |
-          pip install -e . --force-reinstall --no-deps
-          pip install matplotlib numpy
+      - name: Install package
+        run: pip install -e .
 
-      - name: Run VDF bench
-        run: |
-          python bench_vdf.py --size 100 --steps 1000 --lam 0.5 --runs 10 \
-            | tee bench_output.txt
-
-      - name: Generate plot
-        run: |
-          python - << 'EOF'
-import re, matplotlib.pyplot as plt
-# Читаем времена из bench_output.txt
-with open('bench_output.txt') as f:
-    line = next(l for l in f if l.startswith('Runs:'))
-times = list(map(float, re.findall(r'[\d.]+', line)))
-plt.plot(times, marker='o')
-plt.title('Phase-VDF times')
-plt.xlabel('Run #')
-plt.ylabel('Seconds')
-plt.tight_layout()
-plt.savefig('bench_plot.png')
-EOF
+      - name: Run VDF benchmark
+        run: python bench_vdf.py --size 200 --steps 5000 --lam 0.3 --runs 10 > results.txt
 
       - name: Upload results
         uses: actions/upload-artifact@v3
         with:
           name: vdf-benchmark
-          path: |
-            bench_output.txt
-            bench_plot.png
+          path: results.txt
