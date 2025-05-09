@@ -1,7 +1,22 @@
 [flake8]
-# максимальная длина строки
+# Длина строки до 120 символов
 max-line-length = 120
 
-# игнорировать пробелы вокруг операторов (black-style) и E203 (спорный)
-# и W503 (line break before binary operator)
+# Игнорируем конфликты с Black и некоторые другие:
+# E203 — whitespace before ':' (конфликтует с Black)
+# W503 — line break before binary operator (Black style)
 extend-ignore = E203, W503
+
+# Включаем базовые плагины (если нужны ещё — добавь здесь)
+# exclude — что точно не нужно проверять
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist,
+    .venv,
+    venv
+
+# Дополнительные настройки по вкусу:
+# show-source — выводить кусок кода, где ошибка
+show-source = True
