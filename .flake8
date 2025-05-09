@@ -1,5 +1,7 @@
 [flake8]
-# maximum allowed line length
-max-line-length = 88
-# ignore whitespace around : in slicing, and line breaks before binary operators
+# максимальная длина строки
+max-line-length = 120
+
+# игнорировать пробелы вокруг операторов (black-style) и E203 (спорный)
+# и W503 (line break before binary operator)
 extend-ignore = E203, W503
