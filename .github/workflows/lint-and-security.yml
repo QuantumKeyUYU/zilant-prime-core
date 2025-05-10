@@ -14,6 +14,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
+      # удаляем BOM из всех файлов, чтобы pip и setuptools не ругались
+      - name: Strip BOM (если есть)
+        run: |
+          find . -type f -exec sed -i '1s/^\xEF\xBB\xBF//' {} +
+
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
