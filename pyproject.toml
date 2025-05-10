@@ -1,21 +1,23 @@
-[build-system]
-requires = [
-  "setuptools>=61.0",
-  "wheel",
-]
-build-backend = "setuptools.build_meta"
+# pyproject.toml
 
 [project]
 name = "zilant-prime-core"
 version = "0.1.0"
-description = "Core library for ZILANT Prime phase VDF and encryption"
+description = "ZILANT Prime Core: cryptographic primitives for the ZILANT protocol"
 readme = "README.md"
-requires-python = ">=3.9, <3.14"
+requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [
-  { name = "Your Name", email = "you@example.com" },
+  { name = "QuantumKeyUYU", email = "you@example.com" }
 ]
-keywords = ["vdf", "encryption", "zil", "phase-vdf"]
+keywords = [
+  "zilant",
+  "cryptography",
+  "vdf",
+  "prime",
+  "kdf",
+]
+
 dependencies = [
   "aead>=0.2,<1.0",
   "cryptography>=3.4.7",
@@ -23,20 +25,19 @@ dependencies = [
   "hypothesis>=6.0.0",
 ]
 
-[project.urls]
-"Homepage" = "https://github.com/QuantumKeyUYU/zilant-prime-core"
-"Repository" = "https://github.com/QuantumKeyUYU/zilant-prime-core"
-"Bug Tracker" = "https://github.com/QuantumKeyUYU/zilant-prime-core/issues"
-
 [project.optional-dependencies]
 dev = [
   "pytest>=7.0.0",
   "flake8>=5.0.0",
-  "black>=23.0",
+  "bandit>=1.7.0",
+  "pre-commit>=2.20.0",
   "isort>=5.0",
-  "bandit>=1.7",
-  "pre-commit>=2.20",
+  "black>=23.0",
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[build-system]
+requires = [
+  "setuptools>=42",
+  "wheel",
+]
+build-backend = "setuptools.build_meta"
