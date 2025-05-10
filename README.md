@@ -1,4 +1,4 @@
-﻿# ZILANT Prime Core
+# ZILANT Prime Core
 
 Core library for ZILANT Prime phase VDF and authenticated encryption.
 
