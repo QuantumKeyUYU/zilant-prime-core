@@ -1,35 +1,18 @@
-name: Build & Test
-
-on:
-  push:
-    branches:
-      - fix/ci-no-build-isolation
-  pull_request:
-    branches:
-      - fix/ci-no-build-isolation
-
-jobs:
-  build-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
       - name: Detect BOM/UTF-16 signatures
         run: |
-          echo "┌── Проверяем первые 3 байта во всех .py/.md/.toml"
-          for f in $(find . -type f \( -name '*.py' -o -name '*.md' -o -name '*.toml' \)); do
+          echo "┌── Проверяем все .py, .md и .toml файлы на наличие BOM/UTF-16"
+          
+          # Ищем все потенциально проблемные файлы
+          find . -type f \( -name '*.py' -o -name '*.md' -o -name '*.toml' \) | while read f; do
+            # Проверяем первые 3 байта
             sig=$(head -c3 "$f" | xxd -p -u)
-            case "$sig" in
-              efbbbf* ) echo "💥 BOM UTF-8   -> $f" ;;
-              fffe*   ) echo "💥 BOM UTF-16LE-> $f" ;;
-              fffe*   ) echo "💥 BOM UTF-16BE-> $f" ;;
-            esac
-          done
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
-
-      - name: Install dependencies
-        run: pip install -e .[dev]
+            if [[ "$sig" == "efbbbf"* ]]; then
+              echo "💥 BOM UTF-8   -> $f"
+            elif [[ "$sig" == "fffe"* ]]; then
+              echo "💥 BOM UTF-16LE-> $f"
+            elif [[ "$sig" == "feff"* ]]; then
+              echo "💥 BOM UTF-16BE-> $f"
+            fi
+          done || true
+          
+          echo "└── Проверка завершена"
