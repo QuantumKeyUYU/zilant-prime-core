@@ -1,3 +1,13 @@
+name: Build & Test
+
+on:
+  push:
+    branches:
+      - fix/ci-no-build-isolation
+  pull_request:
+    branches:
+      - fix/ci-no-build-isolation
+
 jobs:
   build-test:
     runs-on: ubuntu-latest
@@ -15,11 +25,11 @@ jobs:
               fffe*   ) echo "💥 BOM UTF-16BE-> $f" ;;
             esac
           done
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.11
 
       - name: Install dependencies
         run: pip install -e .[dev]
-      # … остальные шаги
