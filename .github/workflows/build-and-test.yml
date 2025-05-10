@@ -1,18 +1,23 @@
       - name: Detect BOM/UTF-16 signatures
         run: |
-          echo "┌── Проверяем все .py, .md и .toml файлы на наличие BOM/UTF-16"
+          echo "┌── Начинаем строгую проверку файлов на BOM/UTF-16"
           
-          # Ищем все потенциально проблемные файлы
-          find . -type f \( -name '*.py' -o -name '*.md' -o -name '*.toml' \) | while read f; do
-            # Проверяем первые 3 байта
-            sig=$(head -c3 "$f" | xxd -p -u)
-            if [[ "$sig" == "efbbbf"* ]]; then
+          # Ищем все .py, .md и .toml файлы
+          find . -type f \( -name '*.py' -o -name '*.md' -o -name '*.toml' \) | while read -r f; do
+            # Считываем первые 3 байта
+            sig=$(xxd -p -l 3 "$f" | tr '[:lower:]' '[:upper:]')
+            
+            # Проверяем сигнатуру BOM
+            if [[ "$sig" == "EFBBBF"* ]]; then
               echo "💥 BOM UTF-8   -> $f"
-            elif [[ "$sig" == "fffe"* ]]; then
-              echo "💥 BOM UTF-16LE-> $f"
-            elif [[ "$sig" == "feff"* ]]; then
-              echo "💥 BOM UTF-16BE-> $f"
+              exit 1
+            elif [[ "$sig" == "FEFF"* ]]; then
+              echo "💥 BOM UTF-16BE -> $f"
+              exit 1
+            elif [[ "$sig" == "FFFE"* ]]; then
+              echo "💥 BOM UTF-16LE -> $f"
+              exit 1
             fi
-          done || true
+          done
           
-          echo "└── Проверка завершена"
+          echo "✔️ Все файлы чисты — ни одного BOM не найдено"
