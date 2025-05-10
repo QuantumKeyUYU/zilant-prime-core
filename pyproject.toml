@@ -3,13 +3,13 @@ name = "zilant-prime-core"
 version = "0.1.0"
 description = "Zilant Prime Core"
 authors = ["QuantumKeyUYU <email@example.com>"]
-license = "MIT"
+license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.9"
 
 [project.urls]
-"Homepage" = "https://github.com/QuantumKeyUYU/zilant-prime-core"
-"Repository" = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+Homepage = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+Repository = "https://github.com/QuantumKeyUYU/zilant-prime-core"
 
 [project.optional-dependencies]
 dev = ["pytest", "hypothesis", "black", "flake8", "mypy", "bandit"]
