@@ -1,11 +1,10 @@
 import os
+
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 
+
 def encrypt(
-    key: bytes,
-    plaintext: bytes,
-    aad: bytes,
-    nonce: bytes = None
+    key: bytes, plaintext: bytes, aad: bytes, nonce: bytes = None
 ) -> (bytes, bytes):
     """
     AEAD ChaCha20-Poly1305 encrypt.
@@ -21,12 +20,8 @@ def encrypt(
     ct = aead.encrypt(nonce, plaintext, aad)
     return nonce, ct
 
-def decrypt(
-    key: bytes,
-    nonce: bytes,
-    ciphertext: bytes,
-    aad: bytes
-) -> bytes:
+
+def decrypt(key: bytes, nonce: bytes, ciphertext: bytes, aad: bytes) -> bytes:
     """
     AEAD ChaCha20-Poly1305 decrypt.
     :param key:        32-байтный ключ

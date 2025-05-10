@@ -1,0 +1,39 @@
+name: Build & Test
+
+on:
+  push:
+    branches:
+      - fix/ci-no-build-isolation
+  pull_request:
+    branches:
+      - fix/ci-no-build-isolation
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect BOM/UTF-16 signatures
+        run: |
+          echo "┌── Строгая проверка файлов на BOM/UTF-16"
+          
+          # Проверяем все .py, .md и .toml файлы
+          find . -type f \( -name '*.py' -o -name '*.md' -o -name '*.toml' \) | while read -r f; do
+            # Считываем первые 3 байта
+            sig=$(xxd -p -l 3 "$f" | tr '[:lower:]' '[:upper:]')
+            
+            # Роняем весь workflow, если находим BOM
+            if [[ "$sig" == "EFBBBF"* ]]; then
+              echo "💥 BOM UTF-8   -> $f"
+              exit 1
+            elif [[ "$sig" == "FEFF"* ]]; then
+              echo "💥 BOM UTF-16BE -> $f"
+              exit 1
+            elif [[ "$sig" == "FFFE"* ]]; then
+              echo "💥 BOM UTF-16LE -> $f"
+              exit 1
+            fi
+          done
+          
+          echo "✔️ Все файлы чисты — ни одного BOM не найдено"

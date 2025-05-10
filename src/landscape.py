@@ -1,7 +1,6 @@
 import random
 from typing import List, Tuple
 
-
 Clause = Tuple[int, int, int]
 
 

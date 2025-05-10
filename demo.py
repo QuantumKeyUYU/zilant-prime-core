@@ -1,6 +1,6 @@
+from src.aead import decrypt, encrypt
 from src.kdf import derive_key
 from src.vdf import vdf
-from src.aead import encrypt, decrypt
 from src.zil import create_zil, unpack_zil
 
 if __name__ == "__main__":

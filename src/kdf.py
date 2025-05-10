@@ -1,7 +1,6 @@
 import os
-from argon2.low_level import (
-    hash_secret_raw, Type
-)
+
+from argon2.low_level import Type, hash_secret_raw
 
 DEFAULT_TIME_COST = 3
 DEFAULT_MEMORY_COST = 65536  # 64 MiB
@@ -9,14 +8,17 @@ DEFAULT_PARALLELISM = 4
 DEFAULT_SALT_LENGTH = 32
 KEY_LENGTH = 32
 
-def derive_key(password: bytes, 
-               salt: bytes = None, 
-               time_cost: int = DEFAULT_TIME_COST, 
-               mem_cost: int = DEFAULT_MEMORY_COST, 
-               parallelism: int = DEFAULT_PARALLELISM) -> bytes:
+
+def derive_key(
+    password: bytes,
+    salt: bytes = None,
+    time_cost: int = DEFAULT_TIME_COST,
+    mem_cost: int = DEFAULT_MEMORY_COST,
+    parallelism: int = DEFAULT_PARALLELISM,
+) -> bytes:
     """
     Derives a cryptographic key using Argon2id.
-    
+
     :param password: User-provided password.
     :param salt: Optional salt; randomly generated if None.
     :param time_cost: Iteration count.
@@ -44,7 +46,7 @@ def derive_key(password: bytes,
         memory_cost=mem_cost,
         parallelism=parallelism,
         hash_len=KEY_LENGTH,
-        type=Type.ID
+        type=Type.ID,
     )
-    
+
     return key
