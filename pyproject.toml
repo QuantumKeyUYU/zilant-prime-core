@@ -1,5 +1,8 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = [
+  "setuptools>=61.0",
+  "wheel",
+]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,11 +10,12 @@ name = "zilant-prime-core"
 version = "0.1.0"
 description = "Core library for ZILANT Prime phase VDF and encryption"
 readme = "README.md"
-requires-python = ">=3.9,<4.0"    # <-- СЂР°СЃС€РёСЂРёР»Рё РґРѕ <4.0
-license = { file = "LICENSE" }
+requires-python = ">=3.9, <3.14"
+license = { text = "MIT" }
 authors = [
   { name = "Your Name", email = "you@example.com" },
 ]
+keywords = ["vdf", "encryption", "zil", "phase-vdf"]
 dependencies = [
   "aead>=0.2,<1.0",
   "cryptography>=3.4.7",
@@ -19,15 +23,20 @@ dependencies = [
   "hypothesis>=6.0.0",
 ]
 
+[project.urls]
+"Homepage" = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+"Repository" = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+"Bug Tracker" = "https://github.com/QuantumKeyUYU/zilant-prime-core/issues"
+
 [project.optional-dependencies]
 dev = [
   "pytest>=7.0.0",
   "flake8>=5.0.0",
-  "bandit>=1.7.0",
-  "pre-commit>=2.20.0",
-  "isort>=5.0",
   "black>=23.0",
+  "isort>=5.0",
+  "bandit>=1.7",
+  "pre-commit>=2.20",
 ]
 
-[project.scripts]
-bench-vdf = "bench_vdf:main"
+[tool.setuptools.packages.find]
+where = ["src"]
