@@ -3,26 +3,38 @@ name = "zilant-prime-core"
 version = "0.1.0"
 description = "ZILANT Prime Core Library"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "MIT"
 authors = [{ name = "QuantumKeyUYU", email = "example@email.com" }]
 dependencies = [
-    "cryptography",
-    "setuptools",
-    "wheel"
+    "cryptography>=41.0",
+    "setuptools>=61.0",
+    "wheel>=0.40.0"
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "flake8",
-    "bandit",
-    "mypy",
-    "black"
+    "pytest>=7.0",
+    "flake8>=6.0",
+    "bandit>=1.7",
+    "mypy>=1.0",
+    "black>=23.0"
 ]
 
 [project.license-files]
 include = ["LICENSE"]
 
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=61.0", "wheel>=0.40.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-v --strict-markers"
+testpaths = ["tests"]
+
+[tool.flake8]
+max-line-length = 88
+exclude = ".git,__pycache__,build,dist"
