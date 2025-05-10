@@ -3,17 +3,19 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
 
 jobs:
-  test:
+  build-and-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python: ["3.9", "3.10", "3.11"]
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v4
@@ -23,7 +25,7 @@ jobs:
       - name: Upgrade pip, setuptools, wheel
         run: pip install --upgrade pip setuptools wheel
 
-      - name: Install dev dependencies
+      - name: Install package + dev dependencies
         run: |
           pip install .[dev]
 
