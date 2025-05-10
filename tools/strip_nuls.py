@@ -6,9 +6,11 @@ Usage:
 """
 import sys
 
+
 def strip_nuls(path: str) -> None:
-    data = open(path, 'rb').read().replace(b'\x00', b'')
-    open(path, 'wb').write(data)
+    data = open(path, "rb").read().replace(b"\x00", b"")
+    open(path, "wb").write(data)
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

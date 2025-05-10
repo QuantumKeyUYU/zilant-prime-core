@@ -1,10 +1,6 @@
-#!/usr/bin/env python
-"""
-UYUBox CLI  –  упаковка и распаковка .zil‑контейнеров
-Команды:
-  uyi pack <infile> -o <outfile.zil> [options]
-  uyi unpack <infile.zil> [options]
-"""
+#!/usr/bin/env python3
+"""UYUBox CLI – упаковка и распаковка .zil-контейнеров."""
+
 from __future__ import annotations
 
 import getpass
@@ -13,7 +9,6 @@ from typing import Dict, Tuple
 
 import click
 
-from tlv import encode_tlv
 from zil import create_zil, unpack_zil
 
 
@@ -49,12 +44,31 @@ def cli() -> None:
 
 
 @cli.command()
-@click.argument("infile", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-@click.option("-o", "--outfile", type=click.Path(dir_okay=False, path_type=Path), required=True)
+@click.argument(
+    "infile",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+)
+@click.option(
+    "-o",
+    "--outfile",
+    type=click.Path(dir_okay=False, path_type=Path),
+    required=True,
+)
 @click.option("-p", "--passphrase", help="Passphrase (prompted if omitted)")
-@click.option("--vdf-iters", type=int, default=10, show_default=True)
+@click.option(
+    "--vdf-iters",
+    type=int,
+    default=10,
+    show_default=True,
+    help="Number of VDF iterations",
+)
 @click.option("--one-shot/--multi", default=False, show_default=True)
-@click.option("--meta", multiple=True, metavar="TYPE=VALUE", help="TLV metadata (mime, ver, or 0x##)")
+@click.option(
+    "--meta",
+    multiple=True,
+    metavar="TYPE=VALUE",
+    help="TLV metadata (mime, ver, or 0x##)",
+)
 def pack(
     infile: Path,
     outfile: Path,
@@ -69,7 +83,10 @@ def pack(
         passphrase = _prompt_passphrase()
 
     meta_dict = _parse_meta(meta)
-    click.echo(f"Packing {infile} → {outfile} (VDF={vdf_iters}, one-shot={one_shot})")
+    click.echo(
+        f"Packing {infile} → {outfile} "
+        f"(VDF={vdf_iters}, one-shot={one_shot})"
+    )
     data = infile.read_bytes()
 
     with click.progressbar(length=vdf_iters, label="Generating VDF") as bar:
@@ -88,10 +105,22 @@ def pack(
 
 
 @cli.command()
-@click.argument("infile", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument(
+    "infile",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+)
 @click.option("-p", "--passphrase", help="Passphrase (prompted if omitted)")
-@click.option("-o", "--outfile", type=click.Path(dir_okay=False, path_type=Path), help="Write plaintext to file")
-def unpack(infile: Path, passphrase: str | None, outfile: Path | None) -> None:
+@click.option(
+    "-o",
+    "--outfile",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Write plaintext to file",
+)
+def unpack(
+    infile: Path,
+    passphrase: str | None,
+    outfile: Path | None,
+) -> None:
     if not passphrase:
         passphrase = _prompt_passphrase()
 
