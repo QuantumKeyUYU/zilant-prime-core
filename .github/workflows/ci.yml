@@ -1,7 +1,10 @@
 # .github/workflows/ci.yml
-name: CI (build wheel)
+name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 jobs:
   test:
@@ -12,9 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Strip BOM from pyproject.toml
-        run: python strip_bom.py
-
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v4
         with:
@@ -23,13 +23,9 @@ jobs:
       - name: Upgrade pip, setuptools, wheel
         run: pip install --upgrade pip setuptools wheel
 
-      - name: Build wheel
-        run: python -m build --wheel --no-isolation .
-
-      - name: Install wheel + dev dependencies
+      - name: Install dev dependencies
         run: |
-          pip install dist/*.whl
-          pip install pytest flake8 bandit
+          pip install .[dev]
 
       - name: Run tests
         run: pytest -q
