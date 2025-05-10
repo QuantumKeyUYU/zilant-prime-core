@@ -2,14 +2,19 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Check for BOM
+      - name: Detect BOM/UTF-16 signatures
         run: |
-          echo "Ищем BOM в .py/.md/.toml..."
-          grep -rI --include="*.py" --include="*.md" --include="*.toml" $'\xEF\xBB\xBF' . || true
-
+          echo "┌── Проверяем первые 3 байта во всех .py/.md/.toml"
+          for f in $(find . -type f \( -name '*.py' -o -name '*.md' -o -name '*.toml' \)); do
+            sig=$(head -c3 "$f" | xxd -p -u)
+            case "$sig" in
+              efbbbf* ) echo "💥 BOM UTF-8   -> $f" ;;
+              fffe*   ) echo "💥 BOM UTF-16LE-> $f" ;;
+              fffe*   ) echo "💥 BOM UTF-16BE-> $f" ;;
+            esac
+          done
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -17,3 +22,4 @@ jobs:
 
       - name: Install dependencies
         run: pip install -e .[dev]
+      # … остальные шаги
