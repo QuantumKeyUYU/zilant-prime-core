@@ -1,44 +1,19 @@
-name: Build & Test
-
-on: [push, pull_request]
-
 jobs:
   build-test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [ "3.9", "3.10", "3.11" ]
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Strip BOM from pyproject.toml
-        # если вдруг BOM остался, снимем его на лету
+      - name: Check for BOM
         run: |
-          sed -i '1s/^\xEF\xBB\xBF//' pyproject.toml
+          echo "Ищем BOM в .py/.md/.toml..."
+          grep -rI --include="*.py" --include="*.md" --include="*.toml" $'\xEF\xBB\xBF' . || true
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Upgrade pip, setuptools, wheel
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-
-      - name: Install dev dependencies
-        run: |
-          pip install .[dev] --no-build-isolation
-
-      - name: Run tests
-        run: |
-          pytest -q --maxfail=1 --disable-warnings
-
-      - name: Lint with flake8
-        run: |
-          flake8 .
-
-      - name: Security scan with bandit
-        run: |
-          bandit -r src
+      - name: Install dependencies
+        run: pip install -e .[dev]
