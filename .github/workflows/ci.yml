@@ -1,48 +1,71 @@
-# .github/workflows/ci.yml
 name: CI
 
+# Триггерим на push в main и на pull_request
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
 
 jobs:
   build-and-test:
     name: Build & Test on Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
-
     strategy:
-      fail-fast: false
       matrix:
-        # Обратите внимание: не 3.1, а 3.10!
         python-version: [3.9, 3.10, 3.11]
 
     steps:
-      # 1) Забираем код
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2) Ставим нужный Python
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
-      # 3) Обновляем pip, setuptools & wheel
       - name: Upgrade pip, setuptools & wheel
-        run: python -m pip install --upgrade pip setuptools wheel
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
 
-      # 4) Устанавливаем проект вместе со всеми dev-зависимостями
       - name: Install dev dependencies
-        run: pip install -e .[dev]
+        run: |
+          pip install .[dev]
 
-      # 5) Запускаем тесты
       - name: Run tests
-        run: pytest -q
+        run: |
+          pytest -q
 
-      # 6) Линтим код
       - name: Lint with flake8
-        run: flake8
+        run: |
+          flake8 .
 
-      # 7) Сканируем на уязвимости
+  lint-and-security:
+    name: Lint & Security Checks
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Upgrade pip
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: Strip BOM from pyproject.toml (if any)
+        run: |
+          python tools/strip_bom.py
+
+      - name: Run flake8
+        run: |
+          flake8 .
+
       - name: Security scan with bandit
-        run: bandit -r .
+        run: |
+          bandit -r src -n5
