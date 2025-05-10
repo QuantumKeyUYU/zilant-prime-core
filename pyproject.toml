@@ -1,30 +1,28 @@
 [project]
 name = "zilant-prime-core"
 version = "0.1.0"
-description = "ZILANT Prime Core: cryptographic primitives for the ZILANT protocol"
+description = "ZILANT Prime Core Library"
 readme = "README.md"
-requires-python = ">=3.9"
-license = { text = "MIT" }
-authors = [{ name = "QuantumKeyUYU", email = "you@example.com" }]
-keywords = ["zilant","cryptography","vdf","prime","kdf"]
-
+license = { file = "LICENSE" }
+authors = [{ name = "QuantumKeyUYU", email = "example@email.com" }]
 dependencies = [
-  "aead>=0.2,<1.0",
-  "cryptography>=3.4.7",
-  "argon2-cffi>=21.3.0",
-  "hypothesis>=6.0.0",
+    "cryptography",
+    "setuptools",
+    "wheel"
 ]
 
 [project.optional-dependencies]
 dev = [
-  "pytest>=7.0.0",
-  "flake8>=5.0.0",
-  "bandit>=1.7.0",
-  "pre-commit>=2.20.0",
-  "isort>=5.0",
-  "black>=23.0",
+    "pytest",
+    "flake8",
+    "bandit",
+    "mypy",
+    "black"
 ]
 
+[project.license-files]
+include = ["LICENSE"]
+
 [build-system]
-requires = ["setuptools>=42","wheel"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
