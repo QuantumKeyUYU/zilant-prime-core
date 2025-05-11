@@ -1,5 +1,5 @@
 """
-Simple landscape module for testing.
+Simple landscape module for testing purposes.
 """
 
 def describe_landscape():
