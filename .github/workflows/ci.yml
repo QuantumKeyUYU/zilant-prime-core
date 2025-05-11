@@ -2,42 +2,37 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - fix/ci-no-build-isolation
   pull_request:
+    branches:
+      - main
+      - fix/ci-no-build-isolation
 
 jobs:
-  lint:
-    name: Lint with flake8
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with: python-version: 3.11
-      - run: pip install --upgrade pip setuptools wheel
-      - run: python strip_bom.py pyproject.toml
-      - run: pip install ".[dev]" --no-build-isolation
-      - run: flake8 .
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-  security:
-    name: Security scan with bandit
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with: python-version: 3.11
-      - run: pip install --upgrade pip setuptools wheel
-      - run: pip install ".[dev]" --no-build-isolation
-      - run: bandit -r src
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
 
-  typecheck:
-    name: Type-check with mypy
-    runs-on: ubuntu-latest
-    needs: security
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with: python-version: 3.11
-      - run: pip install --upgrade pip setuptools wheel
-      - run: pip install ".[dev]" --no-build-isolation
-      - run: mypy src
+      - name: Install dependencies
+        run: pip install -e .[dev] --no-build-isolation
+
+      - name: Run tests
+        run: pytest --maxfail=1 --disable-warnings -q
+
+      - name: Lint with flake8
+        run: flake8 .
+
+      - name: Security scan with bandit
+        run: bandit -r src
+
+      - name: Type checks with mypy
+        run: mypy src

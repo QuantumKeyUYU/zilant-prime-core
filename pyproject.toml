@@ -1,27 +1,32 @@
+[build-system]
+requires = ["setuptools>=60.0", "wheel"]
+
 [project]
 name = "zilant-prime-core"
 version = "0.1.0"
 description = "Core engine for ZILANT Prime™"
+authors = [{name = "QuantumKeyUYU", email = "quantumkey@uyu.com"}]
+license = {text = "MIT"}
 readme = "README.md"
-license = { file = "LICENSE" }
-authors = [
-  { name = "QuantumKeyUYU", email = "you@example.com" }
-]
 requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+keywords = ["cryptography", "quantum", "security"]
 dependencies = [
-  "cryptography>=41.0.0",
-  "numpy>=1.25.0",
-  "scipy>=1.11.0",
+    "cryptography>=41.0.0",
+    "numpy>=1.25.0",
+    "scipy>=1.11.0"
 ]
 
-[project.optional-dependencies]
-dev = [
-  "pytest>=7.0",
-  "flake8>=6.0",
-  "bandit>=1.7",
-  "mypy>=1.0",
-]
+[tool.flake8]
+max-line-length = 88
+exclude = .git,__pycache__,build,dist
 
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+[tool.bandit]
+targets = ["src"]
+
+[tool.mypy]
+files = "src"

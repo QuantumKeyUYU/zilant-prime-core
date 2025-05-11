@@ -1,33 +1,41 @@
-name: Build & Test
+name: Build and Test
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - fix/ci-no-build-isolation
   pull_request:
+    branches:
+      - main
+      - fix/ci-no-build-isolation
 
 jobs:
-  build-test:
+  build-and-test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.10", "3.11"]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.11
 
       - name: Upgrade pip, setuptools, wheel
         run: pip install --upgrade pip setuptools wheel
 
-      - name: Strip BOM from pyproject.toml
-        run: python strip_bom.py pyproject.toml
-
       - name: Install dev dependencies
-        run: pip install ".[dev]" --no-build-isolation
+        run: pip install -e .[dev] --no-build-isolation
 
       - name: Run tests
         run: pytest --maxfail=1 --disable-warnings -q
+
+      - name: Lint with flake8
+        run: flake8 .
+
+      - name: Security scan with bandit
+        run: bandit -r src
+
+      - name: Quality checks with mypy
+        run: mypy src

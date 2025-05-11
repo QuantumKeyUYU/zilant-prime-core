@@ -1,14 +1,17 @@
-#!/usr/bin/env python3
-import sys
+import os
 
-def strip_bom(path: str) -> None:
-    with open(path, "rb") as f:
-        data = f.read()
-    bom = b'\xef\xbb\xbf'
-    if data.startswith(bom):
-        with open(path, "wb") as f:
-            f.write(data[len(bom):])
+def strip_bom(file_path):
+    with open(file_path, 'rb') as f:
+        content = f.read()
+
+    if content.startswith(b'\xef\xbb\xbf'):
+        with open(file_path, 'wb') as f:
+            f.write(content[3:])
+        print(f"BOM removed from {file_path}")
+    else:
+        print(f"No BOM found in {file_path}")
 
 if __name__ == "__main__":
-    for filepath in sys.argv[1:]:
-        strip_bom(filepath)
+    for root, _, files in os.walk("src"):
+        for file in files:
+            strip_bom(os.path.join(root, file))
