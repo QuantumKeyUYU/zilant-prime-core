@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 import os
+import sys
 
 def strip_bom(path):
     with open(path, 'rb') as f:
         data = f.read()
     if data.startswith(b'\xef\xbb\xbf'):
+        print(f"Stripping BOM from {path}")
         with open(path, 'wb') as f:
             f.write(data[3:])
-        print(f"Stripped BOM: {path}")
 
 if __name__ == "__main__":
-    for root, _, files in os.walk("src"):
-        for fn in files:
-            strip_bom(os.path.join(root, fn))
+    for file in sys.argv[1:]:
+        strip_bom(file)

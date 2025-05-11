@@ -1,25 +1,26 @@
 [project]
 name = "zilant-prime-core"
 version = "0.1.0"
-description = "Core engine for ZILANT Prime™"
+description = "Zilant Prime Core engine"
 readme = "README.md"
 requires-python = ">=3.9"
-
-# Авторы — PEP 621 требует массив таблиц
 authors = [
-  { name = "QuantumKeyUYU", email = "example@example.com" }
+  { name = "QuantumKeyUYU", email = "quantumkey@uyu.com" }
 ]
 
-# Зависимости — PEP 621 требует массив строк в PEP 508 формате
 dependencies = [
   "cryptography>=41.0.0",
   "numpy>=1.25.0",
-  "scipy>=1.11.0",
+  "scipy>=1.11.0"
 ]
 
-[project.urls]
-"Homepage" = "https://github.com/QuantumKeyUYU/zilant-prime-core"
-"Repository" = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0",
+  "flake8>=6.0",
+  "mypy>=1.0",
+  "bandit>=1.7"
+]
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

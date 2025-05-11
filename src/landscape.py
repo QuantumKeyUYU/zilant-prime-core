@@ -1,14 +1,10 @@
-import numpy as np
-from scipy.optimize import minimize
+"""
+Simple landscape module for testing.
+"""
 
-def potential_energy(x: np.ndarray) -> float:
-    return float(np.dot(x, x))
-
-def optimize_landscape(dim: int = 10):
-    x0 = np.random.rand(dim)
-    res = minimize(potential_energy, x0)
-    return res
+def describe_landscape():
+    return ["Mountains", "Valleys", "Rivers", "Plains"]
 
 if __name__ == "__main__":
-    result = optimize_landscape()
-    print("Result:", result)
+    for feature in describe_landscape():
+        print(f"- {feature}")

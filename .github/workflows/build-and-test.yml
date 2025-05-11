@@ -14,27 +14,16 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Setup Python 3.11
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
-      - name: Upgrade packaging tools
-        run: pip install --upgrade pip setuptools wheel
-
       - name: Install dev dependencies
         run: pip install -e .[dev] --no-build-isolation
 
-      - name: Run pytest
+      - name: Run tests
         run: pytest --maxfail=1 --disable-warnings -q
-
-      - name: flake8 lint
-        run: flake8 .
-
-      - name: bandit scan
-        run: bandit -r src
-
-      - name: mypy types
-        run: mypy src

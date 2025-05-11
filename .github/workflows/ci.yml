@@ -1,4 +1,4 @@
-name: CI
+name: Lint & Security Checks
 
 on:
   push:
@@ -11,12 +11,13 @@ on:
       - fix/ci-no-build-isolation
 
 jobs:
-  ci:
+  lint-and-security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Setup Python 3.11
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
@@ -24,14 +25,11 @@ jobs:
       - name: Install dev dependencies
         run: pip install -e .[dev] --no-build-isolation
 
-      - name: Run tests
-        run: pytest --maxfail=1 --disable-warnings -q
-
-      - name: Lint (flake8)
+      - name: Run flake8
         run: flake8 .
 
-      - name: Bandit security scan
+      - name: Run bandit
         run: bandit -r src
 
-      - name: Type check (mypy)
+      - name: Run mypy
         run: mypy src
