@@ -1,18 +1,10 @@
-name: Build & Test
-
-on:
-  push:
-    branches:
-      - main
-      - fix/ci-no-build-isolation
-  pull_request:
-    branches:
-      - main
-      - fix/ci-no-build-isolation
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10, 3.11]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -20,10 +12,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install dev dependencies
-        run: pip install -e .[dev] --no-build-isolation
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install .[dev]
 
       - name: Run tests
         run: pytest --maxfail=1 --disable-warnings -q
+
+      - name: Lint with flake8
+        run: flake8 .
+
+      - name: Security scan with bandit
+        run: bandit -r src
+
+      - name: Quality checks
+        run: mypy src
