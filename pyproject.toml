@@ -1,7 +1,7 @@
 [project]
 name = "zilant-prime-core"
 version = "0.1.0"
-description = "Zilant Prime Core"
+description = "ZILANT Prime Core"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
@@ -15,9 +15,12 @@ Homepage   = "https://github.com/QuantumKeyUYU/zilant-prime-core"
 Repository = "https://github.com/QuantumKeyUYU/zilant-prime-core"
 
 [project.dependencies]
-cryptography = "^41.0.0"
-numpy         = "^1.25.0"
-scipy         = "^1.11.0"
+# PEP 621 requires this to be an array
+dependencies = [
+  "cryptography>=41.0.0",
+  "numpy>=1.25.0",
+  "scipy>=1.11.0",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -26,11 +29,11 @@ dev = [
   "black",
   "flake8",
   "mypy",
-  "bandit"
+  "bandit",
 ]
 
 [build-system]
-requires    = ["setuptools", "wheel"]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
