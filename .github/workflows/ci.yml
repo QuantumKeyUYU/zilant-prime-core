@@ -1,10 +1,8 @@
 name: CI
 
-# Запускаем на каждый push и pull_request
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
 
 jobs:
@@ -12,25 +10,13 @@ jobs:
     name: Lint with flake8
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python 3.11
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
-
-      - name: Upgrade pip, setuptools, wheel
-        run: pip install --upgrade pip setuptools wheel
-
-      - name: Install dev dependencies
-        run: pip install ".[dev]" --no-build-isolation
-
-      - name: Strip BOM from pyproject.toml
-        run: python strip_bom.py pyproject.toml
-
-      - name: Run flake8
-        run: flake8 .
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with: python-version: 3.11
+      - run: pip install --upgrade pip setuptools wheel
+      - run: python strip_bom.py pyproject.toml
+      - run: pip install ".[dev]" --no-build-isolation
+      - run: flake8 .
 
   security:
     name: Security scan with bandit
@@ -51,8 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
+        with: python-version: 3.11
       - run: pip install --upgrade pip setuptools wheel
       - run: pip install ".[dev]" --no-build-isolation
       - run: mypy src

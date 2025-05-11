@@ -3,25 +3,24 @@ name = "zilant-prime-core"
 version = "0.1.0"
 description = "Core engine for ZILANT Prime™"
 readme = "README.md"
-requires-python = ">=3.9"
-keywords = ["zilant", "crypto", "vdf"]
 license = { file = "LICENSE" }
-license-files = ["LICENSE"]
-
-# по PEP 621: authors — массив таблиц с name+email
 authors = [
-  { name = "QuantumKeyUYU", email = "your.email@example.com" },
+  { name = "QuantumKeyUYU", email = "you@example.com" }
 ]
-
+requires-python = ">=3.9"
 dependencies = [
   "cryptography>=41.0.0",
   "numpy>=1.25.0",
   "scipy>=1.11.0",
 ]
 
-[project.urls]
-Homepage = "https://github.com/QuantumKeyUYU/zilant-prime-core"
-Repository = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0",
+  "flake8>=6.0",
+  "bandit>=1.7",
+  "mypy>=1.0",
+]
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
