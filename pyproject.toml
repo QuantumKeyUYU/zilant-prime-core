@@ -1,36 +1,26 @@
-[build-system]
-requires = ["setuptools>=60.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "zilant-prime-core"
 version = "0.1.0"
 description = "Core engine for ZILANT Prime™"
 readme = "README.md"
-authors = [ { name="QuantumKeyUYU", email="quantumkey@uyu.com" } ]
-license = { text="MIT" }
 requires-python = ">=3.9"
-classifiers = [
-  "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: MIT License",
-  "Operating System :: OS Independent",
-]
-keywords = ["cryptography","quantum","security"]
 
+# Авторы — PEP 621 требует массив таблиц
+authors = [
+  { name = "QuantumKeyUYU", email = "example@example.com" }
+]
+
+# Зависимости — PEP 621 требует массив строк в PEP 508 формате
 dependencies = [
   "cryptography>=41.0.0",
   "numpy>=1.25.0",
   "scipy>=1.11.0",
 ]
 
-[tool.flake8]
-max-line-length = 88
-extend-ignore = ["E203"]
-exclude = ["build","dist",".git","__pycache__"]
+[project.urls]
+"Homepage" = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+"Repository" = "https://github.com/QuantumKeyUYU/zilant-prime-core"
 
-[tool.mypy]
-strict = true
-files = "src"
-
-[tool.bandit]
-skips = ["B311"]
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
