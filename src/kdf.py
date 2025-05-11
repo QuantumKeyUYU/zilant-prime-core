@@ -1,5 +1,4 @@
 import os
-
 from argon2.low_level import Type, hash_secret_raw
 
 DEFAULT_TIME_COST = 3
@@ -8,10 +7,9 @@ DEFAULT_PARALLELISM = 4
 DEFAULT_SALT_LENGTH = 32
 KEY_LENGTH = 32
 
-
 def derive_key(
     password: bytes,
-    salt: bytes = None,
+    salt: bytes | None = None,
     time_cost: int = DEFAULT_TIME_COST,
     mem_cost: int = DEFAULT_MEMORY_COST,
     parallelism: int = DEFAULT_PARALLELISM,
@@ -39,6 +37,7 @@ def derive_key(
     if not (1 <= parallelism <= 16):
         raise ValueError("parallelism must be between 1 and 16")
 
+    # Собираем ключ
     key = hash_secret_raw(
         secret=password,
         salt=salt,
@@ -48,5 +47,4 @@ def derive_key(
         hash_len=KEY_LENGTH,
         type=Type.ID,
     )
-
     return key
