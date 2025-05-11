@@ -11,28 +11,27 @@ on:
       - fix/ci-no-build-isolation
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Setup Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
-      - name: Install dependencies
+      - name: Install dev dependencies
         run: pip install -e .[dev] --no-build-isolation
 
       - name: Run tests
         run: pytest --maxfail=1 --disable-warnings -q
 
-      - name: Lint with flake8
+      - name: Lint (flake8)
         run: flake8 .
 
-      - name: Security scan with bandit
+      - name: Bandit security scan
         run: bandit -r src
 
-      - name: Type checks with mypy
+      - name: Type check (mypy)
         run: mypy src

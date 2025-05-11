@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build & Test
 
 on:
   push:
@@ -14,28 +14,27 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Setup Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
-      - name: Upgrade pip, setuptools, wheel
+      - name: Upgrade packaging tools
         run: pip install --upgrade pip setuptools wheel
 
       - name: Install dev dependencies
         run: pip install -e .[dev] --no-build-isolation
 
-      - name: Run tests
+      - name: Run pytest
         run: pytest --maxfail=1 --disable-warnings -q
 
-      - name: Lint with flake8
+      - name: flake8 lint
         run: flake8 .
 
-      - name: Security scan with bandit
+      - name: bandit scan
         run: bandit -r src
 
-      - name: Quality checks with mypy
+      - name: mypy types
         run: mypy src
