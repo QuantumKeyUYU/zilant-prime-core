@@ -1,9 +1,22 @@
-from typing import Sequence
+# ── файл src/landscape.py ─────────────────────────────────────────────────────
 
-def energy(state: Sequence[float]) -> float:
+from typing import Sequence, Tuple
+
+def energy(data: Sequence[Tuple[int, int]]) -> int:
     """
-    Вычисляет «энергию» состояния как сумму квадратов координат.
-    state — любая последовательность чисел (int или float).
-    Возвращает float.
+    Пример: ваша реализация подсчёта "энергии" ландшафта.
+    Принимает список (или другой итерабельный контейнер) кортежей (x,y)
+    и возвращает число.
     """
-    return float(sum(x * x for x in state))
+    # <-- Ваша реальная логика должна стоять здесь! -->
+    total = 0
+    for x, y in data:
+        total += x*x + y*y
+    return total
+
+def generate_sat(data: Sequence[Tuple[int, int]]) -> int:
+    """
+    Тесты из tests/test_elc_vdf.py ожидают функцию generate_sat,
+    возвращающую то же, что energy.
+    """
+    return energy(data)
