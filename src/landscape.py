@@ -1,10 +1,9 @@
-"""
-Simple landscape module for testing purposes.
-"""
+from typing import Sequence
 
-def describe_landscape():
-    return ["Mountains", "Valleys", "Rivers", "Plains"]
-
-if __name__ == "__main__":
-    for feature in describe_landscape():
-        print(f"- {feature}")
+def energy(state: Sequence[float]) -> float:
+    """
+    Вычисляет «энергию» состояния как сумму квадратов координат.
+    state — любая последовательность чисел (int или float).
+    Возвращает float.
+    """
+    return float(sum(x * x for x in state))
