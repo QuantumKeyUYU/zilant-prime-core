@@ -7,6 +7,7 @@ DEFAULT_PARALLELISM = 4
 DEFAULT_SALT_LENGTH = 32
 KEY_LENGTH = 32
 
+
 def derive_key(
     password: bytes,
     salt: bytes | None = None,
@@ -37,7 +38,6 @@ def derive_key(
     if not (1 <= parallelism <= 16):
         raise ValueError("parallelism must be between 1 and 16")
 
-    # Собираем ключ
     key = hash_secret_raw(
         secret=password,
         salt=salt,

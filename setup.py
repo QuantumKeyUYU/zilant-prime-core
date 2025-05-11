@@ -3,24 +3,22 @@ from setuptools import setup, find_packages
 setup(
     name="zilant-prime-core",
     version="0.1.0",
-    description="Core library for Zilant Prime",
-    author="Your Name",
-    packages=find_packages(where="src"),
+    description="Zero-knowledge VDF and related primitives",
     package_dir={"": "src"},
-    python_requires=">=3.9",
+    packages=find_packages(where="src"),
     install_requires=[
-        "argon2-cffi>=21.3.0",    # <-- добавляем зависимость
         "cryptography>=41.0.0",
         "numpy>=1.25.0",
-        "scipy>=1.15.3",
-        "cffi>=1.17.1",
+        "scipy>=1.10.1",         # забираем версию, поддерживающую Py3.9–3.11
+        "argon2-cffi>=23.1.0",   # новая зависимость
     ],
     extras_require={
         "dev": [
-            "pytest>=6.0",
+            "pytest>=7.0",
             "flake8>=6.0",
-            "bandit>=1.7.4",
-            "mypy>=1.0",
-        ]
+            "bandit>=1.7",
+            "mypy>=1.5",
+        ],
     },
+    python_requires=">=3.9, <4",
 )
