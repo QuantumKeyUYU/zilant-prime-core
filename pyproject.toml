@@ -2,41 +2,36 @@
 name = "zilant-prime-core"
 version = "0.1.0"
 description = "Zilant Prime Core"
-authors = ["QuantumKeyUYU <email@example.com>"]
-license = {text = "MIT License"}
 readme = "README.md"
 requires-python = ">=3.9"
+license = { text = "MIT" }
+
+authors = [
+  { name = "QuantumKeyUYU", email = "email@example.com" }
+]
 
 [project.urls]
-Homepage = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+Homepage   = "https://github.com/QuantumKeyUYU/zilant-prime-core"
 Repository = "https://github.com/QuantumKeyUYU/zilant-prime-core"
 
 [project.dependencies]
 cryptography = "^41.0.0"
-numpy = "^1.25.0"
-scipy = "^1.11.0"
+numpy         = "^1.25.0"
+scipy         = "^1.11.0"
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "hypothesis",
-    "black",
-    "flake8",
-    "mypy",
-    "bandit",
-    "wheel",
-    "setuptools"
+  "pytest",
+  "hypothesis",
+  "black",
+  "flake8",
+  "mypy",
+  "bandit"
 ]
 
 [build-system]
-requires = ["setuptools", "wheel"]
+requires    = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-license-files = ["LICENSE", "LICENSE.txt"]
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.hatch.version]
-path = "src/zilant_prime_core/__init__.py"
+license-files = ["LICENSE"]
