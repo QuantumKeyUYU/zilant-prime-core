@@ -5,13 +5,16 @@ CLI для ZILANT Prime™.
 """
 import sys
 from pathlib import Path
+
 import click
 
 # Импортируем упаковку/распаковку
-from pack import pack as _pack, one_shot_pack
+from pack import one_shot_pack
+from pack import pack as _pack
 from zil import unpack_zil
 
 # ─────────────────────────────────────────────────────────────────────────── CLI ──
+
 
 @click.group()
 def cli() -> None:
@@ -25,7 +28,8 @@ def cli() -> None:
     type=click.Path(exists=True, path_type=Path),
 )
 @click.option(
-    "-o", "--output",
+    "-o",
+    "--output",
     "output_path",
     required=True,
     type=click.Path(path_type=Path),
@@ -37,7 +41,8 @@ def cli() -> None:
     help="Одношот-режим (удаляется после первого чтения).",
 )
 @click.option(
-    "-p", "--password",
+    "-p",
+    "--password",
     "password",
     required=True,
     help="Пароль для шифрования",
@@ -101,7 +106,8 @@ def pack(
     type=click.Path(exists=True, path_type=Path),
 )
 @click.option(
-    "-o", "--output",
+    "-o",
+    "--output",
     "output_path",
     type=click.Path(path_type=Path),
     help="Куда распаковать содержимое",

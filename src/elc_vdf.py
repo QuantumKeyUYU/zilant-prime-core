@@ -1,5 +1,7 @@
 import numpy as np
+
 from landscape import energy  # реальная энергия из landscape
+
 
 def gradient(formula, state, eps=1e-5):
     """
@@ -28,7 +30,7 @@ def generate_phase_vdf(formula, steps, lam, verify_gap=5):
     state = np.zeros(len(formula), dtype=float)
     raw_e = energy(formula, state)
     # Если energy возвращает массив, суммируем его
-    e = np.sum(raw_e)  
+    e = np.sum(raw_e)
     for step in range(1, steps + 1):
         cps.append((state.copy(), e))
         if step % verify_gap == 0:
@@ -45,7 +47,7 @@ def generate_phase_vdf_4d(formula, steps, lam, verify_gap=5):
     cps = []
     state = np.zeros((4, len(formula)), dtype=float)
     # энергия нулевого состояния
-    e = np.sum(np.linalg.norm(state, axis=0))  
+    e = np.sum(np.linalg.norm(state, axis=0))
     for step in range(1, steps + 1):
         cps.append((state.copy(), e))
         if step % verify_gap == 0:
@@ -57,7 +59,7 @@ def verify_phase_vdf(formula, cps, lam, verify_gap=5):
     """
     Проверка, что энергия не возрастает.
     """
-    prev = float('inf')
+    prev = float("inf")
     for i, (_, e) in enumerate(cps, start=1):
         if e > prev + 1e-12:
             print(f"Energy ↑ at checkpoint {i}: {e:.6f} > {prev:.6f}")

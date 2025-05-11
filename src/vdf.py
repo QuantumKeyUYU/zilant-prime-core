@@ -1,7 +1,9 @@
 import hashlib
 
+
 def sha256(data: bytes) -> bytes:
     return hashlib.sha256(data).digest()
+
 
 def generate_vdf(seed: bytes, steps: int) -> bytes:
     """
@@ -15,6 +17,7 @@ def generate_vdf(seed: bytes, steps: int) -> bytes:
     for _ in range(steps):
         result = sha256(result)
     return result
+
 
 def generate_partial_proofs(seed: bytes, steps: int, interval: int) -> dict:
     """
@@ -32,6 +35,7 @@ def generate_partial_proofs(seed: bytes, steps: int, interval: int) -> dict:
         if step % interval == 0 or step == steps:
             proofs[step] = result
     return proofs
+
 
 def verify_partial_proof(start_proof: bytes, end_proof: bytes, steps: int) -> bool:
     """

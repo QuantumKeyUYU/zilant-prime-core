@@ -1,15 +1,16 @@
+# src/pack.py
+
 """
 Простейшая упаковка в .zil-контейнер (ZIP).
 Поддерживает stub-параметры password, vdf_iters, meta, one_shot.
 """
 
-from __future__ import annotations
-
 import shutil
 import tempfile
 import zipfile
+
 from pathlib import Path
-from typing import Optional, Any, List, Tuple, Dict
+from typing import Any, Dict, Optional
 
 
 def _zip_dir(src: Path, zf: zipfile.ZipFile) -> None:
@@ -36,7 +37,6 @@ def pack(
     if not inp.exists():
         raise FileNotFoundError(inp)
 
-    # Основная логика ZIP-упаковки
     with tempfile.TemporaryDirectory() as tmp:
         z_tmp = Path(tmp) / "data.zip"
         with zipfile.ZipFile(z_tmp, "w", zipfile.ZIP_DEFLATED) as zf:

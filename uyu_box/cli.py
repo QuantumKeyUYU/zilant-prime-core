@@ -1,4 +1,5 @@
 import click
+
 from src.zil import create_zil, unpack_zil
 
 
@@ -34,6 +35,7 @@ def unpack(input, passphrase, metadata):
     pt, _ = unpack_zil(z, passphrase, metadata.encode())
     # Выводим сырые байты в stdout
     import sys
+
     sys.stdout.buffer.write(pt)
 
 

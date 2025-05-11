@@ -1,5 +1,7 @@
 import pytest
-from aead import encrypt, decrypt
+
+from aead import decrypt, encrypt
+
 
 def test_aead_roundtrip():
     key = b"\x00" * 32
@@ -20,6 +22,7 @@ def test_aead_roundtrip():
     # Decrypt with the same AAD yields original plaintext
     decrypted = decrypt(key, nonce, ciphertext, aad)
     assert decrypted == plaintext
+
 
 def test_aead_wrong_aad_fails():
     key = b"\x00" * 32

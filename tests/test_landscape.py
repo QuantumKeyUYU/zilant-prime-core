@@ -1,5 +1,6 @@
-import pytest
-from landscape import generate_sat, Formula
+# tests/test_landscape.py
+
+from landscape import Formula, generate_sat
 
 
 def test_generate_sat_structure():
