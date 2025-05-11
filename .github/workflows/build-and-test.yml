@@ -2,38 +2,38 @@ name: Build & Test
 
 on:
   push:
-    branches:
-      - fix/ci-no-build-isolation
+    branches: [ main ]
   pull_request:
-    branches:
-      - fix/ci-no-build-isolation
+    branches: [ main ]
 
 jobs:
   build-test:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10, 3.11]
 
-      - name: Detect BOM/UTF-16 signatures
-        run: |
-          echo "┌── Строгая проверка файлов на BOM/UTF-16"
-          
-          # Проверяем все .py, .md и .toml файлы
-          find . -type f \( -name '*.py' -o -name '*.md' -o -name '*.toml' \) | while read -r f; do
-            # Считываем первые 3 байта
-            sig=$(xxd -p -l 3 "$f" | tr '[:lower:]' '[:upper:]')
-            
-            # Роняем весь workflow, если находим BOM
-            if [[ "$sig" == "EFBBBF"* ]]; then
-              echo "💥 BOM UTF-8   -> $f"
-              exit 1
-            elif [[ "$sig" == "FEFF"* ]]; then
-              echo "💥 BOM UTF-16BE -> $f"
-              exit 1
-            elif [[ "$sig" == "FFFE"* ]]; then
-              echo "💥 BOM UTF-16LE -> $f"
-              exit 1
-            fi
-          done
-          
-          echo "✔️ Все файлы чисты — ни одного BOM не найдено"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Upgrade pip, setuptools, wheel
+        run: python -m pip install --upgrade pip setuptools wheel
+
+      - name: Install dev dependencies
+        run: pip install .[dev] --no-build-isolation
+
+      - name: Lint with flake8
+        run: flake8 src tests
+
+      - name: Security scan with bandit
+        run: bandit -r src
+
+      - name: Run tests
+        run: pytest --maxfail=1 --disable-warnings -q
