@@ -4,21 +4,22 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zilant-prime-core"
-version = "0.1.4"              # <-- сюда вашу новую версию
+version = "0.1.4"
 description = "Core engine for ZILANT Prime™"
 readme = "README.md"
 license = { text = "MIT" }
-authors = [{ name = "QuantumKeyUYU" }]
+authors = [
+  { name = "QuantumKeyUYU" },
+]
 dependencies = [
   "cryptography>=42,<43",
   "argon2-cffi>=23.1,<24",
   "click>=8.1,<9",
 ]
-
 classifiers = [
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License",
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+Homepage = "https://github.com/QuantumKeyUYU/zilant-prime-core"
