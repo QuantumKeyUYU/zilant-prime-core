@@ -1,25 +1,43 @@
 ﻿[build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=64.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "zilant-prime-core"
 version = "0.1.4"
-description = "Core engine for ZILANT Prime™"
+description = "Core library for Zilant-Prime cryptographic container and VDF tooling"
 readme = "README.md"
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 authors = [
-  { name = "QuantumKeyUYU" },
+  { name = "QuantumKeyUYU", email = "you@example.com" }
 ]
-dependencies = [
-  "cryptography>=42,<43",
-  "argon2-cffi>=23.1,<24",
-  "click>=8.1,<9",
-]
+keywords = ["cryptography","vdf","container"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent"
+]
+dependencies = [
+  "cryptography>=3.4",
+  "hypothesis>=6.0",
+  "click>=8.0"
 ]
 
 [project.urls]
 Homepage = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+Repository = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0",
+  "twine>=4.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.entry-points."console_scripts"]
+zil = "zilant_prime_core.cli:main"
