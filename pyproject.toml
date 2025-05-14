@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zilant-prime-core"
-version = "0.1.0"
+version = "0.1.1"
 description = "Revolutionary Crypto-Core ZILANT Prime™: Secure container (.zil) with AEAD, Argon2id, and Proof-of-Sequential-Work barrier."
 readme = "README.md"
 license = { text = "MIT" }
