@@ -1,11 +1,11 @@
-[build-system]
+﻿[build-system]
 requires = ["setuptools>=64.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "zilant-prime-core"
-version = "0.1.3"
-description = "Revolutionary Crypto-Core ZILANT Prime™: Secure container (.zil) with AEAD, Argon2id, and Proof-of-Sequential-Work barrier."
+version = "0.1.4"
+description = "Revolutionary Crypto-Core ZILANT Primeв„ў: Secure container (.zil) with AEAD, Argon2id, and Proof-of-Sequential-Work barrier."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
@@ -41,6 +41,6 @@ ignore = []
 strict = true
 
 [tool.pytest.ini_options]
-# сохраняем временные файлы в ./.pytest_temp и измеряем покрытие
+# СЃРѕС…СЂР°РЅСЏРµРј РІСЂРµРјРµРЅРЅС‹Рµ С„Р°Р№Р»С‹ РІ ./.pytest_temp Рё РёР·РјРµСЂСЏРµРј РїРѕРєСЂС‹С‚РёРµ
 addopts    = "--basetemp=.pytest_temp --cov=zilant_prime_core --cov-report=term-missing -q -s"
 testpaths  = ["tests"]
