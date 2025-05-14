@@ -1,32 +1,40 @@
-# .github/workflows/release.yml
-name: 📦 Publish
+name: Publish
 
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*'          # срабатывает только на теги
+
+permissions:
+  contents: read
+  id-token: write     # нужен для trusted‑publisher (если настроен)
+  # OR packages: write  # если используем PyPI‑token
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
 
-      - name: Install build tools
-        run: |
-          python -m pip install --upgrade build twine
+    - name: Build dist
+      run: |
+        python -m pip install -U pip build
+        python -m build
 
-      - name: Build dist
-        run: python -m build
+    - name: Publish to PyPI
+      # ====== вариант 1 — Trusted Publisher ======
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        # если репозиторий уже привязан к PyPI как «trusted publisher»
+        skip-existing: true
 
-      - name: Publish to PyPI
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: python -m twine upload dist/*
+      # ====== ИЛИ вариант 2 — старый PyPI‑token ======
+      # uses: pypa/gh-action-pypi-publish@release/v1
+      # with:
+      #   password: ${{ secrets.PYPI_API_TOKEN }}
+      #   skip-existing: true
