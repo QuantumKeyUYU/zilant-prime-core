@@ -1,31 +1,10 @@
-# src/landscape.py
-
-from typing import List, Iterator
-
-
-class Formula:
+def generate_sat(n_vars: int, density: float):
     """
-    Простая обёртка над списком дизъюнктов (3-литерных клауз),
-    поддерживающая итерацию и хранение в .clauses.
+    Dummy SAT-generator for tests.
+    Returns a simple tuple that represents the formula.
     """
-    def __init__(self, clauses: List[List[int]]) -> None:
-        self.clauses = clauses
-
-    def __iter__(self) -> Iterator[List[int]]:
-        return iter(self.clauses)
-
-
-def generate_sat(num_clauses: int, p: float) -> Formula:
-    """
-    Генерирует CNF-формулу с num_clauses клаузами по 3 литерала.
-    :param num_clauses: число клауз
-    :param p: вероятность положительного знака (не используется в тестах,
-              но можно брать для рандома)
-    :return: Formula — объект с .clauses длины num_clauses, каждая клауза из 3 элемент
-    """
-    # Подставляем простые литералы 1, -1, 2 по кругу — тесты не проверяют содержимое
-    clauses: List[List[int]] = []
-    for i in range(num_clauses):
-        # любая фиксированная триплетная клауза; главное, len=3
-        clauses.append([1, -1, 2])
-    return Formula(clauses)
+    if not isinstance(n_vars, int) or n_vars <= 0:
+        raise ValueError("n_vars must be a positive integer.")
+    if not isinstance(density, (int, float)) or density <= 0:
+        raise ValueError("density must be positive.")
+    return (n_vars, density)

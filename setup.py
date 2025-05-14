@@ -3,22 +3,27 @@ from setuptools import setup, find_packages
 setup(
     name="zilant-prime-core",
     version="0.1.0",
-    description="Zero-knowledge VDF and related primitives",
-    package_dir={"": "src"},
+    author="Ваше Имя",
+    author_email="you@example.com",
+    description="Core library for Zilant Prime containers with VDF, AEAD and CLI",
+    long_description=open("README.md", encoding="utf-8").read(),
+    long_description_content_type="text/markdown",
+    url="https://github.com/yourorg/zilant-prime-core",
     packages=find_packages(where="src"),
+    package_dir={"": "src"},
+    python_requires=">=3.8",
     install_requires=[
-        "cryptography>=41.0.0",
-        "numpy>=1.25.0",
-        "scipy>=1.10.1",         # забираем версию, поддерживающую Py3.9–3.11
-        "argon2-cffi>=23.1.0",   # новая зависимость
+        "click>=8.0",
+        "cryptography>=39.0.0",
+        # и другие зависимости...
     ],
-    extras_require={
-        "dev": [
-            "pytest>=7.0",
-            "flake8>=6.0",
-            "bandit>=1.7",
-            "mypy>=1.5",
+    entry_points={
+        "console_scripts": [
+            "zilant=zilant_prime_core.cli:cli",
         ],
     },
-    python_requires=">=3.9, <4",
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+    ],
 )
