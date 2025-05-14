@@ -1,34 +1,36 @@
-# tests/test_elc_vdf.py
+import pytest
+import hashlib
+from zilant_prime_core.vdf.phase_vdf import generate_elc_vdf, verify_elc_vdf, VDFVerificationError
 
-from elc_vdf import (
-    generate_phase_vdf,
-    generate_phase_vdf_4d,
-    verify_phase_vdf,
-)
-from landscape import generate_sat
+def test_elc_vdf_basic():
+    seed = b"test_seed"
+    steps = 100
+    proof = generate_elc_vdf(seed, steps)
+    # Должен вернуть bytes длины sha256
+    assert isinstance(proof, bytes)
+    assert len(proof) == hashlib.sha256().digest_size
+    # И проверка должна пройти
+    assert verify_elc_vdf(seed, steps, proof)
 
+def test_elc_vdf_invalid_steps():
+    # Шагов должно быть > 0
+    with pytest.raises(ValueError):
+        generate_elc_vdf(b"seed", 0)
+    with pytest.raises(ValueError):
+        verify_elc_vdf(b"seed", 0, b"\x00" * hashlib.sha256().digest_size)
 
-def test_roundtrip_1d():
-    f = generate_sat(6, 2.0)
-    cps = generate_phase_vdf(f, steps=20, lam=0.1, verify_gap=5)
-    assert verify_phase_vdf(f, cps, lam=0.1, verify_gap=5)
+def test_elc_vdf_invalid_types():
+    # Неправильный тип seed/proof
+    with pytest.raises(ValueError):
+        generate_elc_vdf("not-bytes", 10)  # type: ignore
+    with pytest.raises(ValueError):
+        verify_elc_vdf(b"seed", 10, "not-bytes")  # type: ignore
 
-
-def test_energy_monotone_1d():
-    f = generate_sat(8, 1.5)
-    cps = generate_phase_vdf(f, steps=30, lam=0.05, verify_gap=10)
-    energies = [e for _, e in cps]
-    assert energies == sorted(energies, reverse=True)
-
-
-def test_roundtrip_4d():
-    f = generate_sat(8, 2.0)
-    cps = generate_phase_vdf_4d(f, steps=25, lam=0.1, verify_gap=5)
-    assert verify_phase_vdf(f, cps, lam=0.1, verify_gap=5)
-
-
-def test_energy_monotone_4d():
-    f = generate_sat(7, 1.8)
-    cps = generate_phase_vdf_4d(f, steps=20, lam=0.05, verify_gap=5)
-    energies = [e for _, e in cps]
-    assert energies == sorted(energies, reverse=True)
+def test_elc_vdf_tampered_proof():
+    seed = b"test_seed"
+    steps = 50
+    proof = generate_elc_vdf(seed, steps)
+    tampered = bytearray(proof)
+    tampered[0] ^= 0xFF
+    # После подмены proof верификация должна упасть (вернуть False)
+    assert not verify_elc_vdf(seed, steps, bytes(tampered))

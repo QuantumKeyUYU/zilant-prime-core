@@ -1,6 +1,7 @@
-# conftest.py
-import os
+# tests/conftest.py
 import sys
+from pathlib import Path
 
-# Добавляем папку src в sys.path, чтобы "import src.*" работал сразу
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
+# <repo>/src    — кладём первым в PYTHONPATH
+SRC = Path(__file__).resolve().parents[1] / "src"
+sys.path.insert(0, str(SRC))
