@@ -1,38 +1,41 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 permissions:
-  contents: read      # необходимо checkout'у
+  contents: read
   actions: read
-  # tests не требуют больше разрешений
 
 jobs:
   build-and-test:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
-    runs-on: ubuntu-latest
-
+        python-version: ['3.10', '3.11', '3.12']
     steps:
-    - uses: actions/checkout@v4        # последняя версия
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: pip
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
 
-    - name: Install deps
-      run: |
-        python -m pip install -U pip
-        pip install .[dev]
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .[dev]
 
-    - name: Run tests
-      run: pytest
+      - name: Run tests
+        run: pytest -q
 
-    # 👉 artefacts
-    - name: Upload coverage
-      uses: actions/upload-artifact@v4   # ← вместо @v3
-      with:
-        name: coverage-html
-        path: htmlcov/
-        if-no-files-found: ignore
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
+          if-no-files-found: ignore
