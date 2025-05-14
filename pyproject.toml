@@ -1,34 +1,39 @@
 [build-system]
-requires = ["setuptools>=64.0.0", "wheel"]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "zilant-prime-core"
 version = "0.1.4"
-description = "Core primitives for Zilant Prime: AEAD, KDF, VDF and CLI tools"
+description = "Core engine for Zilant Prime™"
+authors = [{name = "QuantumKeyUYU"}]
 readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.10"
-license = { text = "MIT" }
 
-authors = [
-  { name = "QuantumKeyUYU", email = "your.email@example.com" }
-]
-
+# ── основные зависимости ───────────────────────────────────────────
 dependencies = [
-  "click>=8.0",
-  "cryptography>=36.0.0",
-  "pytest>=7.0"          # ← вот эта строка
+    "click>=8.0",
+    "cryptography>=42.0.0",
+    # тесты (нужны раннеру)
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
 ]
 
-keywords = ["cryptography", "vdf", "kdf", "aead", "zilant"]
-
-classifiers = [
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "License :: OSI Approved :: MIT License"
+# ── «dev»‑пакет: всё, что нужно локально, но не на проде ────────────
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "hypothesis>=6.99",
+    "black>=24.4",
+    "ruff>=0.4",
+    "build>=1.2",
 ]
 
-[project.urls]
-"Homepage"   = "https://github.com/QuantumKeyUYU/zilant-prime-core"
-"Repository" = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# ── pytest.ini лежит в корне, поэтому path не нужен ────────────────
+#   (если хотите, можно перенести его в [tool.pytest.ini_options])
+
