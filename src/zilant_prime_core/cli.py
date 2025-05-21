@@ -70,7 +70,10 @@ def cli() -> None:
 @click.argument("src", type=click.Path(exists=True, dir_okay=False))
 @click.option("-p", "--password", default=None, help="Password, or '-' to prompt.")
 @click.option(
-    "-o", "--output", type=click.Path(dir_okay=False), default=None,
+    "-o",
+    "--output",
+    type=click.Path(dir_okay=False),
+    default=None,
     help="Where to write the .zil archive.",
 )
 @click.option(
@@ -79,7 +82,8 @@ def cli() -> None:
     help="Whether to overwrite existing archive without prompting.",
 )
 def pack_cmd(
-    src: str, *,
+    src: str,
+    *,
     password: Optional[str],
     output: Optional[str],
     overwrite: Optional[bool],
@@ -118,7 +122,10 @@ def pack_cmd(
 @click.argument("archive", type=click.Path(exists=True, dir_okay=False))
 @click.option("-p", "--password", default=None, help="Password, or '-' to prompt.")
 @click.option(
-    "-d", "--dest", type=click.Path(file_okay=False), required=True,
+    "-d",
+    "--dest",
+    type=click.Path(file_okay=False),
+    required=True,
     help="Directory to unpack into.",
 )
 def unpack_cmd(

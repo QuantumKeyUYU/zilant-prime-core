@@ -45,11 +45,7 @@ def test_unpack_missing_salt():
 
 def test_unpack_missing_nonce():
     meta = json.dumps({"filename": "a", "size": 0}).encode()
-    blob = (
-        len(meta).to_bytes(4, "big")
-        + meta
-        + b"\x00" * DEFAULT_SALT_LENGTH
-    )
+    blob = len(meta).to_bytes(4, "big") + meta + b"\x00" * DEFAULT_SALT_LENGTH
     with pytest.raises(UnpackError, match="nonce"):
         unpack(blob, "/tmp", "pw")
 
@@ -78,13 +74,7 @@ def test_unpack_invalid_tag(monkeypatch):
     salt = b"\x00" * DEFAULT_SALT_LENGTH
     nonce = b"\x00" * DEFAULT_NONCE_LENGTH
     ct = b"\x00" * 16  # «валидная» длина, чтобы пройти проверку
-    raw = (
-        len(meta).to_bytes(4, "big")
-        + meta
-        + salt
-        + nonce
-        + ct
-    )
+    raw = len(meta).to_bytes(4, "big") + meta + salt + nonce + ct
 
     with pytest.raises(UnpackError, match="Неверная метка"):
         unpack(raw, "/tmp", "pw")

@@ -67,7 +67,7 @@ def verify_elc_vdf(
     """
     Проверяет корректность *proof* для пары (*seed*, *steps*).
 
-    • Возвращает **True** / **False** (старое поведение),  
+    • Возвращает **True** / **False** (старое поведение),
     • Если нужен именно exception — передайте `strict=True`.
     """
     seed_b = _validate_seed(seed)
@@ -86,12 +86,15 @@ def verify_elc_vdf(
 generate_posw_sha256 = generate_elc_vdf
 prove_posw_sha256 = generate_elc_vdf  # property-tests
 
+
 def verify_posw_sha256(seed: bytes, proof: bytes, steps: int) -> bool:
     # порядок аргументов «seed, proof, steps» — исторически так сложилось
     return verify_elc_vdf(seed, steps, proof)
 
+
 def generate_landscape(seed: bytes, steps: int) -> bytes:
     return generate_elc_vdf(seed, steps)
+
 
 def verify_landscape(seed: bytes, steps: int, proof: bytes) -> bool:
     return verify_elc_vdf(seed, steps, proof)
