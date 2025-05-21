@@ -3,7 +3,7 @@
 from hypothesis import given, strategies as st
 import pytest
 
-from zilant_prime_core.vdf.vdf import generate_posw_sha256, verify_posw_sha256, VDFVerificationError
+from zilant_prime_core.vdf.vdf import generate_posw_sha256, verify_posw_sha256
 
 @given(seed=st.binary(min_size=1, max_size=64), steps=st.integers(min_value=1, max_value=100))
 def test_posw_roundtrip(seed, steps):

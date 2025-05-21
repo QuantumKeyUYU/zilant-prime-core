@@ -6,7 +6,6 @@ from zilant_prime_core.crypto.aead import (
     generate_nonce,
     DEFAULT_NONCE_LENGTH,
     DEFAULT_KEY_LENGTH,
-    AEADInvalidTagError,
 )
 
 def test_decrypt_short_ciphertext():

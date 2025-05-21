@@ -2,13 +2,12 @@
 
 import json
 import pytest
-from pathlib import Path
 
 from zilant_prime_core.container.metadata import (
     Metadata, MetadataError,
     new_meta_for_file, serialize_metadata, deserialize_metadata
 )
-from zilant_prime_core.utils.formats import to_b64, from_b64
+from zilant_prime_core.utils.formats import from_b64
 
 def test_new_meta_for_file(tmp_path):
     f = tmp_path / "a.txt"

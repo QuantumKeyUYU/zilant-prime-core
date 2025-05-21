@@ -1,8 +1,6 @@
 # tests/test_cli_negative_more.py
 
-import os
 import pytest
-from pathlib import Path
 from click.testing import CliRunner
 from zilant_prime_core.cli import cli
 

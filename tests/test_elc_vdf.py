@@ -1,6 +1,6 @@
 import pytest
 import hashlib
-from zilant_prime_core.vdf.phase_vdf import generate_elc_vdf, verify_elc_vdf, VDFVerificationError
+from zilant_prime_core.vdf.phase_vdf import generate_elc_vdf, verify_elc_vdf
 
 def test_elc_vdf_basic():
     seed = b"test_seed"

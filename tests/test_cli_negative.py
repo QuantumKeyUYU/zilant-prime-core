@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-import pytest
 from click.testing import CliRunner
 from zilant_prime_core.cli import cli
 

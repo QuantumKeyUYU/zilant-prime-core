@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 from zilant_prime_core.utils.constants import DEFAULT_SALT_LENGTH, DEFAULT_NONCE_LENGTH

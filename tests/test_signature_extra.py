@@ -5,7 +5,6 @@ from zilant_prime_core.crypto.signature import (
     sign,
     verify,
     SignatureError,
-    KEY_SIZE,
     SIG_SIZE,
 )
 

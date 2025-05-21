@@ -3,7 +3,7 @@ import struct
 from zilant_prime_core.crypto.aead import decrypt_aead
 from zilant_prime_core.crypto.kdf import derive_key, DEFAULT_KEY_LENGTH
 from zilant_prime_core.vdf.vdf import verify_posw_sha256, VDFVerificationError
-from zilant_prime_core.container.metadata import deserialize_metadata, MetadataError
+from zilant_prime_core.container.metadata import deserialize_metadata
 from zilant_prime_core.utils.constants import MAGIC, VERSION
 
 class ContainerError(Exception):

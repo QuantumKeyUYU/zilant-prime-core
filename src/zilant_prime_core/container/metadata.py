@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
-from zilant_prime_core.utils.formats import to_b64, from_b64
+from zilant_prime_core.utils.formats import to_b64
 
 class MetadataError(Exception):
     """Ошибка сериализации/десериализации метаданных."""
