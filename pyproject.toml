@@ -11,16 +11,16 @@ readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 
-# ── основные зависимости ───────────────────────────────────────────
+# ── основные зависимости ──────────────────────────────
 dependencies = [
     "click>=8.0",
     "cryptography>=42.0.0",
-    # тесты (нужны раннеру)
+    "argon2-cffi>=21.3",    # <--- Важно для поддержки argon2 в CI
+    # тестовые нужны только для раннера, но для простоты добавим тут
     "pytest>=7.4",
     "pytest-cov>=4.1",
 ]
 
-# ── «dev»‑пакет: всё, что нужно локально, но не на проде ────────────
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4",
@@ -29,11 +29,28 @@ dev = [
     "black>=24.4",
     "ruff>=0.4",
     "build>=1.2",
+    "argon2-cffi>=21.3",  # дублируем тут для уверенности (если кто-то ставит dev)
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
-# ── pytest.ini лежит в корне, поэтому path не нужен ────────────────
-#   (если хотите, можно перенести его в [tool.pytest.ini_options])
+# Можно настроить pytest и black через tool.pytest/black/ruff секции
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --cov=src"
+testpaths = [
+    "tests",
+]
 
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = ["E", "F", "I", "N", "B"]
+
+[tool.hypothesis]
+deadline = 1000
