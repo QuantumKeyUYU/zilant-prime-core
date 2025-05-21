@@ -7,13 +7,14 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-from zilant_prime_core.crypto.g_new import G_new
 from zilant_prime_core.utils.constants import (
     DEFAULT_KEY_LENGTH,
     DEFAULT_SALT_LENGTH,
 )
 
-# Параметры по умолчанию для динамического KDF (но в текущей реализации игнорируются)
+# from zilant_prime_core.crypto.g_new import G_new  # <-- для будущей динамики
+
+# Параметры для совместимости с динамическим KDF (в текущей реализации игнорируются)
 DEFAULT_MEMORY_MIN = 2**15  # 32 MiB
 DEFAULT_MEMORY_MAX = 2**17  # 128 MiB
 DEFAULT_TIME_MAX = 5  # до 5 итераций
@@ -33,8 +34,7 @@ def derive_key(
 ) -> bytes:
     """
     Статичный PBKDF2-HMAC-SHA256 KDF → key_length байт.
-    Из пароля (str/bytes) и соли (DEFAULT_SALT_LENGTH байт)
-    выдаёт ключ длины key_length.
+    Из пароля (str/bytes) и соли (DEFAULT_SALT_LENGTH байт) выдаёт ключ длины key_length.
     """
     if isinstance(password, str):
         password = password.encode("utf-8")
@@ -67,15 +67,12 @@ def derive_key_dynamic(
     mem_max: int = DEFAULT_MEMORY_MAX,
 ) -> bytes:
     """
-    "Динамический" KDF: выбирает параметры на базе G_new(profile),
-    но в этой реализации возвращает тот же результат, что derive_key.
-    Сохраняет сигнатуру для будущего расширения.
+    "Динамический" KDF: сигнатура для будущего расширения.
+    Сейчас возвращает результат derive_key и не использует профиль.
     """
-    # Базовая валидация (те же проверки, что и в derive_key)
     if not isinstance(profile, (int, float)):
         raise ValueError("Profile must be a number.")
-    # (остальные аргументы проверяются внутри derive_key)
+    # Остальные проверки в derive_key
 
-    # Можно здесь подправить параметры на основе G_new(profile), если понадобится.
-
+    # Можно реализовать динамику через G_new(profile), если потребуется.
     return derive_key(password, salt, key_length)
