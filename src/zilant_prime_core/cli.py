@@ -1,11 +1,19 @@
-import sys
 from pathlib import Path
 
 import click
+from click import ClickException
 
 from zilant_prime_core.container.pack import pack as _pack_bytes
 from zilant_prime_core.container.unpack import unpack as _unpack_bytes
 from zilant_prime_core.container.metadata import MetadataError
+
+
+def abort(message: str, exit_code: int = 1):
+    """
+    Прерываем выполнение команды, бросая ClickException.
+    В click это автоматически выведет сообщение в stderr и завершит с указанным кодом.
+    """
+    raise ClickException(message)
 
 
 @click.group()
@@ -43,28 +51,28 @@ def pack_cmd(src, password, output, overwrite):
     if dest.exists():
         if overwrite is None:
             if not click.confirm(f"{dest.name} already exists. Overwrite?"):
-                raise click.ClickException("Aborted")
+                abort("Aborted")
         elif not overwrite:
-            raise click.ClickException(f"{dest.name} already exists")
+            abort(f"{dest.name} already exists")
 
     # ── password prompt ──
     if password == "-":
         password = click.prompt("Password", hide_input=True, confirmation_prompt=True)
     if not password:
-        raise click.ClickException("Missing password")
+        abort("Missing password")
 
     # ── pack and write ──
     try:
         container_bytes = _pack_bytes(src_path, password)
     except MetadataError as e:
-        raise click.ClickException(str(e))
+        abort(str(e))
     except Exception as e:
-        raise click.ClickException(f"Packing error: {e}")
+        abort(f"Packing error: {e}")
 
     try:
         dest.write_bytes(container_bytes)
     except Exception as e:
-        raise click.ClickException(f"Packing error: {e}")
+        abort(f"Packing error: {e}")
 
     click.echo(str(dest))
 
@@ -87,14 +95,14 @@ def unpack_cmd(archive, password, dest):
     if password == "-":
         password = click.prompt("Password", hide_input=True)
     if not password:
-        raise click.ClickException("Missing password")
+        abort("Missing password")
 
     try:
         created = _unpack_bytes(archive_path, out_dir, password)
     except MetadataError as e:
-        raise click.ClickException(str(e))
+        abort(str(e))
     except Exception as e:
-        raise click.ClickException(f"Unpack error: {e}")
+        abort(f"Unpack error: {e}")
 
     if isinstance(created, (list, tuple)):
         for p in created:
