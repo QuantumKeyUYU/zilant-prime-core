@@ -36,9 +36,7 @@ def test_pack_no_overwrite_flag_false(tmp_path):
     dest = tmp_path / "custom.zil"
     dest.write_bytes(b"")
     runner = CliRunner()
-    result = runner.invoke(
-        cli, ["pack", str(src), "-p", "pw", "-o", str(dest), "--no-overwrite"]
-    )
+    result = runner.invoke(cli, ["pack", str(src), "-p", "pw", "-o", str(dest), "--no-overwrite"])
     assert result.exit_code != 0
     assert f"{dest.name} already exists" in result.stdout
 

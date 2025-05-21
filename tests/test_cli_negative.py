@@ -14,7 +14,5 @@ def test_cli_overwrite(tmp_path: Path):
     assert result1.exit_code == 0
 
     # второй pack без --overwrite (должен упасть)
-    result2 = runner.invoke(
-        cli, ["pack", str(data), "-p", "-", "--no-overwrite"], input="pw\n"
-    )
+    result2 = runner.invoke(cli, ["pack", str(data), "-p", "-", "--no-overwrite"], input="pw\n")
     assert result2.exit_code != 0

@@ -14,9 +14,7 @@ def generate_salt() -> bytes:
     return os.urandom(DEFAULT_SALT_LENGTH)
 
 
-def derive_key(
-    password: str | bytes, salt: bytes, key_length: int = DEFAULT_KEY_LENGTH
-) -> bytes:
+def derive_key(password: str | bytes, salt: bytes, key_length: int = DEFAULT_KEY_LENGTH) -> bytes:
     """
     Статичный Argon2id KDF → key_length байт.
     """
