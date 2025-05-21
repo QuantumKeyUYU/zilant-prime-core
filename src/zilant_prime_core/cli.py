@@ -1,7 +1,7 @@
+import sys
 from pathlib import Path
 
 import click
-from click import ClickException
 
 from zilant_prime_core.container.pack import pack as _pack_bytes
 from zilant_prime_core.container.unpack import unpack as _unpack_bytes
@@ -9,11 +9,9 @@ from zilant_prime_core.container.metadata import MetadataError
 
 
 def abort(message: str, exit_code: int = 1):
-    """
-    Прерываем выполнение команды, бросая ClickException.
-    В click это автоматически выведет сообщение в stderr и завершит с указанным кодом.
-    """
-    raise ClickException(message)
+    # Печатаем в stdout, чтобы CliRunner().invoke(...).stdout содержал сообщение
+    click.echo(message)
+    sys.exit(exit_code)
 
 
 @click.group()
@@ -51,28 +49,30 @@ def pack_cmd(src, password, output, overwrite):
     if dest.exists():
         if overwrite is None:
             if not click.confirm(f"{dest.name} already exists. Overwrite?"):
-                abort("Aborted")
+                abort("Aborted", 1)
         elif not overwrite:
-            abort(f"{dest.name} already exists")
+            abort(f"{dest.name} already exists", 1)
 
     # ── password prompt ──
     if password == "-":
-        password = click.prompt("Password", hide_input=True, confirmation_prompt=True)
+        password = click.prompt(
+            "Password", hide_input=True, confirmation_prompt=True
+        )
     if not password:
-        abort("Missing password")
+        abort("Missing password", 1)
 
     # ── pack and write ──
     try:
         container_bytes = _pack_bytes(src_path, password)
     except MetadataError as e:
-        abort(str(e))
+        abort(str(e), 1)
     except Exception as e:
-        abort(f"Packing error: {e}")
+        abort(f"Packing error: {e}", 1)
 
     try:
         dest.write_bytes(container_bytes)
     except Exception as e:
-        abort(f"Packing error: {e}")
+        abort(f"Packing error: {e}", 1)
 
     click.echo(str(dest))
 
@@ -92,18 +92,21 @@ def unpack_cmd(archive, password, dest):
     archive_path = Path(archive)
     out_dir = Path(dest)
 
+    # ── password prompt ──
     if password == "-":
         password = click.prompt("Password", hide_input=True)
     if not password:
-        abort("Missing password")
+        abort("Missing password", 1)
 
+    # ── unpack ──
     try:
         created = _unpack_bytes(archive_path, out_dir, password)
     except MetadataError as e:
-        abort(str(e))
+        abort(str(e), 1)
     except Exception as e:
-        abort(f"Unpack error: {e}")
+        abort(f"Unpack error: {e}", 1)
 
+    # ── вывод результата ──
     if isinstance(created, (list, tuple)):
         for p in created:
             click.echo(str(p))
