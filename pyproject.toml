@@ -15,8 +15,7 @@ requires-python = ">=3.10"
 dependencies = [
     "click>=8.0",
     "cryptography>=42.0.0",
-    "argon2-cffi>=21.3",    # <--- Важно для поддержки argon2 в CI
-    # тестовые нужны только для раннера, но для простоты добавим тут
+    "argon2-cffi>=21.3",
     "pytest>=7.4",
     "pytest-cov>=4.1",
 ]
@@ -29,19 +28,21 @@ dev = [
     "black>=24.4",
     "ruff>=0.4",
     "build>=1.2",
-    "argon2-cffi>=21.3",  # дублируем тут для уверенности (если кто-то ставит dev)
+    "argon2-cffi>=21.3",
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
-# Можно настроить pytest и black через tool.pytest/black/ruff секции
+# ── настройки инструментов ────────────────────────────
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q --cov=src"
-testpaths = [
-    "tests",
-]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+# то же самое, что и в .coveragerc — оставлено здесь
+omit = ["*/tests/*", "*/.pytest_cache/*", "*/.ruff_cache/*"]
 
 [tool.black]
 line-length = 100
