@@ -1,0 +1,6 @@
+[run]
+# какие модули НЕ нужно включать в отчёт
+omit =
+    */tests/*
+    */.pytest_cache/*
+    */.ruff_cache/*
