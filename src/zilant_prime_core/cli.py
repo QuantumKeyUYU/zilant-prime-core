@@ -1,21 +1,21 @@
-import sys
+#!/usr/bin/env python3
 from pathlib import Path
 
 import click
+from click import ClickException
 
 from zilant_prime_core.container.pack import pack as _pack_bytes
 from zilant_prime_core.container.unpack import unpack as _unpack_bytes
 from zilant_prime_core.container.metadata import MetadataError
 
 
-def abort(message: str, exit_code: int = 1):
-    # Печатаем в stdout, чтобы CliRunner().invoke(...).stdout содержал сообщение
-    click.echo(message)
-    sys.exit(exit_code)
+def abort(message: str) -> None:
+    """Прекратить выполнение команды, выбросив ClickException с сообщением."""
+    raise ClickException(message)
 
 
 @click.group()
-def cli():
+def cli() -> None:
     """Zilant Prime Core CLI."""
     pass
 
@@ -41,38 +41,39 @@ def cli():
     default=None,
     help="Whether to overwrite existing archive without prompting.",
 )
-def pack_cmd(src, password, output, overwrite):
+def pack_cmd(src: str, password: str, output: str, overwrite: bool) -> None:
+    """
+    Упаковать файл или директорию в .zil-архив с шифрованием паролем.
+    """
     src_path = Path(src)
     dest = Path(output) if output else src_path.with_suffix(".zil")
 
-    # ── overwrite logic BEFORE password prompt ──
+    # ── проверка перезаписи до запроса пароля ──
     if dest.exists():
         if overwrite is None:
             if not click.confirm(f"{dest.name} already exists. Overwrite?"):
-                abort("Aborted", 1)
+                abort("Aborted")
         elif not overwrite:
-            abort(f"{dest.name} already exists", 1)
+            abort(f"{dest.name} already exists")
 
-    # ── password prompt ──
+    # ── запрос пароля ──
     if password == "-":
-        password = click.prompt(
-            "Password", hide_input=True, confirmation_prompt=True
-        )
+        password = click.prompt("Password", hide_input=True, confirmation_prompt=True)
     if not password:
-        abort("Missing password", 1)
+        abort("Missing password")
 
-    # ── pack and write ──
+    # ── упаковка ──
     try:
         container_bytes = _pack_bytes(src_path, password)
     except MetadataError as e:
-        abort(str(e), 1)
+        abort(str(e))
     except Exception as e:
-        abort(f"Packing error: {e}", 1)
+        abort(f"Packing error: {e}")
 
     try:
         dest.write_bytes(container_bytes)
     except Exception as e:
-        abort(f"Packing error: {e}", 1)
+        abort(f"Packing error: {e}")
 
     click.echo(str(dest))
 
@@ -88,25 +89,25 @@ def pack_cmd(src, password, output, overwrite):
     required=True,
     help="Directory to unpack into.",
 )
-def unpack_cmd(archive, password, dest):
+def unpack_cmd(archive: str, password: str, dest: str) -> None:
+    """
+    Распаковать .zil-архив в указанную директорию с расшифровкой паролем.
+    """
     archive_path = Path(archive)
     out_dir = Path(dest)
 
-    # ── password prompt ──
     if password == "-":
         password = click.prompt("Password", hide_input=True)
     if not password:
-        abort("Missing password", 1)
+        abort("Missing password")
 
-    # ── unpack ──
     try:
         created = _unpack_bytes(archive_path, out_dir, password)
     except MetadataError as e:
-        abort(str(e), 1)
+        abort(str(e))
     except Exception as e:
-        abort(f"Unpack error: {e}", 1)
+        abort(f"Unpack error: {e}")
 
-    # ── вывод результата ──
     if isinstance(created, (list, tuple)):
         for p in created:
             click.echo(str(p))
