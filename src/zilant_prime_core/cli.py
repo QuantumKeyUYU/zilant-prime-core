@@ -8,11 +8,6 @@ from zilant_prime_core.container.unpack import unpack as _unpack_bytes
 from zilant_prime_core.container.metadata import MetadataError
 
 
-def abort(message: str, exit_code: int = 1):
-    click.echo(message, err=True)
-    sys.exit(exit_code)
-
-
 @click.group()
 def cli():
     """Zilant Prime Core CLI."""
@@ -48,28 +43,28 @@ def pack_cmd(src, password, output, overwrite):
     if dest.exists():
         if overwrite is None:
             if not click.confirm(f"{dest.name} already exists. Overwrite?"):
-                abort("Aborted", 1)
+                raise click.ClickException("Aborted")
         elif not overwrite:
-            abort(f"{dest.name} already exists", 1)
+            raise click.ClickException(f"{dest.name} already exists")
 
     # ── password prompt ──
     if password == "-":
         password = click.prompt("Password", hide_input=True, confirmation_prompt=True)
     if not password:
-        abort("Missing password", 1)
+        raise click.ClickException("Missing password")
 
     # ── pack and write ──
     try:
         container_bytes = _pack_bytes(src_path, password)
     except MetadataError as e:
-        abort(str(e), 1)
+        raise click.ClickException(str(e))
     except Exception as e:
-        abort(f"Packing error: {e}", 1)
+        raise click.ClickException(f"Packing error: {e}")
 
     try:
         dest.write_bytes(container_bytes)
     except Exception as e:
-        abort(f"Packing error: {e}", 1)
+        raise click.ClickException(f"Packing error: {e}")
 
     click.echo(str(dest))
 
@@ -92,14 +87,14 @@ def unpack_cmd(archive, password, dest):
     if password == "-":
         password = click.prompt("Password", hide_input=True)
     if not password:
-        abort("Missing password", 1)
+        raise click.ClickException("Missing password")
 
     try:
         created = _unpack_bytes(archive_path, out_dir, password)
     except MetadataError as e:
-        abort(str(e), 1)
+        raise click.ClickException(str(e))
     except Exception as e:
-        abort(f"Unpack error: {e}", 1)
+        raise click.ClickException(f"Unpack error: {e}")
 
     if isinstance(created, (list, tuple)):
         for p in created:
