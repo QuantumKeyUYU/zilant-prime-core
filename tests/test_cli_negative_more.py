@@ -35,9 +35,7 @@ def test_pack_overwrite_flag_false(sample_file):
     # сначала упакуем
     runner.invoke(cli, ["pack", str(sample_file), "-p", "pw"])
     # затем без --overwrite
-    result = runner.invoke(
-        cli, ["pack", str(sample_file), "-p", "pw", "--no-overwrite"]
-    )
+    result = runner.invoke(cli, ["pack", str(sample_file), "-p", "pw", "--no-overwrite"])
     assert result.exit_code == 1
     assert f"{sample_file.with_suffix('.zil').name} already exists" in result.stdout
 
@@ -57,9 +55,7 @@ def test_unpack_missing_password(sample_file):
     runner.invoke(cli, ["pack", str(sample_file), "-p", "pw"])
     container = sample_file.with_suffix(".zil")
     # не передали -p
-    result = runner.invoke(
-        cli, ["unpack", str(container), "-d", str(sample_file.parent / "out")]
-    )
+    result = runner.invoke(cli, ["unpack", str(container), "-d", str(sample_file.parent / "out")])
     assert result.exit_code == 1
     assert "Missing password" in result.stdout
 

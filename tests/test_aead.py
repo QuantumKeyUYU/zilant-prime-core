@@ -104,13 +104,9 @@ def test_decrypt_tampered_aad():
 def test_encrypt_aead_invalid_input_lengths():
     key = os.urandom(DEFAULT_KEY_LENGTH)
     nonce = generate_nonce()
-    with pytest.raises(
-        ValueError, match=f"Key must be {DEFAULT_KEY_LENGTH} bytes long."
-    ):
+    with pytest.raises(ValueError, match=f"Key must be {DEFAULT_KEY_LENGTH} bytes long."):
         encrypt_aead(key[:-1], nonce, b"d", b"a")
-    with pytest.raises(
-        ValueError, match=f"Nonce must be {DEFAULT_NONCE_LENGTH} bytes long."
-    ):
+    with pytest.raises(ValueError, match=f"Nonce must be {DEFAULT_NONCE_LENGTH} bytes long."):
         encrypt_aead(key, nonce[:-1], b"d", b"a")
 
 
@@ -118,13 +114,9 @@ def test_decrypt_aead_invalid_input_lengths():
     key = os.urandom(DEFAULT_KEY_LENGTH)
     nonce = generate_nonce()
     ct = encrypt_aead(key, nonce, b"data", b"aad")
-    with pytest.raises(
-        ValueError, match=f"Key must be {DEFAULT_KEY_LENGTH} bytes long."
-    ):
+    with pytest.raises(ValueError, match=f"Key must be {DEFAULT_KEY_LENGTH} bytes long."):
         decrypt_aead(key[:-1], nonce, ct, b"aad")
-    with pytest.raises(
-        ValueError, match=f"Nonce must be {DEFAULT_NONCE_LENGTH} bytes long."
-    ):
+    with pytest.raises(ValueError, match=f"Nonce must be {DEFAULT_NONCE_LENGTH} bytes long."):
         decrypt_aead(key, nonce[:-1], ct, b"aad")
     with pytest.raises(
         ValueError, match="Ciphertext is too short to contain the authentication tag."

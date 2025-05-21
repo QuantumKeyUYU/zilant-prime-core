@@ -58,10 +58,7 @@ def test_posw_invalid_input():
 
     # Incorrect proof length → just False
     assert verify_posw_sha256(b"seed", b"short", 10) is False
-    assert (
-        verify_posw_sha256(b"seed", b"x" * (hashlib.sha256().digest_size + 1), 10)
-        is False
-    )
+    assert verify_posw_sha256(b"seed", b"x" * (hashlib.sha256().digest_size + 1), 10) is False
 
 
 def test_posw_verification_error():
@@ -75,9 +72,7 @@ def test_posw_verification_error():
     assert verify_posw_sha256(seed, bytes(bad), steps) is False
 
 
-@pytest.mark.skipif(
-    sys.platform.startswith("win"), reason="Skip flaky performance test on Windows"
-)
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Skip flaky performance test on Windows")
 def test_posw_performance():
     seed = b"perf"
     steps = 100_000

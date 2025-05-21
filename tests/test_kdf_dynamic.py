@@ -58,9 +58,7 @@ def test_derive_key_dynamic_extremes_do_not_fail():
         ("salt", dict(password="password", salt=b"bad", profile=0.5)),
         (
             "profile",
-            dict(
-                password="password", salt=os.urandom(DEFAULT_SALT_LENGTH), profile="bad"
-            ),
+            dict(password="password", salt=os.urandom(DEFAULT_SALT_LENGTH), profile="bad"),
         ),
         (
             "key_length",
