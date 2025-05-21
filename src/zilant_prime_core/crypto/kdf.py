@@ -14,8 +14,8 @@ from zilant_prime_core.utils.constants import (
 )
 
 # Параметры по умолчанию для динамического KDF (но в текущей реализации игнорируются)
-DEFAULT_MEMORY_MIN = 2 ** 15  # 32 MiB
-DEFAULT_MEMORY_MAX = 2 ** 17  # 128 MiB
+DEFAULT_MEMORY_MIN = 2**15  # 32 MiB
+DEFAULT_MEMORY_MAX = 2**17  # 128 MiB
 DEFAULT_TIME_MAX = 5  # до 5 итераций
 
 
