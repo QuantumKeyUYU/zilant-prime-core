@@ -1,7 +1,9 @@
 import base64
 
+
 def to_hex(data: bytes) -> str:
     return data.hex()
+
 
 def from_hex(s: str) -> bytes:
     try:
@@ -9,8 +11,10 @@ def from_hex(s: str) -> bytes:
     except ValueError as e:
         raise ValueError(f"Invalid hex string: {e}")
 
+
 def to_b64(data: bytes) -> str:
-    return base64.b64encode(data).decode('ascii')
+    return base64.b64encode(data).decode("ascii")
+
 
 def from_b64(s: str) -> bytes:
     try:

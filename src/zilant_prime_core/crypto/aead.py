@@ -7,14 +7,18 @@ from zilant_prime_core.utils.constants import DEFAULT_KEY_LENGTH, DEFAULT_NONCE_
 DEFAULT_KEY_LENGTH = DEFAULT_KEY_LENGTH
 DEFAULT_NONCE_LENGTH = DEFAULT_NONCE_LENGTH
 
+
 class AEADError(Exception):
     """Общая ошибка AEAD."""
+
 
 class AEADInvalidTagError(AEADError):
     """Неверная метка аутентификации."""
 
+
 def generate_nonce() -> bytes:
     return os.urandom(DEFAULT_NONCE_LENGTH)
+
 
 def encrypt_aead(key: bytes, nonce: bytes, data: bytes, aad: bytes = b"") -> bytes:
     if not isinstance(key, (bytes, bytearray)) or len(key) != DEFAULT_KEY_LENGTH:
@@ -23,6 +27,7 @@ def encrypt_aead(key: bytes, nonce: bytes, data: bytes, aad: bytes = b"") -> byt
         raise ValueError(f"Nonce must be {DEFAULT_NONCE_LENGTH} bytes long.")
     ch = ChaCha20Poly1305(key)
     return ch.encrypt(nonce, data, aad)
+
 
 def decrypt_aead(key: bytes, nonce: bytes, ct_tag: bytes, aad: bytes = b"") -> bytes:
     if not isinstance(key, (bytes, bytearray)) or len(key) != DEFAULT_KEY_LENGTH:

@@ -5,17 +5,17 @@ from zilant_prime_core.utils.constants import DEFAULT_KEY_LENGTH, DEFAULT_SALT_L
 from zilant_prime_core.crypto.g_new import G_new
 
 # минимальное и максимальное значение памяти (KiB) для динамики
-DEFAULT_MEMORY_MIN = 2 ** 15  # 32 MiB
-DEFAULT_MEMORY_MAX = 2 ** 17  # 128 MiB
-DEFAULT_TIME_MAX   = 5        # до 5 итераций
+DEFAULT_MEMORY_MIN = 2**15  # 32 MiB
+DEFAULT_MEMORY_MAX = 2**17  # 128 MiB
+DEFAULT_TIME_MAX = 5  # до 5 итераций
+
 
 def generate_salt() -> bytes:
     return os.urandom(DEFAULT_SALT_LENGTH)
 
+
 def derive_key(
-    password: str | bytes,
-    salt: bytes,
-    key_length: int = DEFAULT_KEY_LENGTH
+    password: str | bytes, salt: bytes, key_length: int = DEFAULT_KEY_LENGTH
 ) -> bytes:
     """
     Статичный Argon2id KDF → key_length байт.
@@ -38,6 +38,7 @@ def derive_key(
         hash_len=key_length,
         type=a2.Type.ID,
     )
+
 
 def derive_key_dynamic(
     password: str | bytes,
@@ -74,11 +75,11 @@ def derive_key_dynamic(
         raise ValueError("mem_max must be >= mem_min.")
 
     # Рассчитываем нормировочный коэффициент
-    angle = abs(G_new(profile))            # ∈ [0,1.5]
-    norm  = min(max(angle / 1.5, 0.0), 1.0)
+    angle = abs(G_new(profile))  # ∈ [0,1.5]
+    norm = min(max(angle / 1.5, 0.0), 1.0)
 
     # Параметры Argon2
-    time_cost   = 1 + int(norm * (time_max - 1))
+    time_cost = 1 + int(norm * (time_max - 1))
     memory_cost = mem_min + int(norm * (mem_max - mem_min))
 
     # Подготавливаем пароль

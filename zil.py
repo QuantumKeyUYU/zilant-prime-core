@@ -1,9 +1,12 @@
 # zil.py
 import json
 
+
 class SelfDestructError(Exception):
     """Raised when max-tries is reached on repeated opens."""
+
     pass
+
 
 def pack_zil(
     payload: bytes,
@@ -29,6 +32,7 @@ def pack_zil(
     }
     header = json.dumps(info, separators=(",", ":")).encode("utf-8")
     return header + b"\n" + payload
+
 
 def unpack_zil(
     data: bytes,

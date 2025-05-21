@@ -6,17 +6,22 @@ from zilant_prime_core.vdf.vdf import verify_posw_sha256, VDFVerificationError
 from zilant_prime_core.container.metadata import deserialize_metadata
 from zilant_prime_core.utils.constants import MAGIC, VERSION
 
+
 class ContainerError(Exception):
     pass
+
 
 class ZilFormatError(ContainerError):
     pass
 
+
 class InvalidPasswordError(ContainerError):
     pass
 
+
 class InvalidProofError(ContainerError):
     pass
+
 
 def unpack_zil(data: bytes, password: str) -> tuple[bytes, dict]:
     buf = memoryview(data)
@@ -35,27 +40,27 @@ def unpack_zil(data: bytes, password: str) -> tuple[bytes, dict]:
 
     salt_length = struct.unpack_from("!H", buf, offset)[0]
     offset += 2
-    salt = buf[offset:offset + salt_length].tobytes()
+    salt = buf[offset : offset + salt_length].tobytes()
     offset += salt_length
 
     nonce_length = struct.unpack_from("!H", buf, offset)[0]
     offset += 2
-    nonce = buf[offset:offset + nonce_length].tobytes()
+    nonce = buf[offset : offset + nonce_length].tobytes()
     offset += nonce_length
 
     proof_length = struct.unpack_from("!I", buf, offset)[0]
     offset += 4
-    proof = buf[offset:offset + proof_length].tobytes()
+    proof = buf[offset : offset + proof_length].tobytes()
     offset += proof_length
 
     metadata_length = struct.unpack_from("!I", buf, offset)[0]
     offset += 4
-    metadata_bytes = buf[offset:offset + metadata_length].tobytes()
+    metadata_bytes = buf[offset : offset + metadata_length].tobytes()
     offset += metadata_length
 
     ciphertext_length = struct.unpack_from("!I", buf, offset)[0]
     offset += 4
-    ciphertext = buf[offset:offset + ciphertext_length].tobytes()
+    ciphertext = buf[offset : offset + ciphertext_length].tobytes()
 
     try:
         verify_posw_sha256(salt + nonce, proof, len(proof))
@@ -72,7 +77,10 @@ def unpack_zil(data: bytes, password: str) -> tuple[bytes, dict]:
 
     return payload, metadata
 
-def unpack_zil_file(input_filepath: str, password: str, output_dir: str | None = None) -> str | bytes:
+
+def unpack_zil_file(
+    input_filepath: str, password: str, output_dir: str | None = None
+) -> str | bytes:
     with open(input_filepath, "rb") as f:
         data = f.read()
 

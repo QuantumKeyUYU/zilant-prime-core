@@ -48,15 +48,59 @@ def test_derive_key_dynamic_extremes_do_not_fail():
     derive_key_dynamic("password", salt, profile=100.0)
 
 
-@pytest.mark.parametrize("argname,kwargs", [
-    ("password",       dict(password=123,                           salt=os.urandom(DEFAULT_SALT_LENGTH), profile=0.5)),
-    ("salt",           dict(password="password",                   salt=b"bad",                       profile=0.5)),
-    ("profile",        dict(password="password",                   salt=os.urandom(DEFAULT_SALT_LENGTH), profile="bad")),
-    ("key_length",     dict(password="password", salt=os.urandom(DEFAULT_SALT_LENGTH), profile=0.5, key_length=0)),
-    ("time_max",       dict(password="password", salt=os.urandom(DEFAULT_SALT_LENGTH), profile=0.5, time_max=0)),
-    ("mem_min",        dict(password="password", salt=os.urandom(DEFAULT_SALT_LENGTH), profile=0.5, mem_min=0)),
-    ("mem_max_lt_min", dict(password="password", salt=os.urandom(DEFAULT_SALT_LENGTH), profile=0.5, mem_min=4096, mem_max=1024)),
-])
+@pytest.mark.parametrize(
+    "argname,kwargs",
+    [
+        (
+            "password",
+            dict(password=123, salt=os.urandom(DEFAULT_SALT_LENGTH), profile=0.5),
+        ),
+        ("salt", dict(password="password", salt=b"bad", profile=0.5)),
+        (
+            "profile",
+            dict(
+                password="password", salt=os.urandom(DEFAULT_SALT_LENGTH), profile="bad"
+            ),
+        ),
+        (
+            "key_length",
+            dict(
+                password="password",
+                salt=os.urandom(DEFAULT_SALT_LENGTH),
+                profile=0.5,
+                key_length=0,
+            ),
+        ),
+        (
+            "time_max",
+            dict(
+                password="password",
+                salt=os.urandom(DEFAULT_SALT_LENGTH),
+                profile=0.5,
+                time_max=0,
+            ),
+        ),
+        (
+            "mem_min",
+            dict(
+                password="password",
+                salt=os.urandom(DEFAULT_SALT_LENGTH),
+                profile=0.5,
+                mem_min=0,
+            ),
+        ),
+        (
+            "mem_max_lt_min",
+            dict(
+                password="password",
+                salt=os.urandom(DEFAULT_SALT_LENGTH),
+                profile=0.5,
+                mem_min=4096,
+                mem_max=1024,
+            ),
+        ),
+    ],
+)
 def test_derive_key_dynamic_invalid_args(argname, kwargs):
     with pytest.raises(ValueError):
         derive_key_dynamic(**kwargs)

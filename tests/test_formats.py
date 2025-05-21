@@ -1,7 +1,6 @@
 import pytest
-from zilant_prime_core.utils.formats import (
-    to_hex, from_hex, to_b64, from_b64
-)
+from zilant_prime_core.utils.formats import to_hex, from_hex, to_b64, from_b64
+
 
 def test_hex_roundtrip():
     data = b"\x00\xff\x10"
@@ -9,14 +8,17 @@ def test_hex_roundtrip():
     assert s == "00ff10"
     assert from_hex(s) == data
 
+
 def test_hex_invalid():
     with pytest.raises(ValueError):
         from_hex("gg")
+
 
 def test_b64_roundtrip():
     data = b"foobar"
     s = to_b64(data)
     assert from_b64(s) == data
+
 
 def test_b64_invalid():
     with pytest.raises(ValueError):

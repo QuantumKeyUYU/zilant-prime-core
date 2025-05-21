@@ -4,10 +4,14 @@ import json
 import pytest
 
 from zilant_prime_core.container.metadata import (
-    Metadata, MetadataError,
-    new_meta_for_file, serialize_metadata, deserialize_metadata
+    Metadata,
+    MetadataError,
+    new_meta_for_file,
+    serialize_metadata,
+    deserialize_metadata,
 )
 from zilant_prime_core.utils.formats import from_b64
+
 
 def test_new_meta_for_file(tmp_path):
     f = tmp_path / "a.txt"
@@ -15,6 +19,7 @@ def test_new_meta_for_file(tmp_path):
     m = new_meta_for_file(f)
     assert m.filename == "a.txt"
     assert m.size == 3
+
 
 def test_serialize_deserialize_roundtrip_bytes_extra():
     m = Metadata("n", 5, extra={"blob": b"\x01\x02\xff"})
@@ -28,19 +33,23 @@ def test_serialize_deserialize_roundtrip_bytes_extra():
     d2 = deserialize_metadata(b)
     assert d2 == d
 
+
 def test_serialize_plain_dict():
     d = {"foo": "bar", "num": 7}
     b = serialize_metadata(d)
     assert b == json.dumps(d).encode("utf-8")
 
+
 def test_serialize_unsupported_type():
     with pytest.raises(MetadataError):
         serialize_metadata(12345)
+
 
 def test_serialize_unserializable_extra():
     m = Metadata("n", 0, extra={"bad": object()})
     with pytest.raises(MetadataError):
         serialize_metadata(m)
+
 
 def test_deserialize_invalid_bytes():
     with pytest.raises(MetadataError):

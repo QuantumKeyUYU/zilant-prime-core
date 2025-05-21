@@ -4,8 +4,10 @@ from typing import Any, Dict
 
 from zilant_prime_core.utils.formats import to_b64
 
+
 class MetadataError(Exception):
     """Ошибка сериализации/десериализации метаданных."""
+
 
 class Metadata:
     def __init__(self, filename: str, size: int, extra: Dict[str, Any] = None):
@@ -25,9 +27,11 @@ class Metadata:
                 d[k] = v
         return d
 
+
 def new_meta_for_file(path: Path) -> Metadata:
     stat = path.stat()
     return Metadata(filename=path.name, size=stat.st_size)
+
 
 def serialize_metadata(meta: Any) -> bytes:
     """
@@ -43,6 +47,7 @@ def serialize_metadata(meta: Any) -> bytes:
         return json.dumps(d).encode("utf-8")
     except (TypeError, ValueError) as e:
         raise MetadataError(str(e))
+
 
 def deserialize_metadata(b: bytes) -> Dict[str, Any]:
     """

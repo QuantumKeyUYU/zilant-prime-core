@@ -1,12 +1,15 @@
 import os
 import hashlib
 
+
 class SignatureError(Exception):
     """Ошибка при подписи или неверные ключи/подпись."""
+
 
 # Размер приватного/публичного ключа и подписи
 KEY_SIZE = 32
 SIG_SIZE = hashlib.sha256().digest_size
+
 
 def generate_keypair() -> tuple[bytes, bytes]:
     """
@@ -16,6 +19,7 @@ def generate_keypair() -> tuple[bytes, bytes]:
     priv = os.urandom(KEY_SIZE)
     pub = priv
     return pub, priv
+
 
 def sign(priv: bytes, msg: bytes) -> bytes:
     """
@@ -27,6 +31,7 @@ def sign(priv: bytes, msg: bytes) -> bytes:
     if not isinstance(msg, (bytes, bytearray)):
         raise SignatureError("Invalid message.")
     return hashlib.sha256(priv + msg).digest()
+
 
 def verify(pub: bytes, msg: bytes, sig: bytes, strict: bool = False) -> bool:
     """

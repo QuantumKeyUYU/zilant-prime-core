@@ -4,6 +4,7 @@ import os
 from click.testing import CliRunner
 from zilant_prime_core.cli import cli
 
+
 def test_pack_missing_password_when_no_flag(tmp_path):
     # no -p means we should abort with "Missing password"
     src = tmp_path / "file.txt"
@@ -12,6 +13,7 @@ def test_pack_missing_password_when_no_flag(tmp_path):
     result = runner.invoke(cli, ["pack", str(src)])
     assert result.exit_code != 0
     assert "Missing password" in result.stdout
+
 
 def test_pack_existing_prompts_overwrite_then_abort(tmp_path):
     # existing .zil and no overwrite flag → prompt and abort
@@ -26,6 +28,7 @@ def test_pack_existing_prompts_overwrite_then_abort(tmp_path):
     assert "already exists" in result.stdout
     assert "Aborted" in result.stdout
 
+
 def test_pack_no_overwrite_flag_false(tmp_path):
     # explicit --no-overwrite should abort right away
     src = tmp_path / "bar.txt"
@@ -34,11 +37,11 @@ def test_pack_no_overwrite_flag_false(tmp_path):
     dest.write_bytes(b"")
     runner = CliRunner()
     result = runner.invoke(
-        cli,
-        ["pack", str(src), "-p", "pw", "-o", str(dest), "--no-overwrite"]
+        cli, ["pack", str(src), "-p", "pw", "-o", str(dest), "--no-overwrite"]
     )
     assert result.exit_code != 0
     assert f"{dest.name} already exists" in result.stdout
+
 
 def test_unpack_missing_password(tmp_path):
     # unpack without -p must abort with "Missing password"

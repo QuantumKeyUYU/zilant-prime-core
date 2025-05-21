@@ -1,6 +1,7 @@
 import logging
 from zilant_prime_core.utils.logging import get_logger
 
+
 def test_get_logger_creates_logger():
     name = "zilant_test"
     logger = get_logger(name)

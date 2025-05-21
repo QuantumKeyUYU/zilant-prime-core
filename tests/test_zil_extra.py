@@ -1,17 +1,22 @@
 import pytest
 import json
 
+
 class SelfDestructError(Exception):
     pass
 
+
 def pack_zil(dummy, formula, tries, max_tries, key, a, b, meta_dict, one_time):
     # max_tries больше НЕ передаём как keyword — только позиционно!
-    header = json.dumps({
-        "tries": meta_dict.get("tries", tries),
-        "max_tries": max_tries,
-        "one_time": one_time
-    }).encode("utf-8")
+    header = json.dumps(
+        {
+            "tries": meta_dict.get("tries", tries),
+            "max_tries": max_tries,
+            "one_time": one_time,
+        }
+    ).encode("utf-8")
     return header + b"\n" + b"dummy data"
+
 
 def unpack_zil(data, formula, key, out_dir=None):
     if b"\n" not in data:
@@ -30,9 +35,11 @@ def unpack_zil(data, formula, key, out_dir=None):
         raise SelfDestructError("Container self-destructed after one-time use.")
     return payload
 
+
 DUMMY = "X"
 FORMULA = None
 KEY = b"supersecretkey0000000000000000001"
+
 
 def test_self_destruct_after_max_tries():
     # максимальное число попыток = 2

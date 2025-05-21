@@ -5,15 +5,14 @@ from zilant_prime_core.crypto.kdf import derive_key
 from zilant_prime_core.crypto.aead import decrypt_aead, AEADInvalidTagError
 from zilant_prime_core.container.metadata import deserialize_metadata, MetadataError
 
+
 class UnpackError(Exception):
     """Ошибка при распаковке контейнера."""
+
     pass
 
-def unpack(
-    container: bytes | Path,
-    output_dir: Path | str,
-    password: str
-) -> Path:
+
+def unpack(container: bytes | Path, output_dir: Path | str, password: str) -> Path:
     # 0) raw bytes
     raw = Path(container).read_bytes() if isinstance(container, Path) else container
     offset = 0
@@ -21,13 +20,13 @@ def unpack(
     # 1) 길 meta length (4 bytes big-endian)
     if len(raw) < offset + 4:
         raise UnpackError("Контейнер слишком мал для метаданных.")
-    meta_len = int.from_bytes(raw[offset:offset+4], "big")
+    meta_len = int.from_bytes(raw[offset : offset + 4], "big")
     offset += 4
 
     # 2) meta blob
     if len(raw) < offset + meta_len:
         raise UnpackError("Неполные метаданные.")
-    meta_blob = raw[offset:offset+meta_len]
+    meta_blob = raw[offset : offset + meta_len]
     offset += meta_len
     try:
         meta = deserialize_metadata(meta_blob)
@@ -37,13 +36,13 @@ def unpack(
     # 3) salt
     if len(raw) < offset + DEFAULT_SALT_LENGTH:
         raise UnpackError("Неправильный формат контейнера (salt).")
-    salt = raw[offset:offset+DEFAULT_SALT_LENGTH]
+    salt = raw[offset : offset + DEFAULT_SALT_LENGTH]
     offset += DEFAULT_SALT_LENGTH
 
     # 4) nonce
     if len(raw) < offset + DEFAULT_NONCE_LENGTH:
         raise UnpackError("Неправильный формат контейнера (nonce).")
-    nonce = raw[offset:offset+DEFAULT_NONCE_LENGTH]
+    nonce = raw[offset : offset + DEFAULT_NONCE_LENGTH]
     offset += DEFAULT_NONCE_LENGTH
 
     # 5) ciphertext||tag (остаток)

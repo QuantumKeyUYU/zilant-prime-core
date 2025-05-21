@@ -1,8 +1,10 @@
 import json
 import struct
 
+
 class SelfDestructError(Exception):
     """Подбрасывается при превышении числа попыток."""
+
 
 def pack_zill(
     payload: bytes,
@@ -23,13 +25,14 @@ def pack_zill(
     meta_bytes = json.dumps(meta).encode("utf-8")
     return struct.pack(">I", len(meta_bytes)) + meta_bytes + payload
 
+
 def unpack_zil(data: bytes, formula, key, out_dir: str):
     offset = 0
     total = len(data)
     # читаем длину JSON-метаданных
     meta_len = struct.unpack_from(">I", data, offset)[0]
     offset += 4
-    meta_bytes = data[offset:offset + meta_len]
+    meta_bytes = data[offset : offset + meta_len]
     offset += meta_len
     metadata = json.loads(meta_bytes.decode("utf-8"))
     payload = data[offset:total]

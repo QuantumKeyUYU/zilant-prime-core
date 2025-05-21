@@ -2,6 +2,7 @@ import pytest
 import hashlib
 from zilant_prime_core.vdf.phase_vdf import generate_elc_vdf, verify_elc_vdf
 
+
 def test_elc_vdf_basic():
     seed = b"test_seed"
     steps = 100
@@ -12,6 +13,7 @@ def test_elc_vdf_basic():
     # И проверка должна пройти
     assert verify_elc_vdf(seed, steps, proof)
 
+
 def test_elc_vdf_invalid_steps():
     # Шагов должно быть > 0
     with pytest.raises(ValueError):
@@ -19,12 +21,14 @@ def test_elc_vdf_invalid_steps():
     with pytest.raises(ValueError):
         verify_elc_vdf(b"seed", 0, b"\x00" * hashlib.sha256().digest_size)
 
+
 def test_elc_vdf_invalid_types():
     # Неправильный тип seed/proof
     with pytest.raises(ValueError):
         generate_elc_vdf("not-bytes", 10)  # type: ignore
     with pytest.raises(ValueError):
         verify_elc_vdf(b"seed", 10, "not-bytes")  # type: ignore
+
 
 def test_elc_vdf_tampered_proof():
     seed = b"test_seed"

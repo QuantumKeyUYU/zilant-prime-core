@@ -4,6 +4,7 @@ import pytest
 from zilant_prime_core.container.pack import pack
 from zilant_prime_core.container.unpack import unpack
 
+
 def test_pack_unpack_roundtrip(tmp_path: Path):
     # ── подготовка ──
     src = tmp_path / "dragon.raw"

@@ -6,9 +6,12 @@ from zilant_prime_core.utils.constants import DEFAULT_SALT_LENGTH, DEFAULT_NONCE
 from zilant_prime_core.crypto.kdf import derive_key
 from zilant_prime_core.crypto.aead import encrypt_aead
 
+
 class PackError(Exception):
     """Ошибка при упаковке контейнера."""
+
     pass
+
 
 def pack(src_path: Path, password: str) -> bytes:
     """
@@ -26,10 +29,10 @@ def pack(src_path: Path, password: str) -> bytes:
 
     # 3) Генерируем соль и ключ
     salt = os.urandom(DEFAULT_SALT_LENGTH)
-    key  = derive_key(password.encode("utf-8"), salt)
+    key = derive_key(password.encode("utf-8"), salt)
 
     # 4) Генерируем nonce и шифруем (ciphertext||tag)
-    nonce      = os.urandom(DEFAULT_NONCE_LENGTH)
+    nonce = os.urandom(DEFAULT_NONCE_LENGTH)
     ct_and_tag = encrypt_aead(key, nonce, data, aad=meta_bytes)
 
     # 5) Собираем контейнер

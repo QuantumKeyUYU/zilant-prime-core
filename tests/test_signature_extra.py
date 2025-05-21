@@ -8,6 +8,7 @@ from zilant_prime_core.crypto.signature import (
     SIG_SIZE,
 )
 
+
 def test_verify_invalid_pub_or_sig():
     priv, pub = generate_keypair()
     sig = sign(priv, b"hello")
@@ -19,6 +20,7 @@ def test_verify_invalid_pub_or_sig():
     assert not verify(pub, b"msg", b"\x00" * (SIG_SIZE + 1))
     # корректная длина, но неправильное содержимое
     assert not verify(pub, b"msg", b"\x00" * SIG_SIZE)
+
 
 def test_verify_invalid_inputs_strict():
     priv, pub = generate_keypair()

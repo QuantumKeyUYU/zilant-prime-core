@@ -2,6 +2,7 @@
 import random
 from typing import List
 
+
 def generate_sat(variables: int, density: float) -> List[List[int]]:
     """
     Builds a random 3-CNF formula:
