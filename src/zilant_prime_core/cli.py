@@ -1,91 +1,90 @@
 import sys
 from pathlib import Path
-import struct
 
 import click
 
 from zilant_prime_core.container.pack import pack as _pack_bytes
 from zilant_prime_core.container.unpack import unpack as _unpack_bytes
-from zilant_prime_core.container.metadata import deserialize_metadata
-from zilant_prime_core.utils.constants import HEADER_FMT
+from zilant_prime_core.container.metadata import MetadataError
 
-
-def _prompt_password_twice() -> str | None:
-    pw1 = click.prompt("Password", hide_input=True)
-    pw2 = click.prompt("Confirm ", hide_input=True)
-    return pw1 if pw1 == pw2 else None
-
+def abort(message: str, exit_code: int = 1):
+    click.echo(message, err=True)
+    sys.exit(exit_code)
 
 @click.group()
-def cli() -> None:
-    """🪄 Compress → Encrypt → Seal → *.zil"""
+def cli():
+    """Zilant Prime Core CLI."""
     pass
 
-
 @cli.command("pack")
-@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-@click.option(
-    "-p", "--password", "password_opt", default="-",
-    help="'-' ⇒ интерактивный ввод два раза"
-)
-@click.option("-o", "--output", type=click.Path(dir_okay=False, path_type=Path))
-def cmd_pack(src: Path, password_opt: str, output: Path | None):
-    """Запаковать SRC → SRC.zil (или --output)."""
-    if password_opt == "-":
-        pw = _prompt_password_twice()
-        if pw is None:
-            click.echo("Passwords do not match!")
-            sys.exit(1)
-    else:
-        pw = password_opt
+@click.argument("src", type=click.Path(exists=True, dir_okay=False))
+@click.option("-p", "--password", default=None,
+              help="Password, or '-' to prompt (with confirmation).")
+@click.option("-o", "--output", "output", type=click.Path(dir_okay=False),
+              default=None, help="Where to write the .zil archive.")
+@click.option("--overwrite/--no-overwrite", default=None,
+              help="Whether to overwrite existing archive without prompting.")
+def pack_cmd(src, password, output, overwrite):
+    src_path = Path(src)
+    dest = Path(output) if output else src_path.with_suffix(".zil")
 
-    container = _pack_bytes(src, password=pw)
-    dst = output or src.with_suffix(".zil")
-    dst.write_bytes(container)
-    click.echo(dst)
+    # ── overwrite logic BEFORE password prompt ──
+    if dest.exists():
+        if overwrite is None:
+            if not click.confirm(f"{dest.name} already exists. Overwrite?"):
+                abort("Aborted", 1)
+        elif not overwrite:
+            abort(f"{dest.name} already exists", 1)
+
+    # ── password prompt ──
+    if password == "-":
+        password = click.prompt("Password", hide_input=True, confirmation_prompt=True)
+    if not password:
+        abort("Missing password", 1)
+
+    # ── pack and write ──
+    try:
+        container_bytes = _pack_bytes(src_path, password)
+    except MetadataError as e:
+        abort(str(e), 1)
+    except Exception as e:
+        abort(f"Packing error: {e}", 1)
+
+    try:
+        dest.write_bytes(container_bytes)
+    except Exception as e:
+        abort(f"Packing error: {e}", 1)
+
+    click.echo(str(dest))
 
 
 @cli.command("unpack")
-@click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-@click.option(
-    "-p", "--password", "password_opt", default="-",
-    help="'-' ⇒ интерактивный ввод пароля"
-)
-@click.option(
-    "-d", "--dir", "out_dir",
-    type=click.Path(file_okay=False, path_type=Path),
-    default="."
-)
-@click.option("--overwrite", is_flag=True, help="Разрешить перезапись файлов")
-def cmd_unpack(container: Path, password_opt: str, out_dir: Path, overwrite: bool):
-    """Распаковать CONTAINER → файл в --dir."""
+@click.argument("archive", type=click.Path(exists=True, dir_okay=False))
+@click.option("-p", "--password", default=None,
+              help="Password, or '-' to prompt.")
+@click.option("-d", "--dest", "dest", type=click.Path(file_okay=False),
+              required=True, help="Directory to unpack into.")
+def unpack_cmd(archive, password, dest):
+    archive_path = Path(archive)
+    out_dir = Path(dest)
 
-    # 1) читаем и разбираем метаданные, чтобы узнать имя выходного файла
-    raw = Path(container).read_bytes()
-    magic, ver, mlen, plen, slen = struct.unpack_from(HEADER_FMT, raw)
-    off = struct.calcsize(HEADER_FMT)
-    meta_blob = raw[off : off + mlen]
-    meta = deserialize_metadata(meta_blob)
-    filename = meta["filename"]
-    out_path = out_dir / filename
+    if password == "-":
+        password = click.prompt("Password", hide_input=True)
+    if not password:
+        abort("Missing password", 1)
 
-    # 2) проверяем существование до распаковки
-    if out_path.exists():
-        if not overwrite:
-            click.echo("File already exists, use --overwrite.")
-            sys.exit(1)
-        else:
-            out_path.unlink()
+    try:
+        created = _unpack_bytes(archive_path, out_dir, password)
+    except MetadataError as e:
+        abort(str(e), 1)
+    except Exception as e:
+        abort(f"Unpack error: {e}", 1)
 
-    # 3) читаем пароль
-    if password_opt == "-":
-        pw = click.prompt("Password", hide_input=True)
+    if isinstance(created, (list, tuple)):
+        for p in created:
+            click.echo(str(p))
     else:
-        pw = password_opt
-
-    # 4) собственно распаковка
-    extracted = _unpack_bytes(container, output_dir=out_dir, password=pw)
-    click.echo(extracted)
+        click.echo(str(created))
 
 
 if __name__ == "__main__":

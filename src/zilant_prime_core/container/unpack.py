@@ -1,48 +1,71 @@
-from __future__ import annotations
-import struct
+import json
 from pathlib import Path
 
-from zilant_prime_core.utils.constants import HEADER_FMT, MAGIC, VERSION
-from zilant_prime_core.container.metadata import deserialize_metadata
-from zilant_prime_core.utils.formats import from_b64
+from zilant_prime_core.utils.constants import DEFAULT_SALT_LENGTH, DEFAULT_NONCE_LENGTH
 from zilant_prime_core.crypto.kdf import derive_key
-from zilant_prime_core.crypto.aead import decrypt_aead
-from zilant_prime_core.vdf.vdf import verify_posw_sha256, VDFVerificationError
+from zilant_prime_core.crypto.aead import decrypt_aead, AEADInvalidTagError
+from zilant_prime_core.container.metadata import deserialize_metadata, MetadataError
 
-def unpack(container: bytes | str | Path, *, output_dir: str | Path, password: str) -> Path:
-    data = (
-        Path(container).read_bytes()
-        if isinstance(container, (str, Path))
-        else container
-    )
-    magic, ver, mlen, plen, slen = struct.unpack_from(HEADER_FMT, data)
-    if magic != MAGIC or ver != VERSION:
-        raise ValueError("Invalid container header.")
+class UnpackError(Exception):
+    """Ошибка при распаковке контейнера."""
+    pass
 
-    off = struct.calcsize(HEADER_FMT)
-    meta_blob = data[off : off + mlen]; off += mlen
-    proof     = data[off : off + plen]; off += plen
-    sig       = data[off : off + slen]; off += slen
-    nonce     = data[off : off + 12];   off += 12
-    ct_tag    = data[off : ]
+def unpack(
+    container: bytes | Path,
+    output_dir: Path | str,
+    password: str
+) -> Path:
+    # 0) raw bytes
+    raw = Path(container).read_bytes() if isinstance(container, Path) else container
+    offset = 0
 
-    # VDF
-    if not verify_posw_sha256(ct_tag, proof, 1):
-        raise VDFVerificationError("Bad VDF proof.")
+    # 1) 길 meta length (4 bytes big-endian)
+    if len(raw) < offset + 4:
+        raise UnpackError("Контейнер слишком мал для метаданных.")
+    meta_len = int.from_bytes(raw[offset:offset+4], "big")
+    offset += 4
 
-    meta = deserialize_metadata(meta_blob)
-    salt = meta.get("salt")
-    # salt мог быть base64-строкой
-    if isinstance(salt, str):
-        salt = from_b64(salt)
+    # 2) meta blob
+    if len(raw) < offset + meta_len:
+        raise UnpackError("Неполные метаданные.")
+    meta_blob = raw[offset:offset+meta_len]
+    offset += meta_len
+    try:
+        meta = deserialize_metadata(meta_blob)
+    except MetadataError as e:
+        raise UnpackError(f"Не удалось разобрать метаданные: {e}")
 
-    key = derive_key(password, salt)
-    plaintext = decrypt_aead(key, nonce, ct_tag)
+    # 3) salt
+    if len(raw) < offset + DEFAULT_SALT_LENGTH:
+        raise UnpackError("Неправильный формат контейнера (salt).")
+    salt = raw[offset:offset+DEFAULT_SALT_LENGTH]
+    offset += DEFAULT_SALT_LENGTH
 
+    # 4) nonce
+    if len(raw) < offset + DEFAULT_NONCE_LENGTH:
+        raise UnpackError("Неправильный формат контейнера (nonce).")
+    nonce = raw[offset:offset+DEFAULT_NONCE_LENGTH]
+    offset += DEFAULT_NONCE_LENGTH
+
+    # 5) ciphertext||tag (остаток)
+    ct_and_tag = raw[offset:]
+    if len(ct_and_tag) < 16:
+        raise UnpackError("Ciphertext слишком короткий для включения тега.")
+
+    # 6) derive key + decrypt
+    key = derive_key(password.encode("utf-8"), salt)
+    try:
+        payload = decrypt_aead(key, nonce, ct_and_tag, aad=meta_blob)
+    except AEADInvalidTagError:
+        raise UnpackError("Неверная метка аутентификации.")
+    except Exception as e:
+        raise UnpackError(f"Ошибка дешифрования: {e}")
+
+    # 7) write file
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / meta["filename"]
-    if out_path.exists():
-        raise FileExistsError(out_path)
-    out_path.write_bytes(plaintext)
-    return out_path
+    out_file = out_dir / meta["filename"]
+    if out_file.exists():
+        raise FileExistsError(f"{out_file} уже существует.")
+    out_file.write_bytes(payload)
+    return out_file

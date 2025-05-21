@@ -1,38 +1,36 @@
-from __future__ import annotations
-import struct
+import os
+import json
 from pathlib import Path
 
-from zilant_prime_core.utils.constants import HEADER_FMT, MAGIC, VERSION
-from zilant_prime_core.container.metadata import new_meta_for_file, serialize_metadata
-from zilant_prime_core.crypto.kdf import derive_key, generate_salt
-from zilant_prime_core.crypto.aead import encrypt_aead, generate_nonce
-from zilant_prime_core.vdf.vdf import generate_posw_sha256
+from zilant_prime_core.utils.constants import DEFAULT_SALT_LENGTH, DEFAULT_NONCE_LENGTH
+from zilant_prime_core.crypto.kdf import derive_key
+from zilant_prime_core.crypto.aead import encrypt_aead
 
-def pack(path: str | Path, *, password: str) -> bytes:
-    p = Path(path)
-    payload = p.read_bytes()
+class PackError(Exception):
+    """Ошибка при упаковке контейнера."""
+    pass
 
-    # ── метаданные ──
-    salt = generate_salt()
-    meta = new_meta_for_file(p)
-    meta.extra["salt"] = salt
-    meta_blob = serialize_metadata(meta)
+def pack(src_path: Path, password: str) -> bytes:
+    """
+    Упаковывает файл src_path в байтовый контейнер:
+      [4-bytes meta_len][meta_json][salt][nonce][ciphertext||tag]
+    где meta_json содержит {"filename": ..., "size": ...}.
+    """
+    # 1) Считываем payload
+    data = src_path.read_bytes()
 
-    # ── крипто шаги ──
-    key = derive_key(password, salt)
-    nonce = generate_nonce()
-    ct_tag = encrypt_aead(key, nonce, payload)
+    # 2) Формируем метаданные
+    meta = {"filename": src_path.name, "size": len(data)}
+    meta_bytes = json.dumps(meta).encode("utf-8")
+    meta_len = len(meta_bytes).to_bytes(4, "big")
 
-    # ── простой VDF ──
-    proof = generate_posw_sha256(ct_tag, 1)  # для тестов хватит 1 шага
-    sig = b""
+    # 3) Генерируем соль и ключ
+    salt = os.urandom(DEFAULT_SALT_LENGTH)
+    key  = derive_key(password.encode("utf-8"), salt)
 
-# Note: pack не добавляет «подпись», т.к. тестам она не нужна
+    # 4) Генерируем nonce и шифруем (ciphertext||tag)
+    nonce      = os.urandom(DEFAULT_NONCE_LENGTH)
+    ct_and_tag = encrypt_aead(key, nonce, data, aad=meta_bytes)
 
-    # ── собираем всё вместе ──
-    header = struct.pack(
-        HEADER_FMT,
-        MAGIC, VERSION,
-        len(meta_blob), len(proof), len(sig),
-    )
-    return b"".join([header, meta_blob, proof, sig, nonce, ct_tag])
+    # 5) Собираем контейнер
+    return meta_len + meta_bytes + salt + nonce + ct_and_tag

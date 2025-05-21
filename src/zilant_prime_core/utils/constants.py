@@ -1,12 +1,12 @@
 from struct import calcsize
 
-# Для pack/unpack контейнера
-MAGIC = b"ZILP"           # произвольное 4-байтовое «магическое» значение
-VERSION = 1               # версия формата
-HEADER_FMT = "!4sBIII"    # 4s: MAGIC, B: VERSION, I×3: длинны meta, proof, sig
+# ─── Container header constants (not used in this minimal JSON approach) ───
+MAGIC       = b"ZILP"            # 4-byte magic
+VERSION     = 1                  # 1-byte version
+HEADER_FMT  = "!4sBIII"          # for a more complex header if you want
 HEADER_SIZE = calcsize(HEADER_FMT)
 
-# Для AEAD/KDF
-DEFAULT_KEY_LENGTH = 32
-DEFAULT_NONCE_LENGTH = 12
-DEFAULT_SALT_LENGTH = 16
+# ─── AEAD / KDF constants ───
+DEFAULT_KEY_LENGTH   = 32  # bytes
+DEFAULT_NONCE_LENGTH = 12  # bytes
+DEFAULT_SALT_LENGTH  = 16  # bytes

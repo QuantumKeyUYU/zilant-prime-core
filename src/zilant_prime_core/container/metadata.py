@@ -30,6 +30,9 @@ def new_meta_for_file(path: Path) -> Metadata:
     return Metadata(filename=path.name, size=stat.st_size)
 
 def serialize_metadata(meta: Any) -> bytes:
+    """
+    Принимает Metadata или dict → JSON UTF-8 bytes.
+    """
     try:
         if isinstance(meta, Metadata):
             d = meta.to_json_dict()
@@ -42,8 +45,10 @@ def serialize_metadata(meta: Any) -> bytes:
         raise MetadataError(str(e))
 
 def deserialize_metadata(b: bytes) -> Dict[str, Any]:
+    """
+    Читает JSON UTF-8 bytes → dict.
+    """
     try:
-        d = json.loads(b.decode("utf-8"))
-        return d
+        return json.loads(b.decode("utf-8"))
     except (ValueError, UnicodeDecodeError) as e:
         raise MetadataError(str(e))

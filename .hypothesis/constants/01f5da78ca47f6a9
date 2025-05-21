@@ -1,0 +1,4 @@
+# file: C:\Users\User\zilant-prime-core\src\zilant_prime_core\cli.py
+# hypothesis_version: 6.131.14
+
+['--backup-dir', '--output', '--password', '--shards', '--threshold', '-b', '-d', '-o', '-p', '-s', '-t', '-w', '.zil', 'Password', '__main__', 'container', 'out_dir', 'pack', 'src', 'unpack']
