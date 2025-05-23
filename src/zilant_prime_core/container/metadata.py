@@ -1,59 +1,56 @@
+"""
+(Де)сериализация простейших метаданных об архиве.
+
+Используется во внутреннем формате `.zil`.
+"""
+
+from __future__ import annotations
+
+import hashlib
 import json
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Mapping, MutableMapping
 
-from zilant_prime_core.utils.formats import to_b64
+__all__ = [
+    "Metadata",
+    "MetadataError",
+    "new_meta_for_file",
+    "serialize_metadata",
+    "deserialize_metadata",
+]
 
 
-class MetadataError(Exception):
-    """Ошибка сериализации/десериализации метаданных."""
+class MetadataError(RuntimeError):
+    """Некорректный JSON / отсутствующие поля и т.д."""
 
 
+@dataclass(slots=True, frozen=True)
 class Metadata:
-    def __init__(self, filename: str, size: int, extra: Dict[str, Any] = None):
-        self.filename = filename
-        self.size = size
-        self.extra = extra.copy() if extra else {}
-
-    def to_json_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
-            "filename": self.filename,
-            "size": self.size,
-        }
-        for k, v in self.extra.items():
-            if isinstance(v, (bytes, bytearray)):
-                d[k] = to_b64(v)
-            else:
-                d[k] = v
-        return d
+    name: str
+    size: int
+    sha256: str
+    extra: Mapping[str, Any] | None = None
 
 
-def new_meta_for_file(path: Path) -> Metadata:
-    stat = path.stat()
-    return Metadata(filename=path.name, size=stat.st_size)
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def serialize_metadata(meta: Any) -> bytes:
-    """
-    Принимает Metadata или dict → JSON UTF-8 bytes.
-    """
+def new_meta_for_file(path: Path, *, extra: Mapping[str, Any] | None = None) -> Metadata:
+    return Metadata(name=path.name, size=path.stat().st_size, sha256=_sha256(path), extra=extra)
+
+
+# ────────────────────────────── JSON helpers ────────────────────────────── #
+
+
+def serialize_metadata(meta: Metadata) -> str:
+    return json.dumps(asdict(meta), separators=(",", ":"))
+
+
+def deserialize_metadata(data: str) -> Metadata:
     try:
-        if isinstance(meta, Metadata):
-            d = meta.to_json_dict()
-        elif isinstance(meta, dict):
-            d = meta
-        else:
-            raise MetadataError(f"Unsupported metadata type: {type(meta)}")
-        return json.dumps(d).encode("utf-8")
-    except (TypeError, ValueError) as e:
-        raise MetadataError(str(e))
-
-
-def deserialize_metadata(b: bytes) -> Dict[str, Any]:
-    """
-    Читает JSON UTF-8 bytes → dict.
-    """
-    try:
-        return json.loads(b.decode("utf-8"))
-    except (ValueError, UnicodeDecodeError) as e:
-        raise MetadataError(str(e))
+        obj: MutableMapping[str, Any] = json.loads(data)
+        return Metadata(**obj)  # type: ignore[arg-type]
+    except Exception as exc:  # pragma: no cover
+        raise MetadataError("invalid metadata JSON") from exc

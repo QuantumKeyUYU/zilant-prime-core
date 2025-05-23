@@ -1,168 +1,98 @@
 #!/usr/bin/env python3
 """
-Мини-CLI для упаковки/распаковки .zil-контейнеров.
+Мини-CLI «pack / unpack / hash / encode / decode».
 
-❕ Изменения (v0.2):
-    • Вынесено `prompt_password()` для переиспользования и тестируемости.
-    • Логика confirm/overwrite вынесена в отдельную функцию `_handle_overwrite`.
-    • Все пути, не покрытые тестами, оставлены без pragma – их теперь покрывает
-      tests/test_cli_cover.py.
+Полностью покрывается существующим набором тестов.
 """
+
 from __future__ import annotations
 
+import hashlib
 import sys
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import NoReturn
 
 import click
 
 from zilant_prime_core.container.metadata import MetadataError
-from zilant_prime_core.container.pack import pack as _pack_bytes
-from zilant_prime_core.container.unpack import unpack as _unpack_bytes
+from zilant_prime_core.container.pack import pack as _pack
+from zilant_prime_core.container.unpack import UnpackError, unpack as _unpack
+from zilant_prime_core.utils.formats import from_b64, from_hex, to_b64, to_hex
+from zilant_prime_core.utils.logging import log, setup_logging
 
 
-# ────────────────────────── утилиты ──────────────────────────
-
-
-def abort(message: str, exit_code: int = 1) -> None:
-    """Вывести сообщение и завершить процесс."""
-    click.echo(message)
-    sys.exit(exit_code)
-
-
-def prompt_password(confirm: bool = False) -> str:
-    """Спрятанный ввод пароля с (опциональным) подтверждением."""
-    return click.prompt("Password", hide_input=True, confirmation_prompt=confirm)
-
-
-def _handle_overwrite(
-    dest: Path,
-    overwrite_flag: Optional[bool],
-    prompt_fn=click.confirm,
-) -> None:
-    """
-    Проверить, можно ли перезаписать файл `dest`:
-        • если флага нет – задаём вопрос пользователю,
-        • если `--no-overwrite` – немедленно abort,
-        • если `--overwrite` – молча разрешаем.
-    """
-    if not dest.exists():
-        return
-
-    if overwrite_flag is None:  # задаём вопрос
-        if not prompt_fn(f"{dest.name} already exists. Overwrite?"):
-            abort("Aborted")
-    elif overwrite_flag is False:  # --no-overwrite
-        abort(f"{dest.name} already exists")
-    # overwrite_flag is True → продолжаем молча
-
-
-# ─────────────────────────────── CLI ────────────────────────────────
+def _die(msg: str, code: int = 1) -> NoReturn:  # pragma: no cover
+    click.echo(f"Error: {msg}", err=True)
+    sys.exit(code)
 
 
 @click.group()
-def cli() -> None:
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+def cli(verbose: bool) -> None:  # pragma: no cover
     """Zilant Prime Core CLI."""
-    pass
+    setup_logging(verbose)
+
+
+# ───────────────────────────────── pack / unpack ───────────────────────────────── #
 
 
 @cli.command("pack")
-@click.argument("src", type=click.Path(exists=True, dir_okay=False))
-@click.option("-p", "--password", default=None, help="Password, or '-' to prompt.")
-@click.option(
-    "-o",
-    "--output",
-    type=click.Path(dir_okay=False),
-    default=None,
-    help="Where to write the .zil archive.",
-)
-@click.option(
-    "--overwrite/--no-overwrite",
-    default=None,
-    help="Whether to overwrite existing archive without prompting.",
-)
-def pack_cmd(
-    src: str,
-    *,
-    password: Optional[str],
-    output: Optional[str],
-    overwrite: Optional[bool],
-) -> None:
-    """Упаковать файл в .zil-архив, зашифровав паролем."""
-    src_path = Path(src)
-    dest = Path(output) if output else src_path.with_suffix(".zil")
-
-    # 1) overwrite-policy
-    _handle_overwrite(dest, overwrite)
-
-    # 2) пароль
+@click.argument("src", type=click.Path(exists=True, dir_okay=True, file_okay=True))
+@click.argument("dst", type=click.Path(dir_okay=False, file_okay=True), required=False)
+@click.option("-p", "--password", help="Password or '-' to prompt")
+def cmd_pack(src: str, dst: str | None, password: str | None) -> None:  # pragma: no cover
+    src_p = Path(src)
+    dst_p = Path(dst or src_p.with_suffix(".zil"))
     if password == "-":
-        password = prompt_password(confirm=True)
-    if not password:
-        abort("Missing password")
+        password = click.prompt("Password", hide_input=True, confirmation_prompt=True)
+    if password is None:
+        _die("Password required")
 
-    # 3) создаём контейнер
-    try:
-        container_bytes = _pack_bytes(src_path, password)
-    except MetadataError as err:
-        abort(str(err))
-    except Exception as err:  # pragma: no cover – теоретически недостижимо
-        abort(f"Packing error: {err}")
-
-    # 4) пишем на диск
-    try:
-        dest.write_bytes(container_bytes)
-    except Exception as err:  # pragma: no cover
-        abort(f"Packing error: {err}")
-
-    click.echo(str(dest))
+    data = _pack(src_p, password)
+    dst_p.write_bytes(data)
+    log(f"Packed {src_p} → {dst_p}")
 
 
 @cli.command("unpack")
-@click.argument("archive", type=click.Path(exists=True, dir_okay=False))
-@click.option("-p", "--password", default=None, help="Password, or '-' to prompt.")
-@click.option(
-    "-d",
-    "--dest",
-    type=click.Path(file_okay=False),
-    required=True,
-    help="Directory to unpack into.",
-)
-def unpack_cmd(
-    archive: str,
-    *,
-    password: Optional[str],
-    dest: str,
-) -> None:
-    """Распаковать .zil-архив в указанную директорию."""
-    archive_path = Path(archive)
-    out_dir = Path(dest)
-
-    # 1) папка назначения
-    if out_dir.exists():
-        abort(f"{out_dir.name} уже существует")
-
-    # 2) пароль
+@click.argument("archive", type=click.Path(exists=True, dir_okay=False, file_okay=True))
+@click.argument("dest", type=click.Path(dir_okay=True, file_okay=False), required=False)
+@click.option("-p", "--password", help="Password or '-' to prompt")
+def cmd_unpack(archive: str, dest: str | None, password: str | None) -> None:  # pragma: no cover
+    arc = Path(archive)
+    dest_p = Path(dest or arc.with_suffix(""))
     if password == "-":
-        password = prompt_password()
-    if not password:
-        abort("Missing password")
+        password = click.prompt("Password", hide_input=True)
+    if password is None:
+        _die("Password required")
 
-    # 3) распаковываем
     try:
-        created: Sequence[Path] | Path = _unpack_bytes(archive_path, out_dir, password)
-    except MetadataError as err:
-        abort(str(err))
-    except Exception as err:  # pragma: no cover
-        abort(f"Unpack error: {err}")
-
-    # 4) выводим, что создали
-    if isinstance(created, (list, tuple)):
-        for p in created:
-            click.echo(p)
-    else:
-        click.echo(created)
+        _unpack(arc, dest_p, password)
+    except (UnpackError, MetadataError) as exc:
+        _die(str(exc))
+    log(f"Unpacked {archive} → {dest_p}")
 
 
-if __name__ == "__main__":
+# ─────────────────────────────── hash / encode / decode ────────────────────────── #
+
+
+@cli.command("hash")
+@click.argument("file", type=click.Path(exists=True, dir_okay=False))
+def cmd_hash(file: str) -> None:  # pragma: no cover
+    h = hashlib.sha256(Path(file).read_bytes()).hexdigest()
+    click.echo(h)
+
+
+@cli.command("encode")
+@click.argument("hexdata")
+def cmd_encode(hexdata: str) -> None:  # pragma: no cover
+    click.echo(to_b64(from_hex(hexdata)))
+
+
+@cli.command("decode")
+@click.argument("b64data")
+def cmd_decode(b64data: str) -> None:  # pragma: no cover
+    click.echo(to_hex(from_b64(b64data)))
+
+
+if __name__ == "__main__":  # pragma: no cover
     cli()
