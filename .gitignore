@@ -1,87 +1,90 @@
-﻿\
-# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
-# SPDX-License-Identifier: MIT
-# ------------------------------------------------------------------------------
-#  Zilant Prime Core  вЂ“  .gitignore
-# ------------------------------------------------------------------------------
-
-###############################################################################
-#  Python  byte-code / build artefacts
-###############################################################################
+﻿# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
+*$py.class
+
+# C extensions
 *.so
 
-# Virtual-envs
-.env/
-.venv/
-venv/
-env/
-
-# Packaging & build output
+# Distribution / packaging
+.Python
 build/
 dist/
-wheelhouse/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
 *.egg-info/
+.installed.cfg
 *.egg
-*.whl
-*.tar.gz
-*.zip
+MANIFEST
 
-###############################################################################
-#  Testing artefacts
-###############################################################################
-.hypothesis/           # Hypothesis examples & constants
-.pytest_cache/         # pytest cache (old)
-.pytest_temp/          # pytest tmpdir (custom in this repo)
-.coverage*             # coverage data files
+# Virtual environments
+.env/
+.venv/
+env/
+venv/
+ENV/
+
+# Pytest / test artifacts
+.pytest_cache/
+.pytest_temp/
+cache/
+.hypothesis/
 coverage.xml
-htmlcov/               # coverage HTML report
-.tox/                  # tox virtual-envs
+htmlcov/
+.coverage
+.coverage.*
+nosetests.xml
+*.cover
 
-###############################################################################
-#  Tooling / linters / type-checkers
-###############################################################################
-.mypy_cache/
-ruff_cache/
-.pytype/
-pip-wheel-metadata/
+# Sphinx docs
+docs/_build/
 
-###############################################################################
-#  REUSE helper
-###############################################################################
-.reuse/
-.reuseignore
-
-###############################################################################
-#  IDE / Editor junk
-###############################################################################
+# IDEs and editors
 .vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace
+*.iml
+*.sw?
+*~ 
 
-###############################################################################
-#  OS-specific cruft
-###############################################################################
+# OS files
 .DS_Store
 Thumbs.db
 
-###############################################################################
-#  Backup / swap / logs
-###############################################################################
+# Logs and databases
 *.log
-*.bak
-*.tmp
-*~
-*.swp
-*.swo
+*.sql
+*.sqlite3
 
-###############################################################################
-#  Generated SBOMs & other CI artefacts
-###############################################################################
-sbom-*.spdx.json
-sbom-*.spdx.yaml
+# Pre-commit and linters
+.pre-commit-config.yaml
+coverage.xml
 
+# REUSE metadata
+.reuse/
+.reuseignore
+
+# Scripts artifacts (если есть)
+scripts/generated-sbom.*
+scripts/*.out
+
+# Build artifacts from setuptools / wheel
+pyproject.toml
+setup.py
+setup.cfg
+# (не игнорим этот файл, но выше настраивали SPDX-заголовки)
+
+# Temporary test output folders
+.pytest_temp/
+hypothesis_temp/
+
+# Any other local overrides
+local_settings.py
