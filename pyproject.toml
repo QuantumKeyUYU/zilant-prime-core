@@ -1,16 +1,7 @@
-﻿# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
-# SPDX-License-Identifier: MIT
+﻿[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
 
-############################
-#  build-system metadata   #
-############################
-[build-system]
-requires       = ["setuptools>=64", "wheel"]
-build-backend  = "setuptools.build_meta"
-
-############################
-#      project meta        #
-############################
 [project]
 name            = "zilant-prime-core"
 version         = "0.1.4"
@@ -45,15 +36,9 @@ Source    = "https://github.com/QuantumKeyUYU/zilant-prime-core"
 Issues    = "https://github.com/QuantumKeyUYU/zilant-prime-core/issues"
 Changelog = "https://github.com/QuantumKeyUYU/zilant-prime-core/releases"
 
-############################
-# setuptools discovery     #
-############################
 [tool.setuptools.packages.find]
 where = ["src"]
 
-############################
-# pytest / coverage config #
-############################
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts    = "-ra --cov=src --cov-report=term"
@@ -63,16 +48,10 @@ testpaths  = ["tests"]
 branch = true
 omit   = ["*/tests/*", "*/.pytest_cache/*", "*/.ruff_cache/*"]
 
-############################
-#        Black config      #
-############################
 [tool.black]
 line-length    = 100
 target-version = ["py310"]
 
-############################
-#        Ruff config       #
-############################
 [tool.ruff]
 line-length    = 100
 target-version = "py310"
@@ -87,10 +66,7 @@ exclude        = [
   "build",
   "dist",
 ]
-extend-ignore  = ["E203"]  # конфликтует с Black
+extend-ignore  = ["E203"]
 
-############################
-#    Hypothesis config     #
-############################
 [tool.hypothesis]
 deadline = 1000
