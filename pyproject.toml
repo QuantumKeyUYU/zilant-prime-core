@@ -51,22 +51,3 @@ omit   = ["*/tests/*", "*/.pytest_cache/*", "*/.ruff_cache/*"]
 [tool.black]
 line-length    = 100
 target-version = ["py310"]
-
-[tool.ruff]
-line-length    = 100
-target-version = "py310"
-select         = ["E", "F", "I", "N", "B", "UP", "ARG"]
-fixable        = ["ALL"]
-src            = ["src", "tests"]
-exclude        = [
-  ".git",
-  ".venv",
-  ".mypy_cache",
-  ".pytest_cache",
-  "build",
-  "dist",
-]
-extend-ignore  = ["E203"]
-
-[tool.hypothesis]
-deadline = 1000
