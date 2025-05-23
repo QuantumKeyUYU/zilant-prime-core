@@ -1,14 +1,12 @@
-﻿# ruff.toml — конфигурация для Ruff ≥ 0.4
-
-line-length    = 100
+﻿line-length    = 100
 target-version = "py310"
 
 [lint]
 select = ["E", "F", "I", "N", "B"]
 ignore = [
   "I001",  # порядок импортов
-  "B904",  # raise-from
-  "N802",  # snake_case функций
+  "B904",  # raise from err
+  "N802",  # snake_case имена функций
 ]
 
 [lint.per-file-ignores]
@@ -17,6 +15,6 @@ ignore = [
   "F841",  # unused variable
   "I001",  # порядок импортов
   "E501",  # длина строки
-  "E702",  # несколько stmt в строке
+  "E702",  # несколько stmt на строке
   "B904",
 ]
