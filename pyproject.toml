@@ -1,26 +1,33 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
+############################
+#  build-system metadata   #
+############################
 [build-system]
 requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
+############################
+#      project meta        #
+############################
 [project]
-name = "zilant-prime-core"
-version = "0.1.4"
-description = "Core engine for Zilant Prime™"
-authors = [{name = "QuantumKeyUYU"}]
-readme = "README.md"
-license = {text = "MIT"}
+name            = "zilant-prime-core"
+version         = "0.1.4"
+description     = "Core engine for Zilant Prime™"
+authors         = [{ name = "QuantumKeyUYU" }]
+readme          = "README.md"
+license         = { text = "MIT" }
 requires-python = ">=3.10"
 
-# ── основные зависимости ──────────────────────────────
+# ── runtime deps ─────────────────────────────────────────────────────────
 dependencies = [
     "click>=8.0",
     "cryptography>=42.0.0",
-    "argon2-cffi>=21.3",    # <--- Важно для поддержки argon2 в CI
-    # тестовые нужны только для раннера, но для простоты добавим тут
-    "pytest>=7.4",
-    "pytest-cov>=4.1",
+    "argon2-cffi>=21.3",
 ]
 
+# ── optional / dev extras ────────────────────────────────────────────────
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4",
@@ -29,28 +36,54 @@ dev = [
     "black>=24.4",
     "ruff>=0.4",
     "build>=1.2",
-    "argon2-cffi>=21.3",  # дублируем тут для уверенности (если кто-то ставит dev)
 ]
 
+# ── entry-points (консольная команда `zilant`) ───────────────────────────
+[project.scripts]
+zilant = "zilant_prime_core.cli:main"
+
+# ── полезные ссылки, которые GitHub показывает на странице проекта ───────
+[project.urls]
+Homepage      = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+Source        = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+Issues        = "https://github.com/QuantumKeyUYU/zilant-prime-core/issues"
+Changelog     = "https://github.com/QuantumKeyUYU/zilant-prime-core/releases"
+
+############################
+#   setuptools discovery   #
+############################
 [tool.setuptools.packages.find]
 where = ["src"]
 
-# Можно настроить pytest и black через tool.pytest/black/ruff секции
+############################
+#       tooling cfg        #
+############################
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra -q --cov=src"
-testpaths = [
-    "tests",
-]
+addopts    = "-ra --cov=src --cov-report=term"
+testpaths  = ["tests"]
 
 [tool.black]
-line-length = 100
+line-length    = 100
 target-version = ["py310"]
 
 [tool.ruff]
-line-length = 100
+line-length    = 100
 target-version = "py310"
-select = ["E", "F", "I", "N", "B"]
+select         = ["E", "F", "I", "N", "B", "UP", "ARG"]
+extend-ignore  = ["E203"]     # конфликтует с Black
+src            = ["src", "tests"]
+exclude        = [
+    ".git",
+    ".venv",
+    ".mypy_cache",
+    ".pytest_cache",
+    "build",
+    "dist",
+]
 
-[tool.hypothesis]
-deadline = 1000
+#  если захочется управлять coverage напрямую
+[tool.coverage.run]
+source      = ["src"]
+branch      = true
+omit        = ["tests/*", "src/**/__main__.py"]

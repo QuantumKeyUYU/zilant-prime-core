@@ -1,7 +1,26 @@
-# ruff.toml
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
 
-# Выбираем правила, которые хотим проверять и автоматически исправлять
-select = ["F401", "E402", "E261", "E262"]
+############################
+#       Ruff config        #
+############################
+line-length    = 100
+target-version = "py310"
 
-# Разрешаем фиксить именно эти
-fixable = ["F401", "E402", "E261", "E262"]
+# базовый набор + «умные» проверки modern-python / arg / numpy-совместимость
+select   = ["E", "F", "B", "I", "N", "UP", "ARG"]
+# что автоматически чинить (`ALL` – чинит всё, что умеет Ruff)
+fixable  = ["ALL"]
+
+# пути, которые Ruff должен анализировать
+src = ["src", "tests"]
+
+# что пропускать (дублирует .gitignore, но Ruff читает быстрее)
+exclude = [
+    ".git",
+    ".venv",
+    ".mypy_cache",
+    ".pytest_cache",
+    "build",
+    "dist",
+]
