@@ -1,20 +1,16 @@
-﻿line-length    = 100
+﻿line-length = 100
 target-version = "py310"
 
 [lint]
 select = ["E", "F", "I", "N", "B"]
-ignore = [
-  "I001",  # порядок импортов
-  "B904",  # raise from err
-  "N802",  # snake_case имена функций
-]
+ignore = ["I001", "B904", "N802"]
 
 [lint.per-file-ignores]
 "tests/**/*.py" = [
-  "F401",  # unused import
-  "F841",  # unused variable
-  "I001",  # порядок импортов
-  "E501",  # длина строки
-  "E702",  # несколько stmt на строке
-  "B904",
+  "F401",
+  "F841",
+  "I001",
+  "E501",
+  "E702",
+  "B904"
 ]
