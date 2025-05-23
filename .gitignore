@@ -1,27 +1,90 @@
-# ✂ Python bytecode
+﻿# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 
-# ✂ Build artifacts
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
 build/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
 *.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# ✂ Pytest cache
-pytest_cache/
+# Virtual environments
+.env/
+.venv/
+env/
+venv/
+ENV/
 
-# ✂ Локальные файлы и примеры
-*.txt
-*.png
-*.zil
-out.*
-secret.*
-ascii.*
+# Pytest / test artifacts
+.pytest_cache/
+.pytest_temp/
+cache/
+.hypothesis/
+coverage.xml
+htmlcov/
+.coverage
+.coverage.*
+nosetests.xml
+*.cover
 
-# ✂ Ваши IDE/варианты виртуальных окружений
+# Sphinx docs
+docs/_build/
+
+# IDEs and editors
 .vscode/
 .idea/
-.venv/
-# PyInstaller spec files
-*.spec
+*.sublime-project
+*.sublime-workspace
+*.iml
+*.sw?
+*~ 
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite3
+
+# Pre-commit and linters
+.pre-commit-config.yaml
+coverage.xml
+
+# REUSE metadata
+.reuse/
+.reuseignore
+
+# Scripts artifacts (если есть)
+scripts/generated-sbom.*
+scripts/*.out
+
+# Build artifacts from setuptools / wheel
+pyproject.toml
+setup.py
+setup.cfg
+# (не игнорим этот файл, но выше настраивали SPDX-заголовки)
+
+# Temporary test output folders
+.pytest_temp/
+hypothesis_temp/
+
+# Any other local overrides
+local_settings.py
