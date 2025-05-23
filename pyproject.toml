@@ -64,19 +64,19 @@ branch = true
 omit   = ["*/tests/*", "*/.pytest_cache/*", "*/.ruff_cache/*"]
 
 ############################
-# Black config             #
+#        Black config      #
 ############################
 [tool.black]
 line-length    = 100
 target-version = ["py310"]
 
 ############################
-# Ruff config              #
+#        Ruff config       #
 ############################
 [tool.ruff]
 line-length    = 100
 target-version = "py310"
-select         = ["E", "F", "I", "N", "B"]
+select         = ["E", "F", "I", "N", "B", "UP", "ARG"]
 fixable        = ["ALL"]
 src            = ["src", "tests"]
 exclude        = [
@@ -87,10 +87,10 @@ exclude        = [
   "build",
   "dist",
 ]
-extend-ignore  = ["E203"]
+extend-ignore  = ["E203"]  # конфликтует с Black
 
 ############################
-# Hypothesis config        #
+#    Hypothesis config     #
 ############################
 [tool.hypothesis]
 deadline = 1000
