@@ -1,27 +1,87 @@
-# ✂ Python bytecode
+﻿\
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+# ------------------------------------------------------------------------------
+#  Zilant Prime Core  вЂ“  .gitignore
+# ------------------------------------------------------------------------------
+
+###############################################################################
+#  Python  byte-code / build artefacts
+###############################################################################
 __pycache__/
 *.py[cod]
-*$py.class
+*.pyo
+*.pyd
+*.so
 
-# ✂ Build artifacts
+# Virtual-envs
+.env/
+.venv/
+venv/
+env/
+
+# Packaging & build output
 build/
 dist/
+wheelhouse/
 *.egg-info/
+*.egg
+*.whl
+*.tar.gz
+*.zip
 
-# ✂ Pytest cache
-pytest_cache/
+###############################################################################
+#  Testing artefacts
+###############################################################################
+.hypothesis/           # Hypothesis examples & constants
+.pytest_cache/         # pytest cache (old)
+.pytest_temp/          # pytest tmpdir (custom in this repo)
+.coverage*             # coverage data files
+coverage.xml
+htmlcov/               # coverage HTML report
+.tox/                  # tox virtual-envs
 
-# ✂ Локальные файлы и примеры
-*.txt
-*.png
-*.zil
-out.*
-secret.*
-ascii.*
+###############################################################################
+#  Tooling / linters / type-checkers
+###############################################################################
+.mypy_cache/
+ruff_cache/
+.pytype/
+pip-wheel-metadata/
 
-# ✂ Ваши IDE/варианты виртуальных окружений
+###############################################################################
+#  REUSE helper
+###############################################################################
+.reuse/
+.reuseignore
+
+###############################################################################
+#  IDE / Editor junk
+###############################################################################
 .vscode/
 .idea/
-.venv/
-# PyInstaller spec files
-*.spec
+*.sublime-project
+*.sublime-workspace
+
+###############################################################################
+#  OS-specific cruft
+###############################################################################
+.DS_Store
+Thumbs.db
+
+###############################################################################
+#  Backup / swap / logs
+###############################################################################
+*.log
+*.bak
+*.tmp
+*~
+*.swp
+*.swo
+
+###############################################################################
+#  Generated SBOMs & other CI artefacts
+###############################################################################
+sbom-*.spdx.json
+sbom-*.spdx.yaml
+
