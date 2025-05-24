@@ -22,10 +22,17 @@ pip-delete-this-directory.txt
 .cache/
 .coverage
 .coverage.*
-htmlcov/
 coverage.xml
-nosetests.xml
-test-results/
+htmlcov/
+
+# Hypothesis
+.hypothesis/
+
+# Ruff cache
+.ruff_cache/
+
+# Mypy
+.mypy_cache/
 
 # Virtual environments
 .env/
@@ -33,6 +40,9 @@ test-results/
 env/
 venv/
 ENV/
+
+# Pre-commit cache (hooks), but NOT the config file!
+.pre-commit/
 
 # Editor directories and files
 .idea/
@@ -45,23 +55,9 @@ ENV/
 Thumbs.db
 desktop.ini
 
-# Mypy
-.mypy_cache/
-.dmypy.json
-
-# Ruff
-.ruff_cache/
-
-# Hypothesis
-.hypothesis/
-
-# Pre-commit caches (but NOT the config file!)
-.pre-commit/
-.pre-commit-config.yaml
-
-# GitHub Actions artifacts
-.github/workflows/*.retry
-
 # Logs and databases
 *.log
 *.sqlite3
+
+# Backup files
+*~
