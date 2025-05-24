@@ -69,7 +69,6 @@ exclude        = [
   "build",
   "dist",
 ]
-# extend-ignore  = ["E203"]  ← удалено, ruff теперь не будет ругаться
 
 [tool.hypothesis]
 deadline = 1000
