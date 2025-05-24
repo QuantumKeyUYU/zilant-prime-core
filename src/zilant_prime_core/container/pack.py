@@ -1,10 +1,19 @@
-import os
+__all__ = [
+    'PackError',
+    'pack',
+]
+
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 import json
+import os
 from pathlib import Path
 
-from zilant_prime_core.utils.constants import DEFAULT_SALT_LENGTH, DEFAULT_NONCE_LENGTH
-from zilant_prime_core.crypto.kdf import derive_key
 from zilant_prime_core.crypto.aead import encrypt_aead
+from zilant_prime_core.crypto.kdf import derive_key
+from zilant_prime_core.utils.constants import (DEFAULT_NONCE_LENGTH,
+                                               DEFAULT_SALT_LENGTH)
 
 
 class PackError(Exception):

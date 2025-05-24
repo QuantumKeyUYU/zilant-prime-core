@@ -1,3 +1,13 @@
+__all__ = [
+    'VDFVerificationError',
+    'generate_posw_sha256',
+    'prove_posw_sha256',
+    'verify_posw_sha256',
+]
+
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 import hashlib
 
 

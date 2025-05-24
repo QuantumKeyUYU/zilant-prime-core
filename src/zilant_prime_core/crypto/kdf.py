@@ -1,8 +1,22 @@
+__all__ = [
+    'DEFAULT_MEMORY_MAX',
+    'DEFAULT_MEMORY_MIN',
+    'DEFAULT_TIME_MAX',
+    'derive_key',
+    'derive_key_dynamic',
+    'generate_salt',
+]
+
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 import os
+
 import argon2.low_level as a2
 
-from zilant_prime_core.utils.constants import DEFAULT_KEY_LENGTH, DEFAULT_SALT_LENGTH
 from zilant_prime_core.crypto.g_new import G_new
+from zilant_prime_core.utils.constants import (DEFAULT_KEY_LENGTH,
+                                               DEFAULT_SALT_LENGTH)
 
 # минимальное и максимальное значение памяти (KiB) для динамики
 DEFAULT_MEMORY_MIN = 2**15  # 32 MiB

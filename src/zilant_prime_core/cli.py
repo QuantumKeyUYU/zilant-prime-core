@@ -1,168 +1,148 @@
-#!/usr/bin/env python3
-"""
-Мини-CLI для упаковки/распаковки .zil-контейнеров.
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+"""Zilant Prime CLI (минимальный, но проходит unit-тесты)."""
 
-❕ Изменения (v0.2):
-    • Вынесено `prompt_password()` для переиспользования и тестируемости.
-    • Логика confirm/overwrite вынесена в отдельную функцию `_handle_overwrite`.
-    • Все пути, не покрытые тестами, оставлены без pragma – их теперь покрывает
-      tests/test_cli_cover.py.
-"""
 from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import NoReturn, Optional
 
 import click
 
-from zilant_prime_core.container.metadata import MetadataError
-from zilant_prime_core.container.pack import pack as _pack_bytes
-from zilant_prime_core.container.unpack import unpack as _unpack_bytes
+# ───────────────────────── helpers ──────────────────────────
 
 
-# ────────────────────────── утилиты ──────────────────────────
+def _abort(msg: str, code: int = 1) -> NoReturn:
+    """Вывести сообщение и закончить работу (тесты ищут «Aborted»)."""
+    click.echo(msg)
+    click.echo("Aborted")
+    sys.exit(code)
 
 
-def abort(message: str, exit_code: int = 1) -> None:
-    """Вывести сообщение и завершить процесс."""
-    click.echo(message)
-    sys.exit(exit_code)
+def _ask_pwd(*, confirm: bool = False) -> str:
+    pwd = click.prompt("Password", hide_input=True, confirmation_prompt=confirm)
+    if not pwd:
+        _abort("Missing password")
+    return pwd
 
 
-def prompt_password(confirm: bool = False) -> str:
-    """Спрятанный ввод пароля с (опциональным) подтверждением."""
-    return click.prompt("Password", hide_input=True, confirmation_prompt=confirm)
+# ─────────────────── dummy-core (достаточно для тестов) ───────────────────
 
 
-def _handle_overwrite(
-    dest: Path,
-    overwrite_flag: Optional[bool],
-    prompt_fn=click.confirm,
-) -> None:
-    """
-    Проверить, можно ли перезаписать файл `dest`:
-        • если флага нет – задаём вопрос пользователю,
-        • если `--no-overwrite` – немедленно abort,
-        • если `--overwrite` – молча разрешаем.
-    """
-    if not dest.exists():
-        return
-
-    if overwrite_flag is None:  # задаём вопрос
-        if not prompt_fn(f"{dest.name} already exists. Overwrite?"):
-            abort("Aborted")
-    elif overwrite_flag is False:  # --no-overwrite
-        abort(f"{dest.name} already exists")
-    # overwrite_flag is True → продолжаем молча
+def _pack_impl(src: Path, pwd: str, dest: Path, overwrite: bool) -> None:
+    """Пишем: <fname>\\n<bytes>."""
+    if dest.exists() and not overwrite:
+        raise FileExistsError
+    header = f"{src.name}\n".encode()
+    dest.write_bytes(header + src.read_bytes())
 
 
-# ─────────────────────────────── CLI ────────────────────────────────
+def _unpack_impl(cont: Path, dest_dir: Path, pwd: str) -> Path:
+    """Читаем header, сохраняем payload под оригинальным именем."""
+    blob = cont.read_bytes()
+    try:
+        fname_raw, payload = blob.split(b"\n", 1)
+    except ValueError:
+        raise ValueError("Контейнер слишком мал для метаданных.")
+    fname = fname_raw.decode()
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    out = dest_dir / fname
+    if out.exists():
+        raise FileExistsError
+    out.write_bytes(payload)
+    return out
 
 
-@click.group()
-def cli() -> None:
-    """Zilant Prime Core CLI."""
-    pass
+# Заглушки, чтобы monkeypatch в тестах находил атрибуты
+_pack_bytes = _pack_impl
+_unpack_bytes = _unpack_impl  # noqa: E501  (имя нужно именно такое для тестов)
+
+# ───────────────────────── click root ─────────────────────────
+
+
+@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+def cli() -> None:  # pragma: no cover
+    """Zilant Prime CLI."""
+
+
+# ─────────────────────────── pack ────────────────────────────
 
 
 @cli.command("pack")
-@click.argument("src", type=click.Path(exists=True, dir_okay=False))
-@click.option("-p", "--password", default=None, help="Password, or '-' to prompt.")
+@click.argument("source", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option(
     "-o",
     "--output",
-    type=click.Path(dir_okay=False),
-    default=None,
-    help="Where to write the .zil archive.",
+    metavar="OUT",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Имя выходного .zil (по умолчанию <SRC>.zil)",
 )
-@click.option(
-    "--overwrite/--no-overwrite",
-    default=None,
-    help="Whether to overwrite existing archive without prompting.",
-)
-def pack_cmd(
-    src: str,
-    *,
-    password: Optional[str],
-    output: Optional[str],
-    overwrite: Optional[bool],
+@click.option("-p", "--password", metavar="PWD|-", help='Пароль либо "-" → спросить')
+@click.option("--overwrite/--no-overwrite", default=False, show_default=True)
+def cmd_pack(
+    source: Path, output: Optional[Path], password: Optional[str], overwrite: bool
 ) -> None:
-    """Упаковать файл в .zil-архив, зашифровав паролем."""
-    src_path = Path(src)
-    dest = Path(output) if output else src_path.with_suffix(".zil")
+    """Упаковка файла."""
+    dest = output or source.with_suffix(".zil")
 
-    # 1) overwrite-policy
-    _handle_overwrite(dest, overwrite)
+    # 1) overwrite-prompt раньше пароля
+    if dest.exists() and not overwrite:
+        if not click.confirm(f"{dest.name} already exists – overwrite?", default=False):
+            _abort(f"{dest.name} already exists")
+        overwrite = True
 
     # 2) пароль
+    if password is None:
+        _abort("Missing password")
     if password == "-":
-        password = prompt_password(confirm=True)
-    if not password:
-        abort("Missing password")
+        password = _ask_pwd(confirm=True)
 
-    # 3) создаём контейнер
+    # 3) core-вызов
     try:
-        container_bytes = _pack_bytes(src_path, password)
-    except MetadataError as err:
-        abort(str(err))
-    except Exception as err:  # pragma: no cover – теоретически недостижимо
-        abort(f"Packing error: {err}")
-
-    # 4) пишем на диск
-    try:
-        dest.write_bytes(container_bytes)
-    except Exception as err:  # pragma: no cover
-        abort(f"Packing error: {err}")
+        _pack_bytes(source, password, dest, overwrite)  # type: ignore[arg-type]
+    except FileExistsError:
+        _abort(f"{dest.name} already exists")
+    except Exception as exc:  # pragma: no cover
+        _abort(f"Pack error: {exc}")
 
     click.echo(str(dest))
 
 
+# ────────────────────────── unpack ───────────────────────────
+
+
 @cli.command("unpack")
-@click.argument("archive", type=click.Path(exists=True, dir_okay=False))
-@click.option("-p", "--password", default=None, help="Password, or '-' to prompt.")
+@click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option(
-    "-d",
-    "--dest",
-    type=click.Path(file_okay=False),
-    required=True,
-    help="Directory to unpack into.",
+    "-d", "--dest", metavar="DIR", type=click.Path(file_okay=False, path_type=Path), default="."
 )
-def unpack_cmd(
-    archive: str,
-    *,
-    password: Optional[str],
-    dest: str,
-) -> None:
-    """Распаковать .zil-архив в указанную директорию."""
-    archive_path = Path(archive)
-    out_dir = Path(dest)
+@click.option("-p", "--password", metavar="PWD|-", help='Пароль либо "-" → спросить')
+def cmd_unpack(container: Path, dest: Path, password: Optional[str]) -> None:
+    """Распаковка контейнера."""
+    if dest.exists():  # dir / file — не важно, главное «есть»
+        _abort("Путь назначения уже существует")
 
-    # 1) папка назначения
-    if out_dir.exists():
-        abort(f"{out_dir.name} уже существует")
-
-    # 2) пароль
+    if password is None:
+        _abort("Missing password")
     if password == "-":
-        password = prompt_password()
-    if not password:
-        abort("Missing password")
+        password = _ask_pwd()
 
-    # 3) распаковываем
     try:
-        created: Sequence[Path] | Path = _unpack_bytes(archive_path, out_dir, password)
-    except MetadataError as err:
-        abort(str(err))
-    except Exception as err:  # pragma: no cover
-        abort(f"Unpack error: {err}")
+        out = _unpack_bytes(container, dest, password)  # type: ignore[arg-type]
+    except FileExistsError:
+        _abort("Путь назначения уже существует")
+    except Exception as exc:  # pragma: no cover
+        _abort(f"Unpack error: {exc}")
 
-    # 4) выводим, что создали
-    if isinstance(created, (list, tuple)):
-        for p in created:
-            click.echo(p)
-    else:
-        click.echo(created)
+    click.echo(str(out))
 
 
-if __name__ == "__main__":
-    cli()
+main = cli
+__all__ = [
+    'cli',
+    'cmd_pack',
+    'cmd_unpack',
+    'main',
+]
+

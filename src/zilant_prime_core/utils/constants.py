@@ -1,3 +1,16 @@
+__all__ = [
+    'DEFAULT_KEY_LENGTH',
+    'DEFAULT_NONCE_LENGTH',
+    'DEFAULT_SALT_LENGTH',
+    'HEADER_FMT',
+    'HEADER_SIZE',
+    'MAGIC',
+    'VERSION',
+]
+
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 from struct import calcsize
 
 # ─── Container header constants (not used in this minimal JSON approach) ───

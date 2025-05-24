@@ -1,3 +1,17 @@
+__all__ = [
+    'VDFVerificationError',
+    'generate_elc_vdf',
+    'generate_landscape',
+    'generate_posw_sha256',
+    'prove_posw_sha256',
+    'verify_elc_vdf',
+    'verify_landscape',
+    'verify_posw_sha256',
+]
+
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 """
 Elementary (hash-chain) VDF based on SHA-256.
 
@@ -10,7 +24,6 @@ Elementary (hash-chain) VDF based on SHA-256.
 from __future__ import annotations
 
 import hashlib
-
 
 # ─────────────────────────── exceptions ──────────────────────────────
 
