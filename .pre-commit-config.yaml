@@ -11,8 +11,8 @@ repos:
       - id: ruff
         args: [--fix]
 
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.12.0
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
     hooks:
       - id: isort
 
@@ -23,4 +23,4 @@ repos:
         entry: python src/zilant_prime_core/scripts/add_spdx_headers.py src tests
         language: system
         files: \.py$
-        stages: [commit]
+        stages: [pre-commit]
