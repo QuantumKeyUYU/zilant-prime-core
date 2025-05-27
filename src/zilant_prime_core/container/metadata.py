@@ -5,18 +5,18 @@ from __future__ import annotations
 
 import base64
 import json
+from collections.abc import MutableMapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, MutableMapping
+from typing import Any
 
 __all__ = [
-    'Metadata',
-    'MetadataError',
-    'deserialize_metadata',
-    'new_meta_for_file',
-    'serialize_metadata',
+    "Metadata",
+    "MetadataError",
+    "deserialize_metadata",
+    "new_meta_for_file",
+    "serialize_metadata",
 ]
-
 
 
 class MetadataError(Exception):
@@ -27,7 +27,7 @@ class MetadataError(Exception):
 class Metadata:
     filename: str
     size: int
-    extra: Dict[str, Any] = field(default_factory=dict)
+    extra: dict[str, Any] = field(default_factory=dict)
 
     def __init__(
         self,
@@ -35,7 +35,7 @@ class Metadata:
         size: int | None = None,
         *,
         file: str | None = None,
-        extra: Dict[str, Any] | None = None,
+        extra: dict[str, Any] | None = None,
     ) -> None:
         if filename is None and file is None:
             raise MetadataError("`filename`/`file` is required")
@@ -45,11 +45,11 @@ class Metadata:
         self.size = int(size)
         self.extra = dict(extra or {})
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {"filename": self.filename, "size": self.size, **self.extra}
 
     @classmethod
-    def from_mapping(cls, mapping: Dict[str, Any]) -> "Metadata":
+    def from_mapping(cls, mapping: dict[str, Any]) -> Metadata:
         try:
             fn = mapping.get("filename") or mapping["file"]
             sz = mapping["size"]
@@ -89,7 +89,7 @@ def new_meta_for_file(path: Path) -> Metadata:
     return Metadata(filename=path.name, size=st.st_size)
 
 
-def serialize_metadata(meta: Metadata | Dict[str, Any]) -> bytes:
+def serialize_metadata(meta: Metadata | dict[str, Any]) -> bytes:
     try:
         if isinstance(meta, Metadata):
             obj = meta.to_dict()
@@ -106,7 +106,7 @@ def serialize_metadata(meta: Metadata | Dict[str, Any]) -> bytes:
         raise MetadataError(str(exc)) from exc
 
 
-def deserialize_metadata(raw: bytes | bytearray | memoryview) -> Dict[str, Any]:
+def deserialize_metadata(raw: bytes | bytearray | memoryview) -> dict[str, Any]:
     try:
         return json.loads(bytes(raw).decode("utf-8"))
     except Exception as exc:

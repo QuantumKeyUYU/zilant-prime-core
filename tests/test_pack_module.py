@@ -1,4 +1,8 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 from pathlib import Path
+
 import pytest
 
 from zilant_prime_core.container.pack import pack

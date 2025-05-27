@@ -1,5 +1,10 @@
-import pytest
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 import hashlib
+
+import pytest
+
 from zilant_prime_core.vdf.phase_vdf import generate_elc_vdf, verify_elc_vdf
 
 

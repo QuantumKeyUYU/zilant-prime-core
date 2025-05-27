@@ -1,14 +1,13 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 # tests/test_kdf_dynamic.py
 
 import os
+
 import pytest
 
-from zilant_prime_core.crypto.kdf import (
-    generate_salt,
-    derive_key,
-    derive_key_dynamic,
-    DEFAULT_KEY_LENGTH,
-)
+from zilant_prime_core.crypto.kdf import DEFAULT_KEY_LENGTH, derive_key, derive_key_dynamic, generate_salt
 from zilant_prime_core.utils.constants import DEFAULT_SALT_LENGTH
 
 

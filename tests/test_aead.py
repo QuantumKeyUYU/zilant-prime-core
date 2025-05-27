@@ -1,16 +1,21 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
+import builtins
+import hashlib
+
 # tests/test_aead.py
 import os
-import hashlib
-import builtins
+
 import pytest
 
 from zilant_prime_core.crypto.aead import (
-    encrypt_aead,
-    decrypt_aead,
-    generate_nonce,
-    AEADInvalidTagError,
-    DEFAULT_NONCE_LENGTH,
     DEFAULT_KEY_LENGTH,
+    DEFAULT_NONCE_LENGTH,
+    AEADInvalidTagError,
+    decrypt_aead,
+    encrypt_aead,
+    generate_nonce,
 )
 
 
@@ -118,7 +123,5 @@ def test_decrypt_aead_invalid_input_lengths():
         decrypt_aead(key[:-1], nonce, ct, b"aad")
     with pytest.raises(ValueError, match=f"Nonce must be {DEFAULT_NONCE_LENGTH} bytes long."):
         decrypt_aead(key, nonce[:-1], ct, b"aad")
-    with pytest.raises(
-        ValueError, match="Ciphertext is too short to contain the authentication tag."
-    ):
+    with pytest.raises(ValueError, match="Ciphertext is too short to contain the authentication tag."):
         decrypt_aead(key, nonce, b"short", b"aad")

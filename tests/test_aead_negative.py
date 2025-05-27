@@ -1,11 +1,16 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 import os
+
 import pytest
+
 from zilant_prime_core.crypto.aead import (
-    encrypt_aead,
-    decrypt_aead,
-    generate_nonce,
     DEFAULT_KEY_LENGTH,
     AEADInvalidTagError,
+    decrypt_aead,
+    encrypt_aead,
+    generate_nonce,
 )
 
 KEY = os.urandom(DEFAULT_KEY_LENGTH)

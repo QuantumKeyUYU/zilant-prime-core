@@ -1,5 +1,8 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 __all__ = [
-    'get_logger',
+    "get_logger",
 ]
 
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
