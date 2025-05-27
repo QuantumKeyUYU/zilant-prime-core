@@ -1,11 +1,28 @@
+# ruff: noqa: F404,F811,B905,E741
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
 
-"""Мини-«пейзаж» из (clauses, salts) с добровольной strict-валидацией."""
+"""
+Мини-«пейзаж» из (clauses, salts) с добровольной strict-валидацией,
+а также генератор и верификатор простых SAT‐формул.
+
+Функции:
+  - generate_landscape(size: int, *, strict: bool=False) → tuple[list[int], list[int]]
+  - verify_landscape(obj: Any, *, strict: bool=False) → bool
+  - generate_sat(nvars: int, nclauses: int, lits_per_clause: int=3) → list[list[int]]
+  - verify_sat(cnf: list[list[int]], assignment: Sequence[bool]) → bool
+"""
 
 from __future__ import annotations
+
 import random
-from typing import Any, List, Tuple
+from typing import Any, List, Sequence, Tuple
+
+Literal = int
+Clause = List[Literal]
+CNF = List[Clause]
+
+__all__ = ["generate_landscape", "verify_landscape", "generate_sat", "verify_sat", "CNF"]
 
 
 def generate_landscape(size: int, *, strict: bool = False) -> Tuple[List[int], List[int]]:
@@ -20,10 +37,9 @@ def generate_landscape(size: int, *, strict: bool = False) -> Tuple[List[int], L
         raise ValueError("size must be positive")
 
     clauses: List[int] = []
-    salts:   List[int] = []
+    salts: List[int] = []
 
     for _ in range(size):
-        # если строгий режим — только 0 или 1, иначе полное 0–255
         clause = random.randint(0, 1) if strict else random.randint(0, 255)
         clauses.append(clause)
         salts.append(random.randint(0, 2**31 - 1))
@@ -38,41 +54,23 @@ def verify_landscape(obj: Any, *, strict: bool = False) -> bool:
       - если strict=True, clauses допускаются только 0 или 1
       - в любом случае все элементы должны быть int
 
-    :raises ValueError: если структура obj не соответствует tuple[list,int] или длины разные
+    :raises ValueError: если структура obj не соответствует tuple[list[int], list[int]]
+                         или длины разные
     """
-    if not (isinstance(obj, tuple) and len(obj) == 2 and
-            all(isinstance(lst, list) for lst in obj)):
+    if not (isinstance(obj, tuple) and len(obj) == 2 and all(isinstance(lst, list) for lst in obj)):
         raise ValueError("Landscape must be tuple(list[int], list[int])")
 
     clauses, salts = obj
     if len(clauses) != len(salts):
         raise ValueError("Clauses and salts must have same length")
 
-    # Явно указываем strict=False, чтобы ruff не ругался B905
     for clause, salt in zip(clauses, salts, strict=False):
         if not isinstance(clause, int) or not isinstance(salt, int):
             return False
         if strict and clause not in (0, 1):
             return False
 
-"""
-Мини-генератор элементарных SAT-«пейзажей» и быстрая проверка решения.
-
-* `generate_sat(nvars, nclauses, lits_per_clause=3)` → CNF-список.
-* `verify_sat(cnf, assignment)` возвращает `True/False` или
-  поднимает `ValueError`, если переменных в назначении не хватает.
-"""
-
-from __future__ import annotations
-
-import random
-from typing import List, Sequence
-
-Literal = int
-Clause = List[Literal]
-CNF = List[Clause]
-
-__all__ = ["generate_sat", "verify_sat", "CNF"]
+    return True
 
 
 def _rand_literal(nvars: int) -> Literal:
@@ -81,7 +79,9 @@ def _rand_literal(nvars: int) -> Literal:
 
 
 def generate_sat(nvars: int, nclauses: int, lits_per_clause: int = 3) -> CNF:
-    """Сгенерировать псевдо-случайную CNF‐формулу (k-SAT)."""
+    """
+    Сгенерировать псевдо-случайную CNF-формулу (k-SAT).
+    """
     return [[_rand_literal(nvars) for _ in range(lits_per_clause)] for _ in range(nclauses)]
 
 
@@ -89,14 +89,19 @@ def verify_sat(cnf: CNF, assignment: Sequence[bool]) -> bool:
     """
     Проверить, удовлетворяет ли булевое `assignment` формуле `cnf`.
 
-    * `assignment[i]` — значение переменной *i+1*.
-    * Положительный литерал `k` истинен, если `assignment[k-1] is True`.
-    * Отрицательный `-k` истинен, если `assignment[k-1] is False`.
+    :raises ValueError: если в `cnf` встречается литерал с номером больше len(assignment)
     """
     if any(abs(lit) > len(assignment) for clause in cnf for lit in clause):
         raise ValueError("assignment shorter than variable id in CNF")
 
     for clause in cnf:
-        if not any((assignment[abs(lit) - 1]) ^ (lit < 0) for lit in clause):
+        satisfied = False
+        for lit in clause:
+            val = assignment[abs(lit) - 1]
+            if (lit > 0 and val) or (lit < 0 and not val):
+                satisfied = True
+                break
+        if not satisfied:
             return False
+
     return True
