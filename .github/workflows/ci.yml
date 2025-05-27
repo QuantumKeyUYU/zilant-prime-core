@@ -2,13 +2,12 @@ name: Foundation CI
 
 on:
   push:
-    branches: [ main ]
-    tags:     [ 'v*' ]
+    branches:
+      - main
+    tags:
+      - 'v*'
   pull_request:
   workflow_dispatch:
-
-env:
-  PYTHON_VERSIONS: [ '3.10', '3.11', '3.12' ]
 
 jobs:
   # ──────────────────────────── 0.1–0.4 Lint & Format ────────────────────────────
@@ -54,7 +53,6 @@ jobs:
     needs: lint-format
 
     env:
-      # флаги для ASan/UBSan (если есть C/C++ расширения)
       CFLAGS: "-fsanitize=address,undefined -fno-omit-frame-pointer"
       LDFLAGS: "-fsanitize=address,undefined"
 
@@ -94,16 +92,16 @@ jobs:
     needs: [ lint-format, security ]
     strategy:
       matrix:
-        python: ${{ fromJson(env.PYTHON_VERSIONS) }}
+        python-version: [3.10, 3.11, 3.12]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python ${{ matrix.python }}
+      - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python }}
+          python-version: ${{ matrix.python-version }}
           cache: pip
 
       - name: Install project (+ dev deps)
@@ -122,19 +120,19 @@ jobs:
       - name: Upload coverage HTML
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-html-py${{ matrix.python }}
+          name: coverage-html-py${{ matrix.python-version }}
           path: htmlcov
 
       - name: Upload coverage XML
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-xml-py${{ matrix.python }}
+          name: coverage-xml-py${{ matrix.python-version }}
           path: coverage.xml
 
       - name: Upload pytest report
         uses: actions/upload-artifact@v4
         with:
-          name: pytest-report-py${{ matrix.python }}
+          name: pytest-report-py${{ matrix.python-version }}
           path: pytest-report.xml
 
   # ──────────────────────────── 0.6 Reproducible Build ────────────────────────────
