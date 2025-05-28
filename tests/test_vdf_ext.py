@@ -1,6 +1,11 @@
-import pytest
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 import hashlib
-from zilant_prime_core.vdf.vdf import generate_posw_sha256, verify_posw_sha256, prove_posw_sha256
+
+import pytest
+
+from zilant_prime_core.vdf.vdf import generate_posw_sha256, prove_posw_sha256, verify_posw_sha256
 
 
 def test_generate_invalid_seed_type():

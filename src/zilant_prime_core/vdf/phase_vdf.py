@@ -1,12 +1,15 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 __all__ = [
-    'VDFVerificationError',
-    'generate_elc_vdf',
-    'generate_landscape',
-    'generate_posw_sha256',
-    'prove_posw_sha256',
-    'verify_elc_vdf',
-    'verify_landscape',
-    'verify_posw_sha256',
+    "VDFVerificationError",
+    "generate_elc_vdf",
+    "generate_landscape",
+    "generate_posw_sha256",
+    "prove_posw_sha256",
+    "verify_elc_vdf",
+    "verify_landscape",
+    "verify_posw_sha256",
 ]
 
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
@@ -20,8 +23,6 @@ Elementary (hash-chain) VDF based on SHA-256.
     • generate_posw_sha256 / verify_posw_sha256 / prove_posw_sha256
     • generate_landscape  / verify_landscape
 """
-
-from __future__ import annotations
 
 import hashlib
 

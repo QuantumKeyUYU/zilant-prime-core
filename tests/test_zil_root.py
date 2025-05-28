@@ -1,8 +1,13 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 # tests/test_zil_root.py
 
 import json
+
 import pytest
-from zil import pack_zil, unpack_zil, SelfDestructError
+
+from zil import SelfDestructError, pack_zil, unpack_zil
 
 
 def make_container(info, payload=b"OK"):

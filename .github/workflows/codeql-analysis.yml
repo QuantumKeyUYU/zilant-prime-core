@@ -1,0 +1,33 @@
+name: 🔐 CodeQL Analysis
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:      # опционально — чтобы анализировалось по расписанию
+    - cron: '0 0 * * 0'  # каждое воскресенье в полночь
+
+permissions:
+  contents: read    # для checkout
+  security-events: write
+
+jobs:
+  analyze:
+    name: Perform CodeQL Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python, c
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Run CodeQL queries
+        uses: github/codeql-action/analyze@v3

@@ -1,6 +1,9 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 __all__ = [
-    'GNewError',
-    'G_new',
+    "GNewError",
+    "G_new",
 ]
 
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors

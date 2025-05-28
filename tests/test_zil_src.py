@@ -1,9 +1,15 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 # tests/test_zil_src.py
 
 import json
 import struct
+
 import pytest
-from src.zil import pack_zill, unpack_zil as unpack_src, SelfDestructError
+
+from src.zil import SelfDestructError, pack_zill
+from src.zil import unpack_zil as unpack_src
 
 
 def test_pack_zill_embeds_meta_and_payload():

@@ -1,7 +1,11 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 # tests/test_vdf_property.py
 
-from hypothesis import given, strategies as st
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from zilant_prime_core.vdf.vdf import generate_posw_sha256, verify_posw_sha256
 

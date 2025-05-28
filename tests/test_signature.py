@@ -1,10 +1,9 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 import pytest
-from zilant_prime_core.crypto.signature import (
-    generate_keypair,
-    sign,
-    verify,
-    SignatureError,
-)
+
+from zilant_prime_core.crypto.signature import SignatureError, generate_keypair, sign, verify
 
 
 def test_signature_roundtrip():

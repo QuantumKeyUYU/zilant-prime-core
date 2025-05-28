@@ -1,86 +1,186 @@
-name: CI
+name: Foundation CI
 
 on:
   push:
-    branches: [main]
-    tags:     ["v*"]
+    branches:
+      - main
+    tags:
+      - 'v*'
   pull_request:
-  workflow_dispatch:
+  schedule:
+    # Weekly CodeQL scan
+    - cron: '0 0 * * 0'
+
+permissions:
+  contents: read
+  security-events: write
+  packages: write
 
 jobs:
-  # ─────────────────────────────────────────────────────────────────
-  lint:
-    name: Ruff / Black
-    runs-on: ubuntu-latest
 
+  🔍 lint-format:
+    name: Lint & Format
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v5
-      with:
-        python-version: "3.11"
-        cache: pip
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
 
-    - run: |
-        python -m pip install --upgrade pip
-        pip install ruff black
+      - name: Install linters & type-checker
+        run: pip install ruff black isort mypy
 
-    - name: ruff (code + tests)
-      run: ruff check src tests
+      - name: Ruff
+        run: ruff check src tests
 
-    - name: black (check‑only)
-      run: black --check src tests
+      - name: Black
+        run: black --check src tests
 
-  # ─────────────────────────────────────────────────────────────────
-  test:
-    name: Tests (py${{ matrix.python }})
-    needs: lint
+      - name: isort
+        run: isort --check-only src tests
+
+      - name: mypy
+        run: mypy src --strict
+
+  🛡️ semgrep-scan:
+    name: Semgrep OSS Scan
     runs-on: ubuntu-latest
+    needs: lint-format
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep
+        run: semgrep --config=p/ci
+
+  🔐 codeql-analysis:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    needs: lint-format
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python, c
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+
+  🔧 asan-ubsan:
+    name: ASan/UBSan C Build & Test
+    runs-on: ubuntu-latest
+    needs: lint-format
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install C toolchain
+        run: sudo apt-get update && sudo apt-get install -y build-essential clang
+
+      - name: Build with ASan & UBSan
+        run: |
+          mkdir -p build
+          clang -fsanitize=address,undefined -fno-omit-frame-pointer \
+            -Ihdr -o build/zil_c hdr/*.c src/*.c
+
+      - name: Run C tests
+        run: build/zil_c --run-tests
+
+  ✅ test-matrix:
+    name: Test Matrix & Coverage
+    runs-on: ubuntu-latest
+    needs:
+      - semgrep-scan
+      - codeql-analysis
+      - asan-ubsan
     strategy:
-      fail-fast: false
       matrix:
-        python: ["3.10", "3.11", "3.12"]
-
+        python: ['3.10', '3.11', '3.12']
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python }}
-        cache: pip
+      - name: Setup Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
 
-    - name: Install project (+ dev deps)
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e .[dev]
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-dev.txt
+          pip install coverage
 
-    - name: Run tests
-      run: pytest
+      - name: Run tests with coverage
+        run: |
+          coverage run -m pytest
+          coverage xml
+          coverage html
 
-    - name: Upload coverage html
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-html-py${{ matrix.python }}
-        path: htmlcov
-        retention-days: 7
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: htmlcov/
 
-  # ─────────────────────────────────────────────────────────────────
-  build-wheel:
-    name: Build wheel & sdist
-    needs: test
+  🧪 fuzz:
+    name: Fuzz Testing
     runs-on: ubuntu-latest
-
+    needs: test-matrix
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: "3.11"
-        cache: pip
-    - run: |
-        python -m pip install --upgrade pip build
-        python -m build --sdist --wheel --outdir dist/
-    - uses: actions/upload-artifact@v4
-      with:
-        name: dist
-        path: dist/*
-        retention-days: 7
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install Atheris
+        run: pip install atheris
+
+      - name: Run Python fuzzers
+        run: python -m atheris tests/fuzz_target.py
+
+  📦 release:
+    name: Build & Publish
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs: fuzz
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build tools
+        run: pip install build twine cosign
+
+      - name: Build distributions
+        run: python -m build
+
+      - name: Sign artifacts with Cosign
+        run: cosign sign --key ${{ secrets.COSIGN_KEY }} dist/*
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
+
+      - name: Create GitHub Release
+        uses: softprops/turnstyle@v1
+        with:
+          tag: ${{ github.ref_name }}
+          draft: false

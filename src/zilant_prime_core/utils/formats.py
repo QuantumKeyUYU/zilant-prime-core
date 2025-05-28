@@ -1,15 +1,16 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 __all__ = [
-    'from_b64',
-    'from_hex',
-    'to_b64',
-    'to_hex',
+    "from_b64",
+    "from_hex",
+    "to_b64",
+    "to_hex",
 ]
 
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
 """Hex / Base64 helpers (Ruff & mypy clean)."""
-
-from __future__ import annotations
 
 import base64
 import binascii

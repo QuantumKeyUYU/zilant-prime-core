@@ -1,9 +1,9 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 import pytest
-from zilant_prime_core.container.metadata import (
-    serialize_metadata,
-    deserialize_metadata,
-    MetadataError,
-)
+
+from zilant_prime_core.container.metadata import MetadataError, deserialize_metadata, serialize_metadata
 
 
 def test_metadata_roundtrip():

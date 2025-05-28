@@ -1,14 +1,18 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 # tests/test_metadata_extra.py
 
 import json
+
 import pytest
 
 from zilant_prime_core.container.metadata import (
     Metadata,
     MetadataError,
+    deserialize_metadata,
     new_meta_for_file,
     serialize_metadata,
-    deserialize_metadata,
 )
 from zilant_prime_core.utils.formats import from_b64
 
