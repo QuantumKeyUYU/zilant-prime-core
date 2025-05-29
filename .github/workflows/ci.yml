@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [ "main" ]
 
-# нужно для выгрузки SARIF и Codecov
 permissions:
   contents: read
   security-events: write
@@ -28,12 +27,9 @@ jobs:
       - name: Install dev‑deps
         run: pip install -e .[dev]
 
-      - name: Ruff
-        run: ruff check src tests
-      - name: Black
-        run: black --check src tests
-      - name: Isort
-        run: isort --check-only src tests
+      - run: ruff check src tests
+      - run: black --check src tests
+      - run: isort --check-only src tests
 
   tests:
     name: Tests & Coverage (${{ matrix.python }})
@@ -41,7 +37,7 @@ jobs:
     needs: lint-format
     strategy:
       matrix:
-        python: ["3.13"]          # 100 % тесты нам важны хоть на одной версии
+        python: ["3.13"]
 
     steps:
       - uses: actions/checkout@v4
@@ -49,12 +45,15 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Install dev‑deps
-        run: pip install -e .[dev]
-
-      - name: Run pytest
+      - name: Install dev‑deps + pytest‑cov
         run: |
-          pytest -q --cov=src/zilant_prime_core --cov-report=xml
+          pip install -e .[dev]
+          pip install pytest-cov              # гарантированно есть плагин
+
+      - name: Run tests
+        run: |
+          coverage run -m pytest -q
+          coverage xml
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3

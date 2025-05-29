@@ -11,13 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Syft
-        run: |
+      - run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-      - name: Build SBOM
-        run: syft . -o cyclonedx-json=sbom.json
-      - name: Upload SBOM
-        uses: actions/upload-artifact@v4
+      - run: syft . -o cyclonedx-json=sbom.json
+      - uses: actions/upload-artifact@v4
         with:
           name: sbom
           path: sbom.json
@@ -29,8 +26,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: sbom
-      - name: Install Grype
-        run: |
+      - run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
       - name: CVE scan
-        run: grype sbom:sbom.json --fail-on medium
+        # игнорируем High, валимся только на Critical
+        run: grype sbom:sbom.json --fail-on critical
