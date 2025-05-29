@@ -1,6 +1,10 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 # tests/test_landscape_extra.py
 
 import pytest
+
 from landscape import generate_sat
 
 

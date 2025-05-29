@@ -1,15 +1,16 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 # tests/test_vdf.py
 
 import builtins
 import hashlib
-import pytest
 import sys
 import time
 
-from zilant_prime_core.vdf.vdf import (
-    generate_posw_sha256,
-    verify_posw_sha256,
-)
+import pytest
+
+from zilant_prime_core.vdf.vdf import generate_posw_sha256, verify_posw_sha256
 
 
 def debug_print(*args, **kwargs):

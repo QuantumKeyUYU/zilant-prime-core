@@ -1,18 +1,18 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
+import importlib
+
 # tests/test_pack_unpack_errors.py
 import json
-import sys
-import importlib
 from pathlib import Path
 
 import pytest
 
-from zilant_prime_core.container.unpack import unpack, UnpackError
 from zilant_prime_core.container.pack import pack
+from zilant_prime_core.container.unpack import UnpackError, unpack
 from zilant_prime_core.crypto.aead import AEADInvalidTagError
-from zilant_prime_core.utils.constants import (
-    DEFAULT_SALT_LENGTH,
-    DEFAULT_NONCE_LENGTH,
-)
+from zilant_prime_core.utils.constants import DEFAULT_NONCE_LENGTH, DEFAULT_SALT_LENGTH
 
 # Настоящий объект-модуль, а не функция
 unpack_module = importlib.import_module("zilant_prime_core.container.unpack")

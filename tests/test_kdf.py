@@ -1,13 +1,11 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 # tests/test_kdf.py
 
 import builtins  # Add this import
 
-from zilant_prime_core.crypto.kdf import (
-    derive_key,
-    generate_salt,
-    DEFAULT_SALT_LENGTH,
-    DEFAULT_KEY_LENGTH,
-)
+from zilant_prime_core.crypto.kdf import DEFAULT_KEY_LENGTH, DEFAULT_SALT_LENGTH, derive_key, generate_salt
 
 
 def debug_print(*args, **kwargs):

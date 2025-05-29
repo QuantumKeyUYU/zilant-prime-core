@@ -1,86 +1,109 @@
-name: CI
+name: Foundation CI
 
 on:
   push:
-    branches: [main]
-    tags:     ["v*"]
+    branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
   workflow_dispatch:
 
+env:
+  PYTHON_VERSIONS: [ '3.10', '3.11', '3.12' ]
+
 jobs:
-  # ─────────────────────────────────────────────────────────────────
-  lint:
-    name: Ruff / Black
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - uses: actions/setup-python@v5
-      with:
-        python-version: "3.11"
-        cache: pip
-
-    - run: |
-        python -m pip install --upgrade pip
-        pip install ruff black
-
-    - name: ruff (code + tests)
-      run: ruff check src tests
-
-    - name: black (check‑only)
-      run: black --check src tests
-
-  # ─────────────────────────────────────────────────────────────────
-  test:
-    name: Tests (py${{ matrix.python }})
-    needs: lint
+  # ──────────────────────────── 0.1–0.4 Lint & Format ────────────────────────────
+  lint-format:
+    name: 🔍 Lint & Format
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        python: ["3.10", "3.11", "3.12"]
-
+        python-version: ${{ env.PYTHON_VERSIONS }}
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dev dependencies
+        run: |
+          pip install ruff black isort mypy pytest coverage bandit markdownlint-cli syft
+      - name: Lint (ruff)
+        run: ruff check src tests
+      - name: Format (black & isort)
+        run: |
+          black --check src tests
+          isort --check-only src tests
+      - name: Type-check (mypy)
+        run: mypy src
 
-    - uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python }}
-        cache: pip
-
-    - name: Install project (+ dev deps)
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e .[dev]
-
-    - name: Run tests
-      run: pytest
-
-    - name: Upload coverage html
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-html-py${{ matrix.python }}
-        path: htmlcov
-        retention-days: 7
-
-  # ─────────────────────────────────────────────────────────────────
-  build-wheel:
-    name: Build wheel & sdist
-    needs: test
+  # ──────────────────────────── 0.5 Tests & Coverage ────────────────────────────
+  tests:
+    name: 🧪 Tests & Coverage
+    needs: lint-format
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        python-version: ${{ env.PYTHON_VERSIONS }}
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: "3.11"
-        cache: pip
-    - run: |
-        python -m pip install --upgrade pip build
-        python -m build --sdist --wheel --outdir dist/
-    - uses: actions/upload-artifact@v4
-      with:
-        name: dist
-        path: dist/*
-        retention-days: 7
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: pip install -e .[dev]
+      - name: Run tests
+        run: |
+          pytest --cov=src --junitxml=pytest-report.xml
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v3
+        with:
+          files: coverage.xml
+
+  # ──────────────────────────── 0.6 Security Scan ───────────────────────────────
+  security-scan:
+    name: 🔒 Security Scan
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SBOM tool
+        run: pip install syft
+      - name: Generate SBOM
+        run: syft . -o cyclonedx-json=sbom.json
+      - name: Trivy Scan
+        uses: aquasecurity/trivy-action@v0.7
+        with:
+          input: sbom.json
+      - name: Grype Scan
+        uses: anchore/grype-action@v1
+        with:
+          file: sbom.json
+
+  # ──────────────────────────── 0.7 Build & Publish ────────────────────────────
+  build-publish:
+    name: 📦 Build & Publish
+    needs: security-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+      - name: Install build tool
+        run: pip install build
+      - name: Build distributions
+        run: python -m build
+      - name: Sign artifacts with Cosign
+        uses: sigstore/cosign-action@v1
+        with:
+          command: sign
+          annotations: artifact=v0.1-core-ready
+          key: ${{ secrets.COSIGN_KEY }}
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true

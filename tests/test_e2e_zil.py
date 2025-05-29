@@ -1,10 +1,14 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 import os
 import struct
-from zilant_prime_core.crypto.aead import decrypt_aead
-from zilant_prime_core.crypto.kdf import derive_key, DEFAULT_KEY_LENGTH
-from zilant_prime_core.vdf.vdf import verify_posw_sha256, VDFVerificationError
+
 from zilant_prime_core.container.metadata import deserialize_metadata
+from zilant_prime_core.crypto.aead import decrypt_aead
+from zilant_prime_core.crypto.kdf import DEFAULT_KEY_LENGTH, derive_key
 from zilant_prime_core.utils.constants import MAGIC, VERSION
+from zilant_prime_core.vdf.vdf import VDFVerificationError, verify_posw_sha256
 
 
 class ContainerError(Exception):
@@ -78,9 +82,7 @@ def unpack_zil(data: bytes, password: str) -> tuple[bytes, dict]:
     return payload, metadata
 
 
-def unpack_zil_file(
-    input_filepath: str, password: str, output_dir: str | None = None
-) -> str | bytes:
+def unpack_zil_file(input_filepath: str, password: str, output_dir: str | None = None) -> str | bytes:
     with open(input_filepath, "rb") as f:
         data = f.read()
 

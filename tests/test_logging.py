@@ -1,4 +1,8 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 import logging
+
 from zilant_prime_core.utils.logging import get_logger
 
 

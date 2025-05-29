@@ -1,8 +1,13 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 # tests/test_unpack_errors.py
 
 import struct
+
 import pytest
-from zilant_prime_core.container.unpack import unpack, UnpackError
+
+from zilant_prime_core.container.unpack import UnpackError, unpack
 from zilant_prime_core.utils.constants import HEADER_FMT, MAGIC, VERSION
 
 

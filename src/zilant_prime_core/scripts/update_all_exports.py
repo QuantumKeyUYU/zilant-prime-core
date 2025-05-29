@@ -2,35 +2,36 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
 
-import os
 import ast
+import os
 import sys
+
 __all__ = [
-    'SKIP_DIRS',
-    'collect_public_names',
-    'find_all_assign',
-    'main',
-    'update_module',
+    "SKIP_DIRS",
+    "collect_public_names",
+    "find_all_assign",
+    "main",
+    "update_module",
 ]
 
 
+SKIP_DIRS = {".git", "__pycache__", "build", "dist", ".venv"}
 
-
-SKIP_DIRS = {'.git', '__pycache__', 'build', 'dist', '.venv'}
 
 def collect_public_names(tree: ast.AST) -> list[str]:
     names = []
     for node in tree.body:
         # классы и функции
         if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
-            if not node.name.startswith('_'):
+            if not node.name.startswith("_"):
                 names.append(node.name)
         # топ-левел переменные через простые присваивания
         elif isinstance(node, ast.Assign):
             for t in node.targets:
-                if isinstance(t, ast.Name) and not t.id.startswith('_') and t.id != "__all__":
+                if isinstance(t, ast.Name) and not t.id.startswith("_") and t.id != "__all__":
                     names.append(t.id)
     return sorted(set(names))
+
 
 def find_all_assign(tree: ast.AST) -> ast.Assign | None:
     for node in tree.body:
@@ -40,8 +41,9 @@ def find_all_assign(tree: ast.AST) -> ast.Assign | None:
                     return node
     return None
 
+
 def update_module(path: str):
-    src = open(path, encoding='utf-8').read()
+    src = open(path, encoding="utf-8").read()
     tree = ast.parse(src, path)
     public = collect_public_names(tree)
     if not public:
@@ -61,25 +63,27 @@ def update_module(path: str):
         # вставить сразу после shebang/encoding и импортов
         idx = 0
         for i, L in enumerate(lines):
-            if L.startswith('#!') or L.startswith('# -*-') or L.startswith('import') or L.startswith('from'):
+            if L.startswith("#!") or L.startswith("# -*-") or L.startswith("import") or L.startswith("from"):
                 idx = i + 1
             else:
                 break
         lines.insert(idx, block)
 
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.writelines(lines)
     print(f"⇒ Updated __all__ in {path}")
+
 
 def main(root_dirs: list[str]):
     for root in root_dirs:
         for dirpath, dirnames, filenames in os.walk(root):
             dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
             for fn in filenames:
-                if not fn.endswith('.py'):
+                if not fn.endswith(".py"):
                     continue
                 update_module(os.path.join(dirpath, fn))
 
+
 if __name__ == "__main__":
-    roots = sys.argv[1:] if len(sys.argv) > 1 else ['src/zilant_prime_core']
+    roots = sys.argv[1:] if len(sys.argv) > 1 else ["src/zilant_prime_core"]
     main(roots)

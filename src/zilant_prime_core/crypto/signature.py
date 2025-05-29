@@ -1,10 +1,13 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 __all__ = [
-    'KEY_SIZE',
-    'SIG_SIZE',
-    'SignatureError',
-    'generate_keypair',
-    'sign',
-    'verify',
+    "KEY_SIZE",
+    "SIG_SIZE",
+    "SignatureError",
+    "generate_keypair",
+    "sign",
+    "verify",
 ]
 
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
