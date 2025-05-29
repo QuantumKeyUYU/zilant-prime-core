@@ -1,0 +1,33 @@
+name: Sign Artifacts
+
+on:
+  workflow_run:
+    workflows: [ "CI" ]
+    types:
+      - completed
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  sign:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Install Cosign
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/sigstore/cosign/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Sign all artifacts
+        env:
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          for f in $(find . -type f); do
+            cosign sign-blob -y "$f"
+          done
