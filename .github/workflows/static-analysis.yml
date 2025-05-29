@@ -1,19 +1,18 @@
-name: Static Analysis — CodeQL & Semgrep
+name: Static Analysis — CodeQL & Semgrep
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
 permissions:
-  actions: read
   contents: read
-  security-events: write  # для загрузки SARIF
+  security-events: write
 
 jobs:
   codeql:
-    name: 🛡️ CodeQL Analysis
+    name: CodeQL (python)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,16 +22,21 @@ jobs:
       - uses: github/codeql-action/analyze@v3
 
   semgrep:
-    name: 🔎 Semgrep Scan
+    name: Semgrep scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Install Semgrep
-        run: pipx install semgrep
-      - name: Run Semgrep (CI profile)
+        run: pip install semgrep
+
+      - name: Run Semgrep (CI rules)
+        # --sarif сразу генерит отчёт, "|| true" гарантирует 0‑exit,
+        # чтобы падал только при настоящих ошибках pipeline
         run: |
-          semgrep scan --config=p/ci --sarif --output=semgrep.sarif || true
-      - name: Upload Semgrep SARIF
-        uses: github/codeql-action/upload-sarif@v3
+          semgrep scan --config p/ci --sarif --output semgrep.sarif || true
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: semgrep.sarif
