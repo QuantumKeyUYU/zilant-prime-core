@@ -12,30 +12,25 @@ on:
 
 jobs:
   sbom_critical_scan:
-    name: SBOM → Trivy (CRITICAL)
+    name: Generate & Scan SBOM → Trivy (CRITICAL)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Install Syft (for SBOM)
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
-            | sh -s -- -b /usr/local/bin
-
-      - name: Generate SBOM (CycloneDX JSON)
-        run: syft . -o cyclonedx-json=sbom.json
 
       - name: Install Trivy
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
             | sh -s -- -b /usr/local/bin
 
+      - name: Generate CycloneDX SBOM with Trivy
+        run: trivy sbom --format cyclonedx --output sbom.json .
+
       - name: Scan SBOM for CRITICAL vulnerabilities
         run: trivy sbom sbom.json --exit-code 1 --severity CRITICAL
 
   fs_critical_scan:
-    name: Filesystem → Trivy (CRITICAL)
+    name: Scan FS → Trivy (CRITICAL)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
