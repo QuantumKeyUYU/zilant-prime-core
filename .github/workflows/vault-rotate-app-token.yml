@@ -1,0 +1,54 @@
+# .github/workflows/vault-rotate-app-token.yml
+name: Rotate Vault App Token
+
+# Запускаем по расписанию (каждый день в 00:00 UTC)
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  rotate_app_token:
+    name: Generate & Rotate Vault AppRole Token
+    runs-on: ubuntu-latest
+    steps:
+      # Устанавливаем Vault Action и GitHub CLI
+      - name: Install prerequisites
+        run: |
+          sudo apt update
+          sudo apt install -y gh
+
+      # Авторизуемся в GitHub CLI (для записи секретов)
+      - name: GitHub CLI auth
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      # Шаг 1: логинимся в Vault по root-токену (или управленческому токену)
+      - name: Vault login
+        uses: hashicorp/vault-action@v2
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: token
+          token: ${{ secrets.VAULT_ROOT_TOKEN }}
+
+      # Шаг 2: получаем новый AppRole-токен
+      - name: Generate new AppRole token
+        id: new_token
+        uses: hashicorp/vault-action@v2
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: write
+          path: auth/approle/login
+          data: |
+            role_id: ${{ secrets.VAULT_APPROLE_ID }}
+            secret_id: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+
+      # Шаг 3: сохраняем client_token в GitHub Repository Secret
+      - name: Update VAULT_APP_TOKEN secret
+        uses: peter-evans/create-or-update-secret@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          secret-name: VAULT_APP_TOKEN
+          secret-value: ${{ steps.new_token.outputs.client_token }}
