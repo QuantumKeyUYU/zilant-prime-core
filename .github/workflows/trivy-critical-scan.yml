@@ -32,7 +32,7 @@ jobs:
             | sh -s -- -b /usr/local/bin
 
       - name: Scan SBOM for CRITICAL vulnerabilities
-        run: trivy sbom --input sbom.json --exit-code 1 --severity CRITICAL
+        run: trivy sbom sbom.json --exit-code 1 --severity CRITICAL
 
   fs_critical_scan:
     name: Filesystem → Trivy (CRITICAL)
