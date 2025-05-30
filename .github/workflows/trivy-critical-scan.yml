@@ -23,14 +23,14 @@ jobs:
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
             | sh -s -- -b /usr/local/bin
 
-      - name: Generate CycloneDX SBOM with Trivy
-        run: trivy sbom --format cyclonedx --output sbom.json .
+      - name: Generate CycloneDX SBOM from filesystem
+        run: trivy fs --format cyclonedx --output sbom.json .
 
       - name: Scan SBOM for CRITICAL vulnerabilities
         run: trivy sbom sbom.json --exit-code 1 --severity CRITICAL
 
   fs_critical_scan:
-    name: Scan FS → Trivy (CRITICAL)
+    name: Scan filesystem → Trivy (CRITICAL)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
