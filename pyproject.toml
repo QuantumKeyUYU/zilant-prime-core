@@ -9,7 +9,6 @@ name = "zilant-prime-core"
 version = "0.1.0"
 description = "Ядро ZILANT Prime™: AEAD, KDF, VDF, контейнер .zil и CLI"
 readme = "README.md"
-# → подняли минимальную поддержку до Python 3.10
 requires-python = ">=3.10"
 license = "MIT"
 authors = [
@@ -45,7 +44,6 @@ Documentation   = "https://github.com/yourorg/zilant-prime-core#readme"
 
 # ───────────────────────── tool: Black ──────────────────────────
 [tool.black]
-# → Убрали py39, оставили только py310–py313
 target-version = ["py310", "py311", "py312", "py313"]
 line-length = 120
 include = '\.pyi?$'
