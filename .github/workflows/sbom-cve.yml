@@ -47,7 +47,8 @@ jobs:
 
       # ──────────────── Trivy Scan ────────────────
       - name: Install Trivy via GitHub Action
-        uses: aquasecurity/trivy-action@v0.34.1
+        # ← здесь заменили на @v0.30.0, потому что v0.34.1 отсутствует
+        uses: aquasecurity/trivy-action@v0.30.0
 
       - name: Run Trivy CVE scan
         run: |
