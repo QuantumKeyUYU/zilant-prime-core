@@ -20,21 +20,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Пример: сканировать SBOM (если хотите отдельно от sbom-cve.yml)
+      # ─────────────── Install Trivy ───────────────
       - name: Install Trivy via GitHub Action
         uses: aquasecurity/trivy-action@v0.34.1
 
-      - name: Generate SBOM with Syft (если его нет)
+      # ──────────── Генерация SBOM (если её ещё нет) ────────────
+      - name: Install Syft v0.80.0
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
             | sh -s -- -b /usr/local/bin v0.80.0
+
+      - name: Generate SBOM with Syft
+        run: |
           syft . -o cyclonedx-json=sbom.json
 
+      # ──────────────── Запуск Trivy ────────────────
       - name: Run Trivy CVE scan on sbom.json
         run: |
           trivy sbom.json --severity HIGH,CRITICAL
 
-      # Альтернативный вариант: сканировать Docker-образ
+      # Альтернатива: сканировать Docker-образ (раскомментировать, если нужно)
       # - name: Build Docker image
       #   run: |
       #     docker build -t zilant-prime-app:latest .

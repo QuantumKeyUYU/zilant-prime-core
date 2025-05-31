@@ -9,7 +9,8 @@ name = "zilant-prime-core"
 version = "0.1.0"
 description = "Ядро ZILANT Prime™: AEAD, KDF, VDF, контейнер .zil и CLI"
 readme = "README.md"
-requires-python = ">=3.8"
+# → подняли минимальную поддержку до Python 3.10
+requires-python = ">=3.10"
 license = "MIT"
 authors = [
   { name = "Ильдар", email = "you@example.com" },
@@ -44,8 +45,8 @@ Documentation   = "https://github.com/yourorg/zilant-prime-core#readme"
 
 # ───────────────────────── tool: Black ──────────────────────────
 [tool.black]
-# Расширяем список поддерживаемых версий Python: CI тестируется на 3.9–3.13
-target-version = ["py39", "py310", "py311", "py312", "py313"]
+# → Убрали py39, теперь только 3.10–3.13
+target-version = ["py310", "py311", "py312", "py313"]
 line-length = 120
 include = '\.pyi?$'
 exclude = '''
@@ -78,19 +79,18 @@ default_section = "THIRDPARTY"
 line-length = 120
 exclude = ["build", "dist", ".git", ".venv", "__pycache__"]
 
-# Переносим deprecated-параметры в секцию [tool.ruff.lint]
 [tool.ruff.lint]
 select = ["E", "F", "W", "C90", "B"]
 ignore = ["E402", "B904", "C901"]
 per-file-ignores = { "tests/**/*.py" = ["F841"] }
 
-# Mccabe (максимальная сложность) тоже переноcим внутрь lint
 [tool.ruff.lint.mccabe]
 max-complexity = 12
 
 
 # ───────────────────────── tool: MyPy ──────────────────────────
 [tool.mypy]
+# Ставим совпадающую версию (последняя в матрице CI)
 python_version           = "3.13"
 check_untyped_defs       = true
 disallow_untyped_defs    = true

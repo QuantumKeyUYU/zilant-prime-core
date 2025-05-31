@@ -25,7 +25,6 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: python
-          # Если нужны собственные queries, добавьте здесь
           queries: security-and-quality
 
       - name: Autobuild (если есть компиляция, иначе пропустить)
