@@ -13,19 +13,14 @@ permissions:
 
 jobs:
   trivy-scan:
-    name: Run Trivy (Image or SBOM)
+    name: Run Trivy Critical Scan on SBOM
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # ─────────────── Install Trivy ───────────────
-      - name: Install Trivy via GitHub Action
-        # ↓ тоже @master
-        uses: aquasecurity/trivy-action@master
-
-      # ──────────── Генерация SBOM (если её ещё нет) ────────────
+      # ─────────────── Generate SBOM ───────────────
       - name: Install Syft v0.80.0
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
@@ -35,16 +30,24 @@ jobs:
         run: |
           syft . -o cyclonedx-json=sbom.json
 
-      # ──────────────── Запуск Trivy ────────────────
-      - name: Run Trivy CVE scan on sbom.json
-        run: |
-          trivy sbom.json --severity HIGH,CRITICAL
+      # ─────────────── Trivy Scan via Action ───────────────
+      - name: Use Trivy Action to scan SBOM
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: sbom
+          scan-ref: sbom.json
+          severity: HIGH,CRITICAL
 
-      # Альтернатива: сканировать Docker-образ
+      # ──────────── (Опционально) Docker Image Scan ───────────
+      # Если у вас есть Dockerfile и вы хотите одновременно проверять контейнер-образ, можно раскомментировать:
+      #
       # - name: Build Docker image
       #   run: |
       #     docker build -t zilant-prime-app:latest .
       #
-      # - name: Run Trivy image scan
-      #   run: |
-      #     trivy image --severity HIGH,CRITICAL zilant-prime-app:latest
+      # - name: Use Trivy Action to scan Docker image
+      #   uses: aquasecurity/trivy-action@master
+      #   with:
+      #     scan-type: image
+      #     image-ref: zilant-prime-app:latest
+      #     severity: HIGH,CRITICAL

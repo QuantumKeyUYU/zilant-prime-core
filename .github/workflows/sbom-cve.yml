@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: "3.x"
 
-      # ──────────────── Syft (SBOM) ────────────────
+      # ─────────────── Generate SBOM ───────────────
       - name: Install Syft v0.80.0
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
@@ -35,7 +35,7 @@ jobs:
         run: |
           syft . -o cyclonedx-json=sbom.json
 
-      # ──────────────── Grype Scan ────────────────
+      # ─────────────── Grype Scan ───────────────
       - name: Install Grype v0.78.0
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
@@ -45,11 +45,10 @@ jobs:
         run: |
           grype sbom:sbom.json --fail-on medium
 
-      # ──────────────── Trivy Scan ────────────────
-      - name: Install Trivy via GitHub Action
-        # ↓ поменяли @main на @master
+      # ─────────────── Trivy Scan via Action ───────────────
+      - name: Use Trivy Action to scan SBOM
         uses: aquasecurity/trivy-action@master
-
-      - name: Run Trivy CVE scan
-        run: |
-          trivy sbom.json --severity HIGH,CRITICAL
+        with:
+          scan-type: sbom
+          scan-ref: sbom.json
+          severity: HIGH,CRITICAL
