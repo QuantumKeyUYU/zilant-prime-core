@@ -11,11 +11,6 @@ permissions:
   contents: read
   security-events: write
 
-env:
-  # Добавьте сюда, если потребуется, глобальные переменные (например, для Unit-тестов)
-  # ZILANT_LOG_KEY может быть получен в пуле jobs/vault-secrets.yml
-  # COSIGN_PASSWORD может быть получен в пуле jobs/vault-secrets.yml
-
 jobs:
   lint-format:
     name: Lint & Format (py${{ matrix.python }})
@@ -35,7 +30,7 @@ jobs:
 
       - name: Install dependencies for linting
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install ruff black isort mypy
 
       - name: Run ruff (lint)

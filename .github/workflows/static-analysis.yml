@@ -22,18 +22,18 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: python
-          # Можно указать дополнительные queries, если нужно
+          # Если нужны собственные queries, добавьте здесь
           queries: security-and-quality
 
       - name: Autobuild (если есть компиляция, иначе пропустить)
         run: |
-          echo "No-build step needed for pure-Python project"
+          echo "No build step needed for pure-Python project"
 
       - name: Run CodeQL analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
 
       - name: Set up Node.js for Semgrep
         uses: actions/setup-node@v4
@@ -42,6 +42,7 @@ jobs:
 
       - name: Install Semgrep
         run: |
+          python -m pip install --upgrade pip
           pip install semgrep
 
       - name: Run Semgrep
