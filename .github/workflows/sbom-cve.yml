@@ -47,7 +47,8 @@ jobs:
 
       # ──────────────── Trivy Scan ────────────────
       - name: Install Trivy via GitHub Action
-        uses: aquasecurity/trivy-action@main
+        # ↓ поменяли @main на @master
+        uses: aquasecurity/trivy-action@master
 
       - name: Run Trivy CVE scan
         run: |

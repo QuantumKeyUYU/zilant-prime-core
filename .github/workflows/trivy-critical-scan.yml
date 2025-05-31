@@ -22,7 +22,8 @@ jobs:
 
       # ─────────────── Install Trivy ───────────────
       - name: Install Trivy via GitHub Action
-        uses: aquasecurity/trivy-action@main
+        # ↓ тоже @master
+        uses: aquasecurity/trivy-action@master
 
       # ──────────── Генерация SBOM (если её ещё нет) ────────────
       - name: Install Syft v0.80.0
