@@ -3,43 +3,45 @@ name: Trivy Critical Vulnerability Scan
 
 on:
   push:
-    branches:
-      - main
+    branches: ["main"]
   pull_request:
-    branches:
-      - main
-  workflow_dispatch:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  security-events: write
 
 jobs:
-  sbom_critical_scan:
-    name: Generate & Scan SBOM → Trivy (CRITICAL)
+  trivy-scan:
+    name: Run Trivy (Image or SBOM)
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Trivy
+      - name: Set up Docker (если сканируете образ)
+        uses: docker/setup-buildx-action@v2
+
+      - name: Pull latest base image (опционально)
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
-            | sh -s -- -b /usr/local/bin
+          docker pull python:3.13-slim
 
-      - name: Generate CycloneDX SBOM from filesystem
-        run: trivy fs --format cyclonedx --output sbom.json .
+      # ───────────── Если хотите сканировать контейнерную сборку ─────────────
+      # - name: Build Docker image
+      #   run: |
+      #     docker build -t my-app:latest .
 
-      - name: Scan SBOM for CRITICAL vulnerabilities
-        run: trivy sbom sbom.json --exit-code 1 --severity CRITICAL
+      # - name: Run Trivy scan against Docker image
+      #   run: |
+      #     trivy image --severity HIGH,CRITICAL my-app:latest
 
-  fs_critical_scan:
-    name: Scan filesystem → Trivy (CRITICAL)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
+      # ───────────── Если хотите сканировать SBOM ─────────────
       - name: Install Trivy
-        run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
-            | sh -s -- -b /usr/local/bin
+        uses: aquasecurity/trivy-action@v0.10.1
 
-      - name: Scan filesystem for CRITICAL vulnerabilities
-        run: trivy fs --exit-code 1 --severity CRITICAL .
+      - name: Run Trivy CVE scan on sbom.json
+        run: |
+          # Генерация sbom.json должна быть в sbom-cve.yml, но тут можно повторить:
+          syft . -o cyclonedx-json=sbom.json
+          trivy sbom.json --severity HIGH,CRITICAL

@@ -1,34 +1,49 @@
-name: Static Analysis — CodeQL & Semgrep
+# .github/workflows/static-analysis.yml
+name: Static Analysis — CodeQL & Semgrep
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: read
   security-events: write
+  id-token: write
 
 jobs:
-  codeql:
+  codeql-and-semgrep:
+    name: CodeQL & Semgrep Analysis
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
         with:
           languages: python
-      - uses: github/codeql-action/analyze@v3
+          # Можно указать дополнительные queries, если нужно
+          queries: security-and-quality
 
-  semgrep:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: pip install semgrep
-      - name: Semgrep scan
+      - name: Autobuild (если есть компиляция, иначе пропустить)
         run: |
-          semgrep scan --config p/ci --sarif --output semgrep.sarif || true
-      - name: Upload SARIF
-        uses: github/codeql-action/upload-sarif@v3    # ⬅️ v3
+          echo "No-build step needed for pure-Python project"
+
+      - name: Run CodeQL analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: Set up Node.js for Semgrep
+        uses: actions/setup-node@v4
         with:
-          sarif_file: semgrep.sarif
+          node-version: "16"
+
+      - name: Install Semgrep
+        run: |
+          pip install semgrep
+
+      - name: Run Semgrep
+        run: |
+          semgrep --config p/ci

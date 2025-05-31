@@ -1,55 +1,53 @@
 # .github/workflows/cosign-sign-artifacts.yml
-name: Sign Release Artifacts
+name: Sign Artifacts with Cosign
 
 on:
-  push:
-    # срабатываем на теги вида v0.1-core-ready, v1.2.3 и т.п.
-    tags:
-      - 'v*'
+  release:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  # COSIGN_PASSWORD подтянется из fetch-secrets → outputs или из GitHub Secrets напрямую:
+  COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
 
 jobs:
-  build_and_sign:
-    name: Build & Cosign Sign
+  build-and-sign:
+    name: Build Python package and sign with Cosign
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Set up Python 3.x
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Install build dependencies
         run: |
-          python -m pip install --upgrade pip build
+          python -m pip install --upgrade pip
+          pip install build
 
-      - name: Build sdist and wheel
-        run: python -m build --sdist --wheel
-
-      - name: Archive built artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: dist-artifacts
-          path: dist/
-
-      - name: Install Cosign
+      - name: Build distribution packages
         run: |
-          curl -sSfL https://raw.githubusercontent.com/sigstore/cosign/main/install.sh \
-            | sh -s -- -b /usr/local/bin
+          python -m build --sdist --wheel
 
-      - name: Sign artifacts with Cosign
-        env:
-          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}      # приватный ключ Cosign
+      - name: Download Cosign (v2.0.1)
         run: |
-          for file in dist/*; do
-            echo "Signing $file…"
-            cosign sign-blob --key $COSIGN_KEY "$file"
+          COSIGN_VERSION="v2.0.1"
+          curl -LsS "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" \
+            -o cosign
+          chmod +x cosign
+          sudo mv cosign /usr/local/bin/cosign
+
+      - name: Sign each artifact in dist/
+        run: |
+          for artifact in dist/*; do
+            cosign sign --key cosign.key --password-env COSIGN_PASSWORD "$artifact"
           done
-
-      - name: Archive signatures
-        uses: actions/upload-artifact@v3
-        with:
-          name: cosign-signatures
-          path: dist/*.sig

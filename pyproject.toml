@@ -1,6 +1,6 @@
 # ───────────────────────── build system ─────────────────────────
 [build-system]
-requires = ["setuptools>=68", "wheel"]   # >=68 нужен для PEP 621 и новых фишек
+requires = ["setuptools>=68", "wheel"]   # >=68 нужен для PEP 621
 build-backend = "setuptools.build_meta"
 
 # ─────────────────────────── project ────────────────────────────
@@ -41,10 +41,12 @@ Homepage        = "https://github.com/yourorg/zilant-prime-core"
 Documentation   = "https://github.com/yourorg/zilant-prime-core#readme"
 "Issue Tracker" = "https://github.com/yourorg/zilant-prime-core/issues"
 
+
 # ───────────────────────── tool: Black ──────────────────────────
 [tool.black]
+# Расширяем список поддерживаемых версий Python: CI тестируется на 3.9–3.13
+target-version = ["py39", "py310", "py311", "py312", "py313"]
 line-length = 120
-target-version = ["py310"]
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -58,6 +60,7 @@ exclude = '''
 )/
 '''
 
+
 # ───────────────────────── tool: isort ──────────────────────────
 [tool.isort]
 profile = "black"
@@ -69,22 +72,26 @@ use_parentheses = true
 known_first_party = ["zilant_prime_core"]
 default_section = "THIRDPARTY"
 
+
 # ────────────────────────── tool: Ruff ──────────────────────────
 [tool.ruff]
 line-length = 120
 exclude = ["build", "dist", ".git", ".venv", "__pycache__"]
+
+# Переносим deprecated-параметры в секцию [tool.ruff.lint]
+[tool.ruff.lint]
 select = ["E", "F", "W", "C90", "B"]
 ignore = ["E402", "B904", "C901"]
+per-file-ignores = { "tests/**/*.py" = ["F841"] }
 
-[tool.ruff.per-file-ignores]
-"tests/**/*.py" = ["F841"]
-
-[tool.ruff.mccabe]
+# Mccabe (максимальная сложность) тоже переноcим внутрь lint
+[tool.ruff.lint.mccabe]
 max-complexity = 12
 
-# ────────────────────────── tool: MyPy ──────────────────────────
+
+# ───────────────────────── tool: MyPy ──────────────────────────
 [tool.mypy]
-python_version           = "3.10"
+python_version           = "3.13"
 check_untyped_defs       = true
 disallow_untyped_defs    = true
 disallow_incomplete_defs = true
@@ -95,6 +102,7 @@ warn_return_any          = false
 warn_unreachable         = false
 exclude                  = '^(src/zil\.py|src/zilant_prime_core/scripts/)'
 
+
 # ───────────────────────── tool: pytest ─────────────────────────
 [tool.pytest.ini_options]
 minversion     = "7.0"
@@ -102,6 +110,7 @@ addopts        = "-vv --showlocals --disable-warnings --maxfail=1 --durations=10
 testpaths      = ["src", "tests"]
 xfail_strict   = true
 filterwarnings = ["error"]
+
 
 # ──────────────────────── tool: coverage ────────────────────────
 [tool.coverage.run]
