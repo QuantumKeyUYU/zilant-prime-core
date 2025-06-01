@@ -17,36 +17,54 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Чекаутим репозиторий
+      # ─────────────────────────────────────────────────────────────────────────────
+      # 1) Checkout repository
+      # ─────────────────────────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2) Устанавливаем Trivy через официальный Action
+      # ─────────────────────────────────────────────────────────────────────────────
+      # 2) Install Trivy via aquasecurity/trivy-action@master
+      # ─────────────────────────────────────────────────────────────────────────────
       - name: Install Trivy
         uses: aquasecurity/trivy-action@master
 
-      # 3) Генерируем SBOM в формате CycloneDX-JSON
-      - name: Generate SBOM (CycloneDX-JSON)
+      # ─────────────────────────────────────────────────────────────────────────────
+      # 3) Generate SBOM in CycloneDX-JSON format (sbom.json)
+      # ─────────────────────────────────────────────────────────────────────────────
+      - name: Generate SBOM (CycloneDX)
         run: |
+          # Генерируем SBOM в CycloneDX-JSON
           trivy sbom --format cyclonedx --output sbom.json .
 
-      # 4) Сканируем получённый SBOM на уязвимости HIGH/CRITICAL
+      # ─────────────────────────────────────────────────────────────────────────────
+      # 4) Scan generated SBOM for HIGH/CRITICAL vulnerabilities
+      # ─────────────────────────────────────────────────────────────────────────────
       - name: Scan SBOM for HIGH/CRITICAL vulnerabilities
         run: |
+          # Проверим sbom.json на уязвимости категорий HIGH/CRITICAL
           trivy sbom --format table --scanners vuln --severity HIGH,CRITICAL sbom.json
 
-      # 5) Загружаем sbom.json как артефакт (чтобы можно было скачать после выполнения)
+      # ─────────────────────────────────────────────────────────────────────────────
+      # 5) Upload sbom.json as artifact
+      # ─────────────────────────────────────────────────────────────────────────────
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v3
         with:
           name: sbom-json
           path: sbom.json
 
-      # 6) Генерируем JSON-отчёт (опционально) и тоже загружаем
+      # ─────────────────────────────────────────────────────────────────────────────
+      # 6) Generate JSON report (optional) and upload it
+      # ─────────────────────────────────────────────────────────────────────────────
       - name: Generate Trivy JSON report
         if: always()
         run: |
-          trivy sbom --format json --scanners vuln --severity HIGH,CRITICAL sbom.json > trivy-report.json
+          trivy sbom \
+            --format json \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            sbom.json > trivy-report.json
 
       - name: Upload Trivy JSON report
         if: always()
