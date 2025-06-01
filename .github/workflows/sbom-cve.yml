@@ -12,64 +12,51 @@ permissions:
   security-events: write
 
 jobs:
-  sbom-cve-scan:
+  generate-sbom-and-scan:
     name: Generate SBOM and scan for vulnerabilities
     runs-on: ubuntu-latest
 
     steps:
-      # ─────────────────────────────────────────────────────────────────────
-      # Шаг 1. Checkout репозитория
-      # ─────────────────────────────────────────────────────────────────────
+      # 1) ЗАПУЛЛИТЬ КОД
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # ─────────────────────────────────────────────────────────────────────
-      # Шаг 2. Install Trivy
-      # ─────────────────────────────────────────────────────────────────────
-      - name: Install Trivy
-        uses: aquasecurity/trivy-action@master
-
-      # ─────────────────────────────────────────────────────────────────────
-      # Шаг 3. Generate SBOM (CycloneDX-JSON)
-      # ─────────────────────────────────────────────────────────────────────
-      - name: Generate SBOM (CycloneDX)
+      # 2) УСТАНОВИТЬ Trivy, если его нет 
+      - name: Ensure Trivy is installed
         run: |
-          # Генерируем SBOM в формате CycloneDX-JSON
-          trivy sbom --format cyclonedx --output sbom.json .
+          if ! command -v trivy &> /dev/null; then
+            echo "Installing Trivy..."
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo bash -s -- -b /usr/local/bin v0.61.1
+          fi
 
-      # ─────────────────────────────────────────────────────────────────────
-      # Шаг 4. Scan SBOM for HIGH/CRITICAL vulnerabilities
-      # ─────────────────────────────────────────────────────────────────────
-      - name: Scan SBOM for HIGH/CRITICAL vulnerabilities
+      # 3) СОЗДАТЬ SBOM через Syft (CycloneDX-JSON) – оно более «чистое» для Trivy
+      - name: _Install Syft_
         run: |
-          # Сканируем sbom.json на уязвимости категории HIGH и CRITICAL
-          trivy sbom --format table --scanners vuln --severity HIGH,CRITICAL sbom.json
+          if ! command -v syft &> /dev/null; then
+            echo "Installing Syft..."
+            curl -sfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin v0.84.0
+          fi
 
-      # ─────────────────────────────────────────────────────────────────────
-      # Шаг 5. Upload sbom.json как артефакт
-      # ─────────────────────────────────────────────────────────────────────
-      - name: Upload SBOM artifact
+      - name: Generate SBOM with Syft (CycloneDX JSON)
+        run: |
+          syft dir:. --output cyclonedx-json > sbom.json
+
+      # 4) ЗАЛИТЬ SBOM как артефакт
+      - name: Upload SBOM as artifact
         uses: actions/upload-artifact@v3
         with:
           name: sbom-json
           path: sbom.json
 
-      # ─────────────────────────────────────────────────────────────────────
-      # Шаг 6. Generate Trivy JSON report (optional) и upload
-      # ─────────────────────────────────────────────────────────────────────
-      - name: Generate Trivy JSON report
-        if: always()
+      # 5) СКАНИРОВАТЬ SBOM через Trivy → JSON
+      - name: Scan SBOM with Trivy
         run: |
-          # Генерируем JSON-отчёт о HIGH/CRITICAL уязвимостях
-          trivy sbom \
-            --format json \
-            --scanners vuln \
-            --severity HIGH,CRITICAL \
-            sbom.json > trivy-report.json
+          # Сканируем sbom.json, делаем trivy-report.json
+          trivy sbom --input sbom.json --format json --output trivy-report.json
 
+      # 6) ЗАЛИТЬ результат скана как артефакт
       - name: Upload Trivy JSON report
-        if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: trivy-report-json
+          name: trivy-sbom-report
           path: trivy-report.json
