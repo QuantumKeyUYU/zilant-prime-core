@@ -1,70 +1,50 @@
 # .github/workflows/sbom-cve.yml
+
 name: "SBOM & CVE Scan (Syft + Trivy)"
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
 
 permissions:
   contents: read
   security-events: write
 
 jobs:
-  sbom-cve-scan:
-    name: Generate SBOM & scan for vulnerabilities
+  generate-sbom-and-scan:
+    name: "Generate SBOM and scan for vulnerabilities"
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Устанавливаем Syft
       - name: Install Syft (SBOM generator)
         run: |
-          if ! command -v syft &> /dev/null; then
-            curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin v0.94.0
-          fi
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin v0.104.0
 
-      # Устанавливаем Trivy
-      - name: Install Trivy (CVE scanner)
+      - name: Generate SBOM (CycloneDX JSON)
         run: |
-          if ! command -v trivy &> /dev/null; then
-            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo bash -s -- -b /usr/local/bin v0.61.1
-          fi
+          syft . --output cyclonedx-json=sbom.json
 
-      # Генерируем SBOM через Syft (CycloneDX 1.5 JSON) — строго для совместимости!
-      - name: Generate SBOM (CycloneDX 1.5 JSON)
-        run: |
-          syft . --output cyclonedx-json=sbom.json --schema 1.5
-
-      # Загружаем SBOM как artifact
       - name: Upload SBOM (CycloneDX JSON)
         uses: actions/upload-artifact@v4
         with:
           name: sbom-cyclonedx-json
           path: sbom.json
 
-      # Сканируем SBOM через Trivy (обновленный синтаксис, авто-режим)
+      - name: Install Trivy (CVE scanner)
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.51.1
+
       - name: Scan SBOM with Trivy (CVE/License)
         run: |
           trivy sbom sbom.json --format json --output trivy-sbom-report.json
 
-      # Загружаем Trivy-отчёт
       - name: Upload Trivy SBOM scan report (JSON)
         uses: actions/upload-artifact@v4
         with:
           name: trivy-sbom-report
           path: trivy-sbom-report.json
-
-      # (Необязательно, но советую для DevSecOps) — скан всего исходного кода
-      - name: Scan full source tree with Trivy (optional)
-        run: |
-          trivy fs . --format json --output trivy-fs-report.json
-
-      - name: Upload Trivy full source scan report (JSON)
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-fs-report
-          path: trivy-fs-report.json
