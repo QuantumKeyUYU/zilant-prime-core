@@ -1,6 +1,6 @@
+# .github/workflows/sbom-cve.yml
 name: SBOM & CVE Scan
 
-# Запускать при пуше и PR в ветку main
 on:
   push:
     branches: ["main"]
@@ -17,48 +17,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Проверяем код
+      # 1) ЗАПУЛЛИТЬ КОД
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # 2) Устанавливаем Trivy, если не найден
+      # 2) УСТАНОВИТЬ Trivy, если его нет 
       - name: Ensure Trivy is installed
         run: |
           if ! command -v trivy &> /dev/null; then
-            echo "Installing Trivy v0.61.1..."
-            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
-              | sudo bash -s -- -b /usr/local/bin v0.61.1
+            echo "Installing Trivy..."
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo bash -s -- -b /usr/local/bin v0.61.1
           fi
 
-      # 3) Устанавливаем Syft, если не найден (для генерации SBOM)
+      # 3) УСТАНОВИТЬ Syft, если его нет
       - name: Ensure Syft is installed
         run: |
           if ! command -v syft &> /dev/null; then
-            echo "Installing Syft v0.84.0..."
-            curl -sfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
-              | sh -s -- -b /usr/local/bin v0.84.0
+            echo "Installing Syft..."
+            curl -sfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin v0.84.0
           fi
 
-      # 4) Генерируем SBOM в формате CycloneDX JSON
-      - name: Generate SBOM (CycloneDX JSON)
+      # 4) Сгенерировать SBOM через Syft (CycloneDX JSON)
+      - name: Generate SBOM with Syft (CycloneDX JSON)
         run: |
           syft dir:. --output cyclonedx-json > sbom.json
 
-      # 5) Заливаем сам SBOM как артефакт
-      - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v3
+      # 5) Залить SBOM как artifact
+      - name: Upload SBOM as artifact
+        uses: actions/upload-artifact@v4
         with:
           name: sbom-json
           path: sbom.json
 
-      # 6) Сканируем SBOM через Trivy, сохраняем отчёт в JSON
+      # 6) Прогнать Trivy по SBOM
       - name: Scan SBOM with Trivy
         run: |
-          trivy sbom sbom.json --format json --output trivy-sbom-report.json
+          trivy sbom sbom.json --format json --output trivy-report.json
 
-      # 7) Заливаем результат сканирования SBOM
-      - name: Upload Trivy SBOM report
-        uses: actions/upload-artifact@v3
+      # 7) Залить отчет Trivy как artifact
+      - name: Upload Trivy JSON report
+        uses: actions/upload-artifact@v4
         with:
           name: trivy-sbom-report
-          path: trivy-sbom-report.json
+          path: trivy-report.json
