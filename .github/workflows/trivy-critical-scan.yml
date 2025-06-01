@@ -1,6 +1,7 @@
-name: Trivy Critical Vulnerability Scan
+# .github/workflows/trivy-critical-scan.yml
 
-# Запускать при пуше и PR в ветку main
+name: "Trivy Critical Vulnerability Scan on source tree"
+
 on:
   push:
     branches: ["main"]
@@ -13,32 +14,30 @@ permissions:
 
 jobs:
   trivy-critical-scan:
-    name: Run Trivy Critical Scan on source tree
+    name: Run Trivy Critical Scan on source
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Проверяем код
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      # ────────────────────────────────────────────────────────────────
+      - name: 🔄 Checkout repository
+        uses: actions/checkout@v4
 
-      # 2) Устанавливаем Trivy, если не найден
-      - name: Ensure Trivy is installed
+      # ────────────────────────────────────────────────────────────────
+      - name: 🛠 Install Trivy (v0.45.0 – совместимый)
         run: |
-          if ! command -v trivy &> /dev/null; then
-            echo "Installing Trivy v0.61.1..."
-            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
-              | sudo bash -s -- -b /usr/local/bin v0.61.1
-          fi
+          # Скачиваем и ставим Trivy v0.45.0
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b /usr/local/bin v0.45.0
 
-      # 3) Запускаем Trivy-файловый скан (Filesystem scan) и выбираем только severity=CRITICAL
-      - name: Run Trivy filesystem scan (Critical only)
+      # ────────────────────────────────────────────────────────────────
+      - name: 🔍 Run Trivy Critical Scan on full source tree
         run: |
-          # Пишем результат в trivy-critical.json
-          trivy fs . --severity CRITICAL --format json --output trivy-critical.json
+          # Запускаем Trivy в режиме full filesystem scan (по-умолчанию CVE + License)
+          trivy fs . --format json --output trivy-full-report.json --severity CRITICAL,HIGH
 
-      # 4) Заливаем JSON-отчёт Trivy с результатами
-      - name: Upload Trivy critical report
-        uses: actions/upload-artifact@v3
+      # ────────────────────────────────────────────────────────────────
+      - name: 📤 Upload Trivy full source scan report (JSON)
+        uses: actions/upload-artifact@v4
         with:
-          name: trivy-critical-report
-          path: trivy-critical.json
+          name: trivy-full-report
+          path: trivy-full-report.json

@@ -14,32 +14,48 @@ permissions:
 
 jobs:
   sbom-cve:
+    name: Generate SBOM & scan SBOM for vulnerabilities
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      # ────────────────────────────────────────────────────────────────
+      - name: 🔄 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Syft (compatible version)
+      # ────────────────────────────────────────────────────────────────
+      - name: 🛠 Install Syft (v0.82.0 – совместимый)
         run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin v0.82.0
+          # Скачиваем Syft v0.82.0 (последняя версия, с которой Trivy стабильно понимает CycloneDX)
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
+            | sh -s -- -b /usr/local/bin v0.82.0
+      # ────────────────────────────────────────────────────────────────
+      - name: 🗒️ Generate SBOM (CycloneDX JSON)
+        run: |
+          # Генерируем SBOM в формате CycloneDX-JSON и сохраняем в sbom.json
+          syft . --output cyclonedx-json=sbom.json
 
-      - name: Generate SBOM (CycloneDX JSON)
-        run: syft . --output cyclonedx-json=sbom.json
-
-      - name: Upload SBOM (CycloneDX JSON)
+      # ────────────────────────────────────────────────────────────────
+      - name: 📤 Upload SBOM (CycloneDX JSON)
         uses: actions/upload-artifact@v4
         with:
           name: sbom-cyclonedx-json
           path: sbom.json
 
-      - name: Install Trivy (compatible version)
+      # ────────────────────────────────────────────────────────────────
+      - name: 🛠 Install Trivy (v0.45.0 – совместимый)
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.45.0
+          # Ставим Trivy v0.45.0 (гарантированно умеет читать SBOM из Syft v0.82.0)
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b /usr/local/bin v0.45.0
 
-      - name: Scan SBOM with Trivy (CVE/License)
-        run: trivy sbom sbom.json --format json --output trivy-sbom-report.json
+      # ────────────────────────────────────────────────────────────────
+      - name: 🔍 Scan SBOM with Trivy (CVE + license)
+        run: |
+          # Сканируем sbom.json, сохраняем результат в trivy-sbom-report.json
+          trivy sbom sbom.json --format json --output trivy-sbom-report.json
 
-      - name: Upload Trivy SBOM scan report (JSON)
+      # ────────────────────────────────────────────────────────────────
+      - name: 📤 Upload Trivy SBOM scan report (JSON)
         uses: actions/upload-artifact@v4
         with:
           name: trivy-sbom-report
