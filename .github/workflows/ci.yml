@@ -1,5 +1,4 @@
-# .github/workflows/ci.yml
-name: CI
+name: CI — lint/pytest/coverage
 
 on:
   push:
@@ -9,39 +8,42 @@ on:
 
 jobs:
   lint-format:
+    name: "Lint & Format"
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.10, 3.11, 3.12, 3.13]
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install tooling
+          python-version: '3.12'
+      - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install ruff black isort
       - name: Black (check-only)
         run: black --check .
-      - name: Ruff
+      - name: Ruff (check-only)
         run: ruff check .
       - name: isort (check-only)
         run: isort --check-only .
 
   pytest-coverage:
+    name: "Pytest & Coverage"
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.10, 3.11, 3.12, 3.13]
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
       - name: Run pytest with coverage
         run: |
@@ -55,5 +57,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-html-${{ matrix.python-version }}
-          path: htmlcov/
-
+          path: htmlcov
