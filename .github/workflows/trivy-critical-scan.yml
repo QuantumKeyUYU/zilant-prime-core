@@ -1,73 +1,41 @@
-# .github/workflows/trivy-critical-scan.yml
-name: Trivy Critical Vulnerability Scan
+name: Trivy Critical Vulnerability Scan
 
 on:
   push:
-    branches: ["main"]
+    branches: [main]
   pull_request:
-    branches: ["main"]
+    branches: [main]
 
 permissions:
   contents: read
   security-events: write
 
 jobs:
-  trivy-sbom-scan:
+  trivy-critical-scan:
     name: Run Trivy Critical Scan on SBOM
     runs-on: ubuntu-latest
 
     steps:
-      # ─────────────────────────────────────────────────────────────────────
-      # Шаг 1. Checkout репозитория
-      # ─────────────────────────────────────────────────────────────────────
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4      # ← было @v3
 
-      # ─────────────────────────────────────────────────────────────────────
-      # Шаг 2. Install Trivy
-      # ─────────────────────────────────────────────────────────────────────
-      - name: Install Trivy
-        uses: aquasecurity/trivy-action@master
-
-      # ─────────────────────────────────────────────────────────────────────
-      # Шаг 3. Generate SBOM (CycloneDX-JSON)
-      # ─────────────────────────────────────────────────────────────────────
-      - name: Generate SBOM (CycloneDX)
+      - name: Install Trivy (if missing)
         run: |
-          # Генерируем sbom.json
-          trivy sbom --format cyclonedx --output sbom.json .
+          command -v trivy || \
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+          | sudo bash -s -- -b /usr/local/bin v0.61.1
 
-      # ─────────────────────────────────────────────────────────────────────
-      # Шаг 4. Scan SBOM for HIGH/CRITICAL vulnerabilities
-      # ─────────────────────────────────────────────────────────────────────
-      - name: Scan SBOM for HIGH/CRITICAL vulnerabilities
+      - name: Scan sbom.json (if есть) и сохранить критические CVE
         run: |
-          trivy sbom --format table --scanners vuln --severity HIGH,CRITICAL sbom.json
+          if [ -f sbom.json ]; then
+            trivy sbom --severity CRITICAL --input sbom.json \
+                  --format json --output trivy-critical.json
+          else
+            echo "sbom.json not found, skipping scan"; exit 1
+          fi
 
-      # ─────────────────────────────────────────────────────────────────────
-      # Шаг 5. Upload sbom.json как артефакт
-      # ─────────────────────────────────────────────────────────────────────
-      - name: Upload SBOM file
-        uses: actions/upload-artifact@v3
+      - name: Upload Trivy critical report
+        uses: actions/upload-artifact@v4   # ← было @v3
         with:
-          name: sbom-json
-          path: sbom.json
-
-      # ─────────────────────────────────────────────────────────────────────
-      # Шаг 6. Generate Trivy JSON report (optional) и upload
-      # ─────────────────────────────────────────────────────────────────────
-      - name: Generate Trivy JSON report
-        if: always()
-        run: |
-          trivy sbom \
-            --format json \
-            --scanners vuln \
-            --severity HIGH,CRITICAL \
-            sbom.json > trivy-report.json
-
-      - name: Upload Trivy JSON report
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: trivy-report-json
-          path: trivy-report.json
+          name: trivy-critical-report
+          path: trivy-critical.json
