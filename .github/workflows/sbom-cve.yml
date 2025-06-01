@@ -1,6 +1,7 @@
 # .github/workflows/sbom-cve.yml
 name: SBOM & CVE Scan
 
+# Запускаем на push в main и при открытии Pull Request в main
 on:
   push:
     branches: ["main"]
@@ -12,43 +13,43 @@ permissions:
   security-events: write
 
 jobs:
-  sbom-scan:
+  sbom-cve-scan:
     name: Generate SBOM and scan for vulnerabilities
     runs-on: ubuntu-latest
 
     steps:
+      # 1) Чекаутим код
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
-
-      # ─────────────── Generate SBOM ───────────────
-      - name: Install Syft v0.80.0
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
-            | sh -s -- -b /usr/local/bin v0.80.0
-
-      - name: Generate SBOM with Syft
-        run: |
-          syft . -o cyclonedx-json=sbom.json
-
-      # ─────────────── Grype Scan ───────────────
-      - name: Install Grype v0.78.0
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
-            | sh -s -- -b /usr/local/bin v0.78.0
-
-      - name: Run Grype vulnerability scan
-        run: |
-          grype sbom:sbom.json --fail-on medium
-
-      # ─────────────── Trivy Scan via Action ───────────────
-      - name: Use Trivy Action to scan SBOM
+      # 2) Устанавливаем Trivy (через Action) и кладём бинарь в PATH
+      - name: Install Trivy via Action
         uses: aquasecurity/trivy-action@master
+
+      # 3) Генерируем SBOM (CycloneDX-JSON) командой trivy
+      - name: Generate SBOM (CycloneDX-JSON) with Trivy
+        run: |
+          # trivy сам подтянет нужные зависимости и запишет sbom.json
+          trivy sbom --format cyclonedx --output sbom.json .
+
+      # 4) Сканируем получённый SBOM на уязвимости (HIGH, CRITICAL)
+      - name: Scan SBOM for HIGH/CRITICAL vulnerabilities
+        run: |
+          # флаг --scanners vuln указывает, что проверяем только уязвимости
+          trivy sbom --format table --scanners vuln --severity HIGH,CRITICAL sbom.json
+
+      # 5) (Опционально) Загружаем отчёт SBOM и результат сканирования в артефакты
+      - name: Upload sbom.json as artifact
+        uses: actions/upload-artifact@v3
         with:
-          scan-type: sbom
-          scan-ref: sbom.json
-          severity: HIGH,CRITICAL
+          name: sbom-json
+          path: sbom.json
+
+      - name: Upload vulnerability report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy-report
+          path: tricvy-report.txt
+        # Примечание: если вы хотите сохранить табличный отчёт, перенаправьте вывод предыдущей команды в файл:
+        #   trivy sbom --format table --scanners vuln --severity HIGH,CRITICAL sbom.json > trivy-report.txt

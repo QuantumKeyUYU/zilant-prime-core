@@ -12,42 +12,43 @@ permissions:
   security-events: write
 
 jobs:
-  trivy-scan:
+  trivy-sbom-scan:
     name: Run Trivy Critical Scan on SBOM
     runs-on: ubuntu-latest
 
     steps:
+      # 1) Клонируем репозиторий
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # ─────────────── Generate SBOM ───────────────
-      - name: Install Syft v0.80.0
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
-            | sh -s -- -b /usr/local/bin v0.80.0
-
-      - name: Generate SBOM with Syft
-        run: |
-          syft . -o cyclonedx-json=sbom.json
-
-      # ─────────────── Trivy Scan via Action ───────────────
-      - name: Use Trivy Action to scan SBOM
+      # 2) Устанавливаем Trivy в среду
+      - name: Install Trivy via Action
         uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: sbom
-          scan-ref: sbom.json
-          severity: HIGH,CRITICAL
 
-      # ──────────── (Опционально) Docker Image Scan ───────────
-      # Если у вас есть Dockerfile и вы хотите одновременно проверять контейнер-образ, можно раскомментировать:
-      #
-      # - name: Build Docker image
-      #   run: |
-      #     docker build -t zilant-prime-app:latest .
-      #
-      # - name: Use Trivy Action to scan Docker image
-      #   uses: aquasecurity/trivy-action@master
-      #   with:
-      #     scan-type: image
-      #     image-ref: zilant-prime-app:latest
-      #     severity: HIGH,CRITICAL
+      # 3) Генерируем SBOM (CycloneDX-JSON) с помощью Trivy
+      - name: Generate SBOM (CycloneDX-JSON) with Trivy
+        run: |
+          trivy sbom --format cyclonedx --output sbom.json .
+
+      # 4) Сканируем SBOM на уязвимости HIGH/CRITICAL
+      - name: Scan SBOM for HIGH/CRITICAL vulnerabilities
+        run: |
+          trivy sbom --format table --scanners vuln --severity HIGH,CRITICAL sbom.json
+
+      # 5) Опционально: Можно зааплоадить sbom.json и отчёт
+      - name: Upload sbom.json artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom-json
+          path: sbom.json
+
+      - name: Save Trivy report
+        if: always()
+        run: |
+          trivy sbom --format json --scanners vuln --severity HIGH,CRITICAL sbom.json > trivy-report.json
+      - name: Upload JSON report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy-sbom-report
+          path: trivy-report.json
