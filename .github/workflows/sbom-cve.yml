@@ -1,7 +1,6 @@
 # .github/workflows/sbom-cve.yml
 name: SBOM & CVE Scan
 
-# Запускаем на push в main и при открытии Pull Request в main
 on:
   push:
     branches: ["main"]
@@ -18,38 +17,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Чекаутим код
+      # 1) Чекаутим репозиторий
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2) Устанавливаем Trivy (через Action) и кладём бинарь в PATH
-      - name: Install Trivy via Action
+      # 2) Устанавливаем Trivy через официальный Action
+      - name: Install Trivy
         uses: aquasecurity/trivy-action@master
 
-      # 3) Генерируем SBOM (CycloneDX-JSON) командой trivy
-      - name: Generate SBOM (CycloneDX-JSON) with Trivy
+      # 3) Генерируем SBOM в формате CycloneDX-JSON
+      - name: Generate SBOM (CycloneDX-JSON)
         run: |
-          # trivy сам подтянет нужные зависимости и запишет sbom.json
           trivy sbom --format cyclonedx --output sbom.json .
 
-      # 4) Сканируем получённый SBOM на уязвимости (HIGH, CRITICAL)
+      # 4) Сканируем получённый SBOM на уязвимости HIGH/CRITICAL
       - name: Scan SBOM for HIGH/CRITICAL vulnerabilities
         run: |
-          # флаг --scanners vuln указывает, что проверяем только уязвимости
           trivy sbom --format table --scanners vuln --severity HIGH,CRITICAL sbom.json
 
-      # 5) (Опционально) Загружаем отчёт SBOM и результат сканирования в артефакты
-      - name: Upload sbom.json as artifact
+      # 5) Загружаем sbom.json как артефакт (чтобы можно было скачать после выполнения)
+      - name: Upload SBOM artifact
         uses: actions/upload-artifact@v3
         with:
           name: sbom-json
           path: sbom.json
 
-      - name: Upload vulnerability report
+      # 6) Генерируем JSON-отчёт (опционально) и тоже загружаем
+      - name: Generate Trivy JSON report
+        if: always()
+        run: |
+          trivy sbom --format json --scanners vuln --severity HIGH,CRITICAL sbom.json > trivy-report.json
+
+      - name: Upload Trivy JSON report
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: trivy-report
-          path: tricvy-report.txt
-        # Примечание: если вы хотите сохранить табличный отчёт, перенаправьте вывод предыдущей команды в файл:
-        #   trivy sbom --format table --scanners vuln --severity HIGH,CRITICAL sbom.json > trivy-report.txt
+          name: trivy-report-json
+          path: trivy-report.json

@@ -17,16 +17,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Клонируем репозиторий
+      # 1) Чекаутим репозиторий
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2) Устанавливаем Trivy в среду
-      - name: Install Trivy via Action
+      # 2) Устанавливаем Trivy через официальный Action
+      - name: Install Trivy
         uses: aquasecurity/trivy-action@master
 
       # 3) Генерируем SBOM (CycloneDX-JSON) с помощью Trivy
-      - name: Generate SBOM (CycloneDX-JSON) with Trivy
+      - name: Generate SBOM (CycloneDX-JSON)
         run: |
           trivy sbom --format cyclonedx --output sbom.json .
 
@@ -35,20 +35,22 @@ jobs:
         run: |
           trivy sbom --format table --scanners vuln --severity HIGH,CRITICAL sbom.json
 
-      # 5) Опционально: Можно зааплоадить sbom.json и отчёт
-      - name: Upload sbom.json artifact
+      # 5) Загрузим sbom.json как артефакт
+      - name: Upload SBOM file
         uses: actions/upload-artifact@v3
         with:
           name: sbom-json
           path: sbom.json
 
-      - name: Save Trivy report
+      # 6) Сохраняем JSON-отчёт Trivy (опционально) и тоже загружаем
+      - name: Generate Trivy JSON report
         if: always()
         run: |
           trivy sbom --format json --scanners vuln --severity HIGH,CRITICAL sbom.json > trivy-report.json
-      - name: Upload JSON report
+
+      - name: Upload Trivy JSON report
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: trivy-sbom-report
+          name: trivy-report-json
           path: trivy-report.json
