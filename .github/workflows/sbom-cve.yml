@@ -1,33 +1,30 @@
 # .github/workflows/sbom-cve.yml
 
-name: "SBOM & CVE Scan (Syft + Trivy)"
+name: "SBOM & CVE Scan (Syft + Trivy, production, compatible)"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: read
   security-events: write
 
 jobs:
-  generate-sbom-and-scan:
-    name: "Generate SBOM and scan for vulnerabilities"
+  sbom-cve:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Syft (SBOM generator)
+      - name: Install Syft (compatible version)
         run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin v0.104.0
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin v0.82.0
 
       - name: Generate SBOM (CycloneDX JSON)
-        run: |
-          syft . --output cyclonedx-json=sbom.json
+        run: syft . --output cyclonedx-json=sbom.json
 
       - name: Upload SBOM (CycloneDX JSON)
         uses: actions/upload-artifact@v4
@@ -35,13 +32,12 @@ jobs:
           name: sbom-cyclonedx-json
           path: sbom.json
 
-      - name: Install Trivy (CVE scanner)
+      - name: Install Trivy (compatible version)
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.51.1
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.45.0
 
       - name: Scan SBOM with Trivy (CVE/License)
-        run: |
-          trivy sbom sbom.json --format json --output trivy-sbom-report.json
+        run: trivy sbom sbom.json --format json --output trivy-sbom-report.json
 
       - name: Upload Trivy SBOM scan report (JSON)
         uses: actions/upload-artifact@v4
