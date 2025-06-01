@@ -1,11 +1,11 @@
 name: Trivy Critical Vulnerability Scan
 
-# Запускаем на пуш и pull_request в main
+# Запускать при пуше и PR в ветку main
 on:
   push:
-    branches: [main]
+    branches: ["main"]
   pull_request:
-    branches: [main]
+    branches: ["main"]
 
 permissions:
   contents: read
@@ -13,16 +13,16 @@ permissions:
 
 jobs:
   trivy-critical-scan:
-    name: Run Trivy Critical Scan on SBOM
+    name: Run Trivy Critical Scan on source tree
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Чекаутим репозиторий
+      # 1) Проверяем код
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      # 2) Устанавливаем Trivy (v0.61.1), если его нет
-      - name: Install Trivy (if missing)
+      # 2) Устанавливаем Trivy, если не найден
+      - name: Ensure Trivy is installed
         run: |
           if ! command -v trivy &> /dev/null; then
             echo "Installing Trivy v0.61.1..."
@@ -30,30 +30,15 @@ jobs:
               | sudo bash -s -- -b /usr/local/bin v0.61.1
           fi
 
-      # 3) Убедимся, что sbom.json существует (он создаётся в первом workflow)
-      - name: Verify sbom.json presence
+      # 3) Запускаем Trivy-файловый скан (Filesystem scan) и выбираем только severity=CRITICAL
+      - name: Run Trivy filesystem scan (Critical only)
         run: |
-          if [ ! -f sbom.json ]; then
-            echo "sbom.json not found in workspace. Please run SBOM & CVE Scan first."
-            exit 1
-          fi
+          # Пишем результат в trivy-critical.json
+          trivy fs . --severity CRITICAL --format json --output trivy-critical.json
 
-      # 4) Запускаем Trivy, ищем только CRITICAL (снова без --input)
-      - name: Scan SBOM for CRITICAL vulnerabilities
-        run: |
-          trivy sbom sbom.json \
-            --severity CRITICAL \
-            --format json \
-            --output trivy-critical.json
-
-      # 5) Сбрасываем код возврата (чтобы обычные CI-метрики не крушились, если нашли критические уязвимости – 
-      #    при необходимости можно убрать `|| true`)
-        # «|| true» убирает фатал наверх, но обычно мы хотим, чтобы сам джоб упал, если триви-проверка вернёт код !=0.
-        # Если вы хотите, чтобы джоб всегда завершался успешно, можно добавить «|| true»
-
-      # 6) Загружаем отчёт trivy-critical.json как артефакт
+      # 4) Заливаем JSON-отчёт Trivy с результатами
       - name: Upload Trivy critical report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: trivy-critical-report
           path: trivy-critical.json

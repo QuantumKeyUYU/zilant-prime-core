@@ -1,3 +1,5 @@
+# pyproject.toml
+
 # ───────────────────────── build system ─────────────────────────
 [build-system]
 requires = ["setuptools>=68", "wheel"]
@@ -41,10 +43,10 @@ Homepage        = "https://github.com/yourorg/zilant-prime-core"
 Documentation   = "https://github.com/yourorg/zilant-prime-core#readme"
 "Issue Tracker" = "https://github.com/yourorg/zilant-prime-core/issues"
 
-
 # ───────────────────────── tool: Black ──────────────────────────
 [tool.black]
-target-version = ["py310", "py311", "py312", "py313"]
+# Убрали py312, py313: оставляем только поддерживаемые target-version
+target-version = ["py310", "py311"]
 line-length = 120
 include = '\.pyi?$'
 exclude = '''
@@ -59,7 +61,6 @@ exclude = '''
 )/
 '''
 
-
 # ───────────────────────── tool: isort ──────────────────────────
 [tool.isort]
 profile = "black"
@@ -71,24 +72,21 @@ use_parentheses = true
 known_first_party = ["zilant_prime_core"]
 default_section = "THIRDPARTY"
 
-
-# ────────────────────────── tool: Ruff ──────────────────────────
+# ───────────────────────── tool: Ruff ──────────────────────────
 [tool.ruff]
-line-length = 120
-exclude = ["build", "dist", ".git", ".venv", "__pycache__"]
-
-[tool.ruff.lint]
+# основные правила
 select = ["E", "F", "W", "C90", "B"]
 ignore = ["E402", "B904", "C901"]
 per-file-ignores = { "tests/**/*.py" = ["F841"] }
+line-length = 120
+exclude = ["build", "dist", ".git", ".venv", "__pycache__"]
 
-[tool.ruff.lint.mccabe]
+[tool.ruff.mccabe]
 max-complexity = 12
-
 
 # ───────────────────────── tool: MyPy ──────────────────────────
 [tool.mypy]
-python_version           = "3.13"
+python_version           = "3.11"
 check_untyped_defs       = true
 disallow_untyped_defs    = true
 disallow_incomplete_defs = true
@@ -99,7 +97,6 @@ warn_return_any          = false
 warn_unreachable         = false
 exclude                  = '^(src/zil\.py|src/zilant_prime_core/scripts/)'
 
-
 # ───────────────────────── tool: pytest ─────────────────────────
 [tool.pytest.ini_options]
 minversion     = "7.0"
@@ -107,7 +104,6 @@ addopts        = "-vv --showlocals --disable-warnings --maxfail=1 --durations=10
 testpaths      = ["src", "tests"]
 xfail_strict   = true
 filterwarnings = ["error"]
-
 
 # ──────────────────────── tool: coverage ────────────────────────
 [tool.coverage.run]
