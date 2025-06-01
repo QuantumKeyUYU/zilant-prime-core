@@ -1,99 +1,54 @@
-# .github/workflows/ci.yml
-name: CI — lint / pytest / coverage
+name: CI — lint/pytest/coverage
 
-# Триггерим на пуш и PR в ветку main
 on:
   push:
-    branches: ["main"]
+    branches: [ main ]
   pull_request:
-    branches: ["main"]
-
-permissions:
-  contents: read
-  packages: read
+    branches: [ main ]
 
 jobs:
-  # ──────────────────────── JOB 1: lint-format ────────────────────────
   lint-format:
-    name: Lint & Format
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Чекаутим код
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # 2. Устанавливаем Python 3.11 для линтинга
-      - name: Set up Python 3.11
+      - uses: actions/checkout@v4
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.12'
+      - name: Install tooling
+        run: pip install black ruff isort
+      - name: Black (check-only)
+        run: black --check src tests
+      - name: Ruff (check-only)
+        run: ruff check src tests
+      - name: isort (check-only)
+        run: isort --check-only src tests
 
-      # 3. Устанавливаем инструменты форматирования/линтинга
-      - name: Install linting/formatting tools
-        run: |
-          python -m pip install --upgrade pip
-          pip install black ruff isort
-
-      # 4. Black (проверка)
-      - name: Run Black (check-only)
-        run: |
-          black --check .
-
-      # 5. Ruff (проверка)
-      - name: Run Ruff (check-only)
-        run: |
-          ruff check .
-
-      # 6. isort (проверка)
-      - name: Run isort (check-only)
-        run: |
-          isort --check-only .
-
-  # ───────────────────── JOB 2: pytest-coverage ──────────────────────
   pytest-coverage:
-    name: Pytest & Coverage (${{ matrix.python-version }})
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
-
+        python-version: [ '3.10', '3.11', '3.12', '3.13' ]
     steps:
-      # 1. Чекаутим код
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # 2. Устанавливаем нужную версию Python из матрицы
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
-      # 3. Устанавливаем зависимости (dev-зависимости для тестов)
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          # Предполагается, что в корне есть requirements-dev.txt
-          # с нужными пакетами: pytest, pytest-cov и др.
           pip install -r requirements-dev.txt
-
-      # 4. Запускаем pytest с подсчётом покрытия
+          pip install .
       - name: Run pytest with coverage
         run: |
-          pytest --cov=src --cov-report=xml --cov-report=html
-
-      # 5. Загружаем coverage.xml как артефакт (чтобы его можно было скачать)
+          pytest
       - name: Upload coverage XML
         uses: actions/upload-artifact@v4
         with:
           name: coverage-xml-${{ matrix.python-version }}
           path: coverage.xml
-
-      # 6. Загружаем htmlcov как артефакт (опционально — если нужен HTML-отчёт)
       - name: Upload coverage HTML (optional)
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-html-${{ matrix.python-version }}
+          name: htmlcov-${{ matrix.python-version }}
           path: htmlcov
-
