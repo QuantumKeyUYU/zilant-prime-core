@@ -1,4 +1,3 @@
-# .github/workflows/ci.yml
 name: "Stage 0: Paranoid CI"
 
 on:
@@ -15,8 +14,6 @@ env:
 
 jobs:
 
-  # ───────────────────────────────────────────────────────────────────────────────
-  # Job 1: Линтеры → типизация → тесты → покрытие
   lint-and-test:
     name: "1. Lint, Typecheck & Tests"
     runs-on: ubuntu-latest
@@ -61,8 +58,6 @@ jobs:
             htmlcov/
             coverage.xml
 
-  # ───────────────────────────────────────────────────────────────────────────────
-  # Job 2: SBOM → Grype/Trivy
   sbom-and-scan:
     name: "2. Generate SBOM & CVE Scan"
     runs-on: ubuntu-latest
@@ -102,7 +97,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: grype-report
-          path: grype_report.json || true
+          path: grype-report.json || true
 
       - name: Upload Trivy report
         uses: actions/upload-artifact@v3
@@ -110,8 +105,6 @@ jobs:
           name: trivy-report
           path: trivy-report.html || true
 
-  # ───────────────────────────────────────────────────────────────────────────────
-  # Job 3: REUSE License Check
   reuse-check:
     name: "3. REUSE License Check"
     runs-on: ubuntu-latest
@@ -132,8 +125,6 @@ jobs:
           name: reuse-report
           path: reuse-report.html || true
 
-  # ───────────────────────────────────────────────────────────────────────────────
-  # Job 4: Sign Artifacts with Cosign
   sign-artifacts:
     name: "4. Sign Artifacts with Cosign"
     runs-on: ubuntu-latest
@@ -179,8 +170,6 @@ jobs:
           name: signed-artifacts
           path: dist/
 
-  # ───────────────────────────────────────────────────────────────────────────────
-  # Job 5: Static Analysis with CodeQL & Semgrep
   static-analysis:
     name: "5. Static Analysis with CodeQL & Semgrep"
     runs-on: ubuntu-latest
