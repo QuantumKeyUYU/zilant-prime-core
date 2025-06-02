@@ -42,13 +42,13 @@ jobs:
           if [ -f requirements-dev.txt ]; then
             pip install -r requirements-dev.txt
           else
-            # Установим всё необходимое, включая pre-commit
+            # Установим всё, включая pre-commit
             pip install pre-commit ruff black isort mypy pytest coverage \
               syft grype semgrep cosign
           fi
 
       - name: 🔍 Run pre-commit hooks
-        run: pre-commit run --all-files
+        run: python -m pre_commit run --all-files
 
       - name: 🔍 Run ruff (lint)
         run: ruff check .
