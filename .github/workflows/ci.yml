@@ -1,9 +1,8 @@
 # .github/workflows/ci.yml
 
-name: CI — lint / pytest / coverage / security / sign
+name: CI — lint/pytest/coverage/security-and-sign
 
-################################################################################
-# Права, необходимые для CodeQL и security-events
+# Даем Actions минимальные привилегии (чтение кода + запись security-events для CodeQL)
 permissions:
   actions: read
   contents: read
@@ -11,39 +10,21 @@ permissions:
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
-################################################################################
-# Глобальные переменные (версии утилит)
-env:
-  SYFT_VERSION: "0.83.0"
-  GRYPE_VERSION: "0.88.0"
-  TRIVY_VERSION: "0.49.0"
-  COSIGN_VERSION: "2.1.0"
-
-  # Вместо хранения «сырых» многострочных данных PEM мы храним его в виде Base64.
-  # В Settings → Secrets → Actions создайте секрет с EXACT именем:
-  #   COSIGN_PRIVATE_KEY_B64
-  # И положите туда результат:
-  #   $ cat cosign.key | base64 -w0
-  #
-  # В CI его раскодируем в ~/.cosign/cosign.key
-  COSIGN_PRIVATE_KEY_B64: ${{ secrets.COSIGN_PRIVATE_KEY_B64 }}
-
-################################################################################
 jobs:
-  ################################################################################
-  # 1) lint-format: проверка black, ruff, isort
-  ################################################################################
+  # ────────────────────────────────────────────────────────────────────────────────────────────
+  # 1) Линт, форматирование, isort
+  # ────────────────────────────────────────────────────────────────────────────────────────────
   lint-format:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.12 (для линтеров)
+      - name: Set up Python 3.12 (for linters)
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -65,15 +46,15 @@ jobs:
         run: |
           isort --check-only src tests
 
-  ################################################################################
-  # 2) pytest-coverage: запускаем тесты на нескольких версиях Python
-  ################################################################################
+  # ────────────────────────────────────────────────────────────────────────────────────────────
+  # 2) Тесты + покрытие (pytest → upload coverage)
+  # ────────────────────────────────────────────────────────────────────────────────────────────
   pytest-coverage:
     needs: lint-format
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -91,7 +72,7 @@ jobs:
 
       - name: Run pytest with coverage
         run: |
-          pytest
+          pytest --maxfail=1 --disable-warnings -q
 
       - name: Upload coverage XML
         uses: actions/upload-artifact@v4
@@ -105,51 +86,61 @@ jobs:
           name: htmlcov-${{ matrix.python-version }}
           path: htmlcov
 
-  ################################################################################
-  # 3) security-and-sign: SBOM → Grype/Trivy → REUSE → Bandit/Semgrep → CodeQL →
-  # Build wheel & sdist → Sign via Cosign → Выгрузка всех артефактов
-  ################################################################################
+  # ────────────────────────────────────────────────────────────────────────────────────────────
+  # 3) Security + Cosign-sign
+  # ────────────────────────────────────────────────────────────────────────────────────────────
   security-and-sign:
     needs: pytest-coverage
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      ##############################################################################
+      - name: Set up Python 3.13 (for security tools, building & signing)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # ────────────────────────────────────────────────────────────────────────────────────────────
       # 3.1 Устанавливаем системные зависимости: Syft, Grype, Trivy
-      ##############################################################################
+      # ────────────────────────────────────────────────────────────────────────────────────────────
       - name: Install system dependencies (Syft, Grype, Trivy)
         run: |
           set -e
+          # Обновляем индекс пакетов
+          sudo apt-get update
 
-          # 1) Syft (генерация SBOM)
-          curl -sSfL "https://raw.githubusercontent.com/anchore/syft/main/install.sh" \
-            | sh -s -- -b /usr/local/bin
+          # Устанавливаем curl, unzip, git, ca-certificates (если их нет)
+          sudo apt-get install -y curl unzip git ca-certificates
 
-          # 2) Grype (скан SBOM)
-          curl -sSfL "https://raw.githubusercontent.com/anchore/grype/main/install.sh" \
-            | sh -s -- -b /usr/local/bin
+          # Syft (генерация SBOM)
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 
-          # 3) Trivy (доп. скан SBOM)
-          curl -sSfL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" \
-            | tar zxvf - -C /usr/local/bin trivy
+          # Grype (сканирование SBOM)
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
 
-          # 4) Python-утилиты для REUSE, Bandit, Semgrep
+          # Trivy (дополнительный SBOM-сканер)
+          curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+          # Установим python-утилиты: reuse (лицензии), bandit (security), semgrep (OSS правила)
           python -m pip install --upgrade pip
           pip install reuse bandit semgrep
 
-      ##############################################################################
-      # 3.2 Генерация SBOM и сканирование на уязвимости
-      ##############################################################################
+      # ────────────────────────────────────────────────────────────────────────────────────────────
+      # 3.2 Генерация SBOM и скан на уязвимости
+      # ────────────────────────────────────────────────────────────────────────────────────────────
       - name: Generate SBOM (Syft)
         run: |
           syft . -o cyclonedx-json=sbom.json
 
-      - name: Scan SBOM with Grype (fail ONLY on CRITICAL)
+      - name: Scan SBOM with Grype (fail on HIGH or CRITICAL)
         run: |
-          grype sbom:sbom.json --fail-on critical
-        continue-on-error: true
+          grype sbom:sbom.json --fail-on high || true
+        # если найдены уязвимости HIGH/CRITICAL — Grype вернёт exit code 1, но мы не хотим падать полностью,
+        # поэтому добавляем "|| true". Если же хочется прерывать сборку, уберите “|| true”.
 
       - name: Save Grype report (JSON)
         run: |
@@ -157,29 +148,29 @@ jobs:
 
       - name: Scan SBOM with Trivy (severity HIGH,CRITICAL)
         run: |
-          trivy sbom sbom.json --format json --output trivy-report.json --severity HIGH,CRITICAL || true
+          trivy sbom --input sbom.json --severity HIGH,CRITICAL --format json --output trivy-report.json || true
 
-      ##############################################################################
+      # ────────────────────────────────────────────────────────────────────────────────────────────
       # 3.3 Проверка лицензий REUSE
-      ##############################################################################
+      # ────────────────────────────────────────────────────────────────────────────────────────────
       - name: REUSE lint (license compliance)
         run: |
-          reuse lint > reuse-report.txt || true
+          reuse lint || true
 
-      ##############################################################################
-      # 3.4 Static analysis: Bandit, Semgrep
-      ##############################################################################
+      # ────────────────────────────────────────────────────────────────────────────────────────────
+      # 3.4 Статический анализ: Bandit + Semgrep
+      # ────────────────────────────────────────────────────────────────────────────────────────────
       - name: Bandit (security linter)
         run: |
           bandit -r src -f json -o bandit-report.json || true
 
-      - name: Semgrep (OSS rules)
+      - name: Semgrep (OSS rules → SARIF)
         run: |
-          semgrep --config p/ci --sarif-output=semgrep-report.sarif || true
+          semgrep --config p/ci --sarif-output semgrep-report.sarif || true
 
-      ##############################################################################
-      # 3.5 CodeQL analysis
-      ##############################################################################
+      # ────────────────────────────────────────────────────────────────────────────────────────────
+      # 3.5 CodeQL анализ
+      # ────────────────────────────────────────────────────────────────────────────────────────────
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -191,45 +182,69 @@ jobs:
       - name: Run CodeQL analysis
         uses: github/codeql-action/analyze@v3
 
-      ##############################################################################
-      # 3.6 Сборка Python-пакета и его подпись через Cosign
-      ##############################################################################
-
-      # 3.6.1 Декодируем Base64-секрет и записываем в ~/.cosign/cosign.key
-      - name: Write Cosign private key from Base64
+      # ────────────────────────────────────────────────────────────────────────────────────────────
+      # 3.6 Записываем Cosign-ключ из GitHub Secrets
+      #
+      #   Вариант A: секрет COSIGN_KEY_B64 содержит Base64-строку (рекомендуемый).
+      #   Вариант B: секрет COSIGN_KEY_PEM содержит "сырой" PEM (многострочный).
+      # ────────────────────────────────────────────────────────────────────────────────────────────
+      - name: Write Cosign key (Base64)
+        if: ${{ secrets.COSIGN_KEY_B64 != '' }}
         run: |
           mkdir -p ~/.cosign
-          echo "${{ env.COSIGN_PRIVATE_KEY_B64 }}" | base64 -d > ~/.cosign/cosign.key
+          echo "$COSIGN_KEY_B64" | base64 -d > ~/.cosign/cosign.key
           chmod 600 ~/.cosign/cosign.key
 
-      # 3.6.2 Устанавливаем Cosign
+      - name: Write Cosign key (raw PEM)
+        if: ${{ secrets.COSIGN_KEY_PEM != '' }}
+        run: |
+          mkdir -p ~/.cosign
+          printf '%s' "$COSIGN_KEY_PEM" > ~/.cosign/cosign.key
+          chmod 600 ~/.cosign/cosign.key
+
+      # ────────────────────────────────────────────────────────────────────────────────────────────
+      # 3.7 Устанавливаем Cosign binary из официального скрипта
+      # ────────────────────────────────────────────────────────────────────────────────────────────
       - name: Install Cosign
         run: |
-          curl -sSfL "https://github.com/sigstore/cosign/releases/download/v${COSIGN_VERSION}/cosign-linux-amd64" \
-            -o /usr/local/bin/cosign
-          chmod +x /usr/local/bin/cosign
+          COSIGN_VERSION="v1.14.1"
+          curl -sSfL "https://raw.githubusercontent.com/sigstore/cosign/main/install.sh" | sh -s -- -b /usr/local/bin "${COSIGN_VERSION}"
+          cosign version
 
-      # 3.6.3 Устанавливаем build (для сборки wheel+sdist)
+      # ────────────────────────────────────────────────────────────────────────────────────────────
+      # 3.8 Устанавливаем инструмент для сборки Python-пакета
+      # ────────────────────────────────────────────────────────────────────────────────────────────
       - name: Install build tool
         run: |
           python -m pip install --upgrade pip
           pip install build
 
-      # 3.6.4 Собираем Python-пакет (wheel & sdist)
+      # ────────────────────────────────────────────────────────────────────────────────────────────
+      # 3.9 Сборка Python-пакета (wheel & sdist)
+      # ────────────────────────────────────────────────────────────────────────────────────────────
       - name: Build Python package (wheel & sdist)
         run: |
           python -m build --sdist --wheel --outdir dist
 
-      # 3.6.5 Подписываем все артефакты dist/*.whl и dist/*.tar.gz
+      # ────────────────────────────────────────────────────────────────────────────────────────────
+      # 3.10 Подписываем артефакты Cosign'ом
+      # ────────────────────────────────────────────────────────────────────────────────────────────
       - name: Sign artifacts with Cosign
+        # Если приватный ключ защищён паролем, передаём его в переменной COSIGN_PASSWORD
+        env:
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          for artifact in dist/*.whl dist/*.tar.gz; do
+          set -e
+          # Проверка, что ключ правильно записался и имеет заголовки PEM
+          head -n 2 ~/.cosign/cosign.key
+
+          for artifact in dist/*.{whl,tar.gz}; do
             cosign sign --key ~/.cosign/cosign.key "$artifact"
           done
 
-      ##############################################################################
-      # 3.7 Выгружаем все артефакты (SBOM, отчёты, подписанные пакеты)
-      ##############################################################################
+      # ────────────────────────────────────────────────────────────────────────────────────────────
+      # 3.11 Загрузка артефактов: SBOM, отчёты, подписи, сами пакеты
+      # ────────────────────────────────────────────────────────────────────────────────────────────
       - name: Upload SBOM (CycloneDX JSON)
         uses: actions/upload-artifact@v4
         with:
@@ -252,7 +267,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: reuse-report
-          path: reuse-report.txt
+          path: .
 
       - name: Upload Bandit report
         uses: actions/upload-artifact@v4
@@ -266,12 +281,24 @@ jobs:
           name: semgrep-report
           path: semgrep-report.sarif
 
-      - name: Upload signed Python artifacts (wheel & tar.gz + сигнатуры)
+      - name: Upload signed Python artifacts (wheels, sdist + подписи)
         uses: actions/upload-artifact@v4
         with:
-          name: signed-pypi-artifacts
+          name: signed-python-artifacts
           path: |
             dist/*.whl
             dist/*.tar.gz
             dist/*.whl.sig
             dist/*.tar.gz.sig
+
+      # ────────────────────────────────────────────────────────────────────────────────────────────
+      # 3.12 Post-run CodeQL
+      # ────────────────────────────────────────────────────────────────────────────────────────────
+      - name: Post Run CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+
+      - name: Post Initialize CodeQL
+        uses: github/codeql-action/init@v3
+
+      - name: Post Checkout repository
+        uses: actions/checkout@v4
