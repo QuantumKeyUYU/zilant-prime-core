@@ -1,9 +1,9 @@
 # .github/workflows/ci.yml
-name: CI — lint / pytest / coverage / security & sign
+name: CI — lint / pytest / coverage / security & sign
 
 permissions:
-  actions: read
   contents: read
+  actions: read
   security-events: write
 
 on:
@@ -12,29 +12,43 @@ on:
   pull_request:
     branches: [main]
 
+#######################################################################
+# 1 — Lint / formatting
+#######################################################################
 jobs:
   lint-format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements-dev.txt') }}
+          restore-keys: ${{ runner.os }}-pip-
 
       - name: Install linters
         run: |
           python -m pip install --upgrade pip
           pip install black ruff isort
 
-      - name: Black (check-only)
+      - name: Black (check‑only)
         run: black --check src tests
 
-      - name: Ruff (check-only)
+      - name: Ruff (check‑only)
         run: ruff check src tests
 
-      - name: isort (check-only)
+      - name: isort (check‑only)
         run: isort --check-only src tests
 
+#######################################################################
+# 2 — Tests + coverage (matrix 3.10‑3.13)
+#######################################################################
   pytest-coverage:
     needs: lint-format
     runs-on: ubuntu-latest
@@ -47,18 +61,25 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python }}-${{ hashFiles('**/requirements-dev.txt') }}
+          restore-keys: ${{ runner.os }}-pip-
+
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
           pip install .
 
-      - name: Run tests
-        run: pytest --maxfail=1 --disable-warnings --quiet
+      - name: Run pytest
+        run: pytest -q --maxfail=1
 
       - uses: actions/upload-artifact@v4
         with:
-          name: coverage-xml-${{ matrix.python }}
+          name: cov-xml-${{ matrix.python }}
           path: coverage.xml
 
       - uses: actions/upload-artifact@v4
@@ -66,91 +87,119 @@ jobs:
           name: htmlcov-${{ matrix.python }}
           path: htmlcov
 
+#######################################################################
+# 3 — Security + package signing
+#######################################################################
   security-and-sign:
     needs: pytest-coverage
     runs-on: ubuntu-latest
+    env:
+      COSIGN_KEY_B64: ${{ secrets.COSIGN_KEY_B64 }}
+      COSIGN_PWD:     ${{ secrets.COSIGN_PASSWORD }}
     steps:
+      #################################################################
+      # 3.1  Base system + Python
+      #################################################################
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
-      - name: Install Syft / Grype / Trivy + Python tools
+      - name: Install Syft / Grype / Trivy + helpers
         run: |
           sudo apt-get update -y
-          curl -sfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-          curl -sfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
+            | sudo sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
+            | sudo sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sudo sh -s -- -b /usr/local/bin
           python -m pip install --upgrade pip
-          pip install reuse bandit semgrep
+          pip install reuse bandit semgrep build
 
-      - name: Generate SBOM (Syft)
+      #################################################################
+      # 3.2  SBOM / vuln scan
+      #################################################################
+      - name: Generate SBOM
         run: syft . -o cyclonedx-json=sbom.json
 
-      - name: Scan SBOM with Grype (fail on critical)
+      - name: Grype scan (fail on CRITICAL only)
         run: grype sbom:sbom.json --fail-on critical
 
       - name: Save Grype report
         if: always()
-        run: grype sbom:sbom.json -o json > grype-report.json
+        run: grype sbom:sbom.json -o json > grype-report.json || true
 
-      - name: Scan SBOM with Trivy
-        run: trivy sbom:sbom.json --format json --output trivy-report.json --severity HIGH,CRITICAL
+      - name: Trivy scan
+        run: trivy sbom:sbom.json --severity HIGH,CRITICAL --format json --output trivy-report.json
         continue-on-error: true
 
+      #################################################################
+      # 3.3  Static analysis
+      #################################################################
       - name: REUSE lint
         run: reuse lint || true
 
       - name: Bandit
         run: bandit -r src -f json -o bandit-report.json || true
 
-      - name: Semgrep
-        run: semgrep --config p/ci --sarif-output=semgrep-report.sarif || true
+      - name: Semgrep (OSS rules)
+        run: semgrep --config p/ci --sarif-output=semgrep.sarif || true
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+      #################################################################
+      # 3.4  CodeQL
+      #################################################################
+      - uses: github/codeql-action/init@v3
         with:
           languages: python
+      - uses: github/codeql-action/autobuild@v3
+      - uses: github/codeql-action/analyze@v3
 
-      - name: Autobuild CodeQL
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Run CodeQL analysis
-        uses: github/codeql-action/analyze@v3
-
-      - name: Write Cosign private key (Base64)
-        env:
-          COSIGN_KEY_B64: ${{ secrets.COSIGN_KEY_B64 }}
+      #################################################################
+      # 3.5  Prepare Cosign key (if secret present)
+      #################################################################
+      - name: Decode Cosign key (Base64)
+        if: env.COSIGN_KEY_B64 != ''
         run: |
           mkdir -p ~/.cosign
           echo "$COSIGN_KEY_B64" | base64 -d > ~/.cosign/cosign.key
           chmod 600 ~/.cosign/cosign.key
 
-      - name: Install Cosign (Official binary)
+      #################################################################
+      # 3.6  Install Cosign
+      #################################################################
+      - name: Install Cosign
+        if: env.COSIGN_KEY_B64 != ''
         run: |
           COSIGN_VERSION="v2.2.4"
-          curl -LO "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
-          sudo mv cosign-linux-amd64 /usr/local/bin/cosign
-          sudo chmod +x /usr/local/bin/cosign
+          curl -LO https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64
+          sudo install cosign-linux-amd64 /usr/local/bin/cosign
           cosign version
 
-      - name: Install build tool
-        run: python -m pip install build
-
-      - name: Build wheel & sdist
+      #################################################################
+      # 3.7  Build wheel + sdist
+      #################################################################
+      - name: Build package
         run: python -m build --sdist --wheel --outdir dist
 
-      - name: Sign artifacts with Cosign
+      #################################################################
+      # 3.8  Sign artifacts (if key present)
+      #################################################################
+      - name: Sign artifacts
+        if: env.COSIGN_KEY_B64 != ''
         env:
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          for artifact in dist/*.{whl,tar.gz}; do
-            cosign sign --key ~/.cosign/cosign.key "$artifact"
+          for file in dist/*.{whl,tar.gz}; do
+            cosign sign --key ~/.cosign/cosign.key "$file"
           done
 
+      #################################################################
+      # 3.9  Upload artifacts / reports
+      #################################################################
       - uses: actions/upload-artifact@v4
         with:
-          name: sbom-json
+          name: sbom
           path: sbom.json
 
       - uses: actions/upload-artifact@v4
@@ -165,24 +214,18 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: reuse-report
-          path: .
-
-      - uses: actions/upload-artifact@v4
-        with:
           name: bandit-report
           path: bandit-report.json
 
       - uses: actions/upload-artifact@v4
         with:
           name: semgrep-report
-          path: semgrep-report.sarif
+          path: semgrep.sarif
 
       - uses: actions/upload-artifact@v4
         with:
-          name: signed-python-packages
+          name: signed-packages
           path: |
             dist/*.whl
             dist/*.tar.gz
-            dist/*.whl.sig
-            dist/*.tar.gz.sig
+            dist/*.sig
