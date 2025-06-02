@@ -2,7 +2,7 @@
 
 name: CI — lint/pytest/coverage/security
 
-# Разрешения (нужны для загрузки CodeQL-результатов, security-events и т.д.)
+# Разрешения для CodeQL и security-events
 permissions:
   actions: read
   contents: read
@@ -15,9 +15,9 @@ on:
     branches: [ main ]
 
 jobs:
-  # ────────────────────────────────────────────────────────────────────────────────────────────
+  # ───────────────────────────────────────────────────────────────────────────
   # 1) Линт, форматирование, isort
-  # ────────────────────────────────────────────────────────────────────────────────────────────
+  # ───────────────────────────────────────────────────────────────────────────
   lint-format:
     runs-on: ubuntu-latest
     steps:
@@ -45,9 +45,9 @@ jobs:
         run: |
           isort --check-only src tests
 
-  # ────────────────────────────────────────────────────────────────────────────────────────────
+  # ───────────────────────────────────────────────────────────────────────────
   # 2) Тесты + покрытие (pytest → upload coverage)
-  # ────────────────────────────────────────────────────────────────────────────────────────────
+  # ───────────────────────────────────────────────────────────────────────────
   pytest-coverage:
     needs: lint-format
     runs-on: ubuntu-latest
@@ -84,9 +84,9 @@ jobs:
           name: htmlcov-${{ matrix.python-version }}
           path: htmlcov
 
-  # ────────────────────────────────────────────────────────────────────────────────────────────
+  # ───────────────────────────────────────────────────────────────────────────
   # 3) Security checks: SBOM → Grype/Trivy, reuse-lint, Bandit, Semgrep, CodeQL
-  # ────────────────────────────────────────────────────────────────────────────────────────────
+  # ───────────────────────────────────────────────────────────────────────────
   security-checks:
     needs: pytest-coverage
     runs-on: ubuntu-latest
@@ -99,7 +99,7 @@ jobs:
         with:
           python-version: '3.13'
 
-      # ─── 3.1 Устанавливаем системные зависимости (Syft, Grype, Trivy) и Python-утилиты
+      # ─── 3.1 Устанавливаем системные зависимости и Python-утилиты ──────────────
       - name: Install system dependencies (Syft, Grype, Trivy) and Python tools
         run: |
           sudo apt-get update
@@ -107,20 +107,20 @@ jobs:
 
           # Устанавливаем Syft (для генерации SBOM)
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
-            | sh -s -- -b /usr/local/bin v0.84.0
+            | sh -s -- -b /usr/local/bin
 
           # Устанавливаем Grype (для сканирования SBOM)
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
-            | sh -s -- -b /usr/local/bin v0.110.0
+            | sh -s -- -b /usr/local/bin
 
-          # Устанавливаем Trivy (для дополнительного сканирования)
+          # Устанавливаем Trivy (для дополнительного сканирования SBOM)
           curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
-            | sudo sh -s -- -b /usr/local/bin v0.61.3
+            | sudo sh -s -- -b /usr/local/bin
 
           # Устанавливаем Python-утилиты: reuse (лицензии), bandit (security), semgrep (OSS rules)
           pip install reuse bandit semgrep
 
-      # ─── 3.2 Генерация SBOM и скан на уязвимости ───────────────────────────────────────────────
+      # ─── 3.2 Генерация SBOM и скан на уязвимости ───────────────────────────────
       - name: Generate SBOM (Syft)
         run: |
           syft . -o cyclonedx-json=sbom.json
@@ -129,26 +129,24 @@ jobs:
         run: |
           grype sbom:sbom.json --fail-on high
         continue-on-error: true
-        # — Если Grype найдёт «high» или «critical», job завершится с ошибкой.
-        # — «medium»/«low» попадут в отчет, но не сломают CI.
+        # — Если Grype найдёт «high» или «critical», этот шаг завершится с ошибкой, но весь job не упадёт (continue-on-error).
 
       - name: Save Grype report (JSON)
         run: |
           grype sbom:sbom.json -o json > grype-report.json || true
 
-      - name: Scan SBOM with Trivy (fail on high+critical severity)
+      - name: Scan SBOM with Trivy
         run: |
           trivy sbom --format json --output trivy-report.json sbom.json || true
-        # — В этой версии Trivy флаг --severity отсутствует, поэтому мы сканируем весь sbom.
-        # — «high/critical» уязвимости дадут ненулевой код возврата (|| true),
-        #    отчёт попадёт в trivy-report.json, но CI не сломается.
+        # — Trivy сканирует весь SBOM. «high/critical» уязвимости отразятся в trivy-report.json,
+        #   но благодаря "|| true" шаг не провалит весь job.
 
-      # ─── 3.3 Проверка лицензий REUSE (reuse-lint) ───────────────────────────────────────────────
+      # ─── 3.3 Проверка лицензий REUSE (reuse-lint) ───────────────────────────────
       - name: REUSE lint (license compliance)
         run: |
           reuse lint > reuse-report.txt || true
 
-      # ─── 3.4 Static analysis: Bandit, Semgrep ─────────────────────────────────────────────────
+      # ─── 3.4 Static analysis: Bandit, Semgrep ───────────────────────────────────
       - name: Bandit (security linter)
         run: |
           bandit -r src -f json -o bandit-report.json || true
@@ -157,7 +155,7 @@ jobs:
         run: |
           semgrep --config p/ci --sarif-output=semgrep-report.sarif || true
 
-      # ─── 3.5 CodeQL analysis ─────────────────────────────────────────────────────────────────
+      # ─── 3.5 CodeQL analysis ───────────────────────────────────────────────────
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -169,7 +167,7 @@ jobs:
       - name: Run CodeQL analysis
         uses: github/codeql-action/analyze@v3
 
-      # ─── 3.6 Загрузка артефактов security-отчетов ──────────────────────────────────────────────
+      # ─── 3.6 Загрузка артефактов security-отчетов ───────────────────────────────
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
         with:
@@ -188,7 +186,7 @@ jobs:
           name: trivy-report
           path: trivy-report.json
 
-      - name: Upload reuse report
+      - name: Upload REUSE report
         uses: actions/upload-artifact@v4
         with:
           name: reuse-report
