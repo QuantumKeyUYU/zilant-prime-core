@@ -40,12 +40,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip setuptools wheel
 
-          # Если есть requirements-dev.txt — ставим его содержимое
           if [ -f requirements-dev.txt ]; then
             python -m pip install -r requirements-dev.txt
           fi
 
-          # Всегда гарантировано ставим все нужные dev-утилиты:
+          # Всегда гарантированно ставим все нужные dev-утилиты:
           python -m pip install \
             pre-commit \
             ruff \
@@ -55,8 +54,7 @@ jobs:
             pytest \
             coverage \
             syft \
-            semgrep \
-            cosign
+            semgrep
 
       - name: 🔍 Run pre-commit hooks
         run: pre-commit run --all-files
@@ -104,14 +102,9 @@ jobs:
       - name: 📦 Install SBOM tools
         run: |
           python -m pip install --upgrade pip
+          python -m pip install syft trivy
 
-          # Syft ставится через PyPI
-          python -m pip install syft
-
-          # Trivy ставим через PyPI (работает без проблем)
-          python -m pip install trivy
-
-      - name: 🔧 Install Grype (CLI) via official install script
+      - name: 🔧 Install Grype (CLI)
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
 
@@ -188,30 +181,14 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 📦 Install build tools
+      - name: 🔧 Install Cosign (CLI)
         run: |
-          python -m pip install --upgrade pip setuptools wheel build
-          python -m pip install cosign
-
-      - name: 🔐 (Optional) Fetch Cosign key from Vault
-        if: ${{ env.VAULT_ADDR && env.VAULT_TOKEN }}
-        uses: hashicorp/vault-action@v2
-        id: vault
-        with:
-          url: ${{ env.VAULT_ADDR }}
-          method: token
-          token: ${{ env.VAULT_TOKEN }}
-          path: secret/data/cosign
-
-      - name: 📥 Write Cosign Private Key
-        if: steps.vault.outputs['secret/data/cosign']
-        run: |
-          echo "${{ steps.vault.outputs['secret/data/cosign'] }}" \
-            | base64 --decode > cosign.key
-          chmod 600 cosign.key
+          COSIGN_VERSION=v2.1.0
+          curl -sSL https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-${COSIGN_VERSION}-linux-amd64 -o /usr/local/bin/cosign
+          chmod +x /usr/local/bin/cosign
 
       - name: 📦 Build Python packages
-        run: python -m build
+        run: python -m pip install --upgrade pip setuptools wheel build && python -m build
 
       - name: 📝 Create GitHub Release
         id: create_release
@@ -227,8 +204,7 @@ jobs:
             – 📑 Подпись артефактов через Cosign
 
       - name: 🔏 Sign artifacts with Cosign
-        run: |
-          cosign sign --key cosign.key dist/*.tar.gz dist/*.whl
+        run: cosign sign --key cosign.key dist/*.tar.gz dist/*.whl
 
       - name: 🏷 Upload signed artifacts to Release
         uses: softprops/action-gh-release@v1
