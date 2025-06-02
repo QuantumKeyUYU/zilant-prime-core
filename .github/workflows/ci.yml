@@ -8,7 +8,7 @@ on:
     branches: [ main ]
 
 env:
-  PYTHON_VERSION: '3.10'
+  PYTHON_VERSION: "3.10"
   COSIGN_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
   COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
   SBOM_FILE: sbom.json
@@ -89,22 +89,21 @@ jobs:
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
 
       - name: Scan SBOM with Grype (fail on medium+)
-        run: |
-          grype sbom:${{ env.SBOM_FILE }} --fail-on medium
+        run: grype sbom:${{ env.SBOM_FILE }} --fail-on medium
 
       - name: Install Trivy
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
 
       - name: Scan SBOM with Trivy (fail on HIGH,CRITICAL)
-        run: |
-          trivy sbom ${SBOM_FILE} --severity HIGH,CRITICAL
+        run: trivy sbom ${SBOM_FILE} --severity HIGH,CRITICAL
 
-      - name: Upload vulnerability reports
+      - name: Upload Grype report
         uses: actions/upload-artifact@v3
         with:
           name: grype-report
           path: grype_report.json || true
+
       - name: Upload Trivy report
         uses: actions/upload-artifact@v3
         with:
@@ -112,7 +111,7 @@ jobs:
           path: trivy-report.html || true
 
   # ───────────────────────────────────────────────────────────────────────────────
-  # Job 3: REUSE-лицензии
+  # Job 3: REUSE License Check
   reuse-check:
     name: "3. REUSE License Check"
     runs-on: ubuntu-latest
@@ -134,7 +133,7 @@ jobs:
           path: reuse-report.html || true
 
   # ───────────────────────────────────────────────────────────────────────────────
-  # Job 4: Подпись артефактов Cosign’ом
+  # Job 4: Sign Artifacts with Cosign
   sign-artifacts:
     name: "4. Sign Artifacts with Cosign"
     runs-on: ubuntu-latest
@@ -181,7 +180,7 @@ jobs:
           path: dist/
 
   # ───────────────────────────────────────────────────────────────────────────────
-  # Job 5: Статический анализ (CodeQL + Semgrep)
+  # Job 5: Static Analysis with CodeQL & Semgrep
   static-analysis:
     name: "5. Static Analysis with CodeQL & Semgrep"
     runs-on: ubuntu-latest
