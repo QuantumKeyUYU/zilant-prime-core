@@ -1,4 +1,6 @@
-name: CI — lint/pytest/coverage
+# .github/workflows/ci.yml
+
+name: CI — lint/pytest/coverage/security
 
 on:
   push:
@@ -7,48 +9,166 @@ on:
     branches: [ main ]
 
 jobs:
+  # ──────────────────────────────────────────────────────────────────────────────────────────
+  # 1) Линт, форматирование, isort
+  # ──────────────────────────────────────────────────────────────────────────────────────────
   lint-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12 (для линтеров)
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install tooling
+
+      - name: Install linters
         run: pip install black ruff isort
+
       - name: Black (check-only)
         run: black --check src tests
+
       - name: Ruff (check-only)
         run: ruff check src tests
+
       - name: isort (check-only)
         run: isort --check-only src tests
 
+  # ──────────────────────────────────────────────────────────────────────────────────────────
+  # 2) Тесты + покрытие (pytest → upload coverage)
+  # ──────────────────────────────────────────────────────────────────────────────────────────
   pytest-coverage:
+    needs: lint-format
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [ '3.10', '3.11', '3.12', '3.13' ]
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install dependencies
         run: |
           pip install -r requirements-dev.txt
           pip install .
+
       - name: Run pytest with coverage
         run: |
           pytest
+
       - name: Upload coverage XML
         uses: actions/upload-artifact@v4
         with:
           name: coverage-xml-${{ matrix.python-version }}
           path: coverage.xml
-      - name: Upload coverage HTML (optional)
+
+      - name: Upload coverage HTML
         uses: actions/upload-artifact@v4
         with:
           name: htmlcov-${{ matrix.python-version }}
           path: htmlcov
+
+  # ──────────────────────────────────────────────────────────────────────────────────────────
+  # 3) Security checks: SBOM → Grype/Trivy, reuse-lint, Bandit, Semgrep, CodeQL
+  # ──────────────────────────────────────────────────────────────────────────────────────────
+  security-checks:
+    needs: pytest-coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13 (для security-утилит)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      # ─── 3.1 Устанавливаем необходимые утилиты ──────────────────────────────────────────
+      - name: Install system dependencies
+        run: |
+          # Для SBOM и сканеров: устанавливаем Syft и Grype
+          # (если в runner'е нет, скачиваем официальные релизы)
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+
+          # Устанавливаем инструменты Python
+          pip install reuse bandit semgrep
+
+      # ─── 3.2 Генерация SBOM и скан на уязвимости ──────────────────────────────────────────
+      - name: Generate SBOM (Syft)
+        run: |
+          syft . -o cyclonedx-json=sbom.json
+
+      - name: Scan SBOM with Grype (fail on medium+)
+        run: |
+          grype sbom:sbom.json --fail-on medium
+
+      - name: Scan SBOM with Trivy (severity HIGH,CRITICAL)
+        run: |
+          trivy sbom.json --severity HIGH,CRITICAL
+
+      # ─── 3.3 Проверка лицензий по REUSE (reuse-lint) ───────────────────────────────────────
+      - name: REUSE lint (license compliance)
+        run: |
+          reuse lint
+
+      # ─── 3.4 Static analysis: Bandit, Semgrep ──────────────────────────────────────────────
+      - name: Bandit (security linter)
+        run: |
+          bandit -r src
+
+      - name: Semgrep (OSS rules)
+        run: |
+          semgrep --config p/ci --fail
+
+      # ─── 3.5 CodeQL analysis ───────────────────────────────────────────────────────────────
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+
+      - name: Autobuild CodeQL
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Run CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+
+      # ─── 3.6 Собираем артефакты security-report ──────────────────────────────────────────
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-json
+          path: sbom.json
+
+      - name: Upload grype report
+        run: grype sbom:sbom.json -o json > grype-report.json
+
+      - name: Upload Trivy report
+        run: trivy sbom.json -o template --template "@contrib/gitlab.tpl" > trivy-report.txt
+
+      - name: Upload reuse report
+        uses: actions/upload-artifact@v4
+        with:
+          name: reuse-report
+          path: .
+
+      - name: Upload bandit report (optional)
+        run: |
+          bandit -r src -f json -o bandit-report.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+      - name: Upload semgrep SARIF
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-report
+          path: semgrep-report.sarif
+
