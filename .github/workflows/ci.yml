@@ -2,7 +2,7 @@
 
 name: CI — lint/pytest/coverage/security & sign
 
-# Даём Actions нужные права, в том числе для загрузки артефактов CodeQL.
+# Разрешения для Actions (в т.ч. для CodeQL, загрузки артефактов и т.д.)
 permissions:
   actions: read
   contents: read
@@ -94,37 +94,38 @@ jobs:
     needs: pytest-coverage
     runs-on: ubuntu-latest
     steps:
+
+      # ─── 3.1 Checkout + Python 3.13 для security-утилит
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.13 (для security-утилит & sign)
+      - name: Set up Python 3.13
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
 
-      # ─── 3.1 Устанавливаем системные зависимости (Syft, Grype, Trivy) и Python-утилиты
+      # ─── 3.2 Устанавливаем системные зависимости (Syft, Grype, Trivy) + Python-утилиты
       - name: Install system dependencies (Syft, Grype, Trivy) and Python tools
         run: |
           sudo apt-get update -y
 
-          # Устанавливаем Syft (для генерации SBOM)
+          # Syft (генерация SBOM)
           curl -sfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
             | sh -s -- -b /usr/local/bin
 
-          # Устанавливаем Grype (для сканирования SBOM)
+          # Grype (сканирование SBOM)
           curl -sfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
             | sh -s -- -b /usr/local/bin
 
-          # Устанавливаем Trivy (для дополнительного сканирования SBOM)
+          # Trivy (дополнительный скан SBOM)
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
             | sh -s -- -b /usr/local/bin
 
-          # Устанавливаем Python-утилиты: reuse (лицензии), bandit (security), semgrep (OSS rules)
+          # Python-утилиты: reuse (лицензии), bandit (security), semgrep (OSS rules)
           python -m pip install --upgrade pip
           pip install reuse bandit semgrep
-          # КодQL сам подтянется после init CodeQL.
 
-      # ─── 3.2 Генерация SBOM и скан на уязвимости Grype/Trivy
+      # ─── 3.3 Генерация SBOM и скан на уязвимости
       - name: Generate SBOM (Syft)
         run: |
           syft . -o cyclonedx-json=sbom.json
@@ -132,7 +133,7 @@ jobs:
       - name: Scan SBOM with Grype (fail on HIGH or CRITICAL)
         run: |
           grype sbom:sbom.json --fail-on high
-        # Если найдутся уязвимости уровня HIGH/CRITICAL, этот шаг выйдет с кодом ≠0 и упадёт job.
+        # Если найдутся уязвимости уровня HIGH/CRITICAL, шаг упадёт и прекратит выполнение job.
         continue-on-error: false
 
       - name: Save Grype report (JSON)
@@ -142,17 +143,16 @@ jobs:
       - name: Scan SBOM with Trivy (severity HIGH,CRITICAL)
         run: |
           trivy sbom:sbom.json --format json --output trivy-report.json --severity HIGH,CRITICAL
-        # Если найдутся CRITICAL/HIGH, Trivy завершится с non-zero; пропустим (чтобы job не упал раньше времени),
-        # но отчёт всё равно будет сохранён.
+        # Trivy упадёт на CRITICAL/HIGH, но отчёт всё равно запишется
         continue-on-error: true
 
-      # ─── 3.3 Проверка лицензий REUSE (reuse-lint)
+      # ─── 3.4 Проверка лицензий REUSE (reuse-lint)
       - name: REUSE lint (license compliance)
         run: |
           reuse lint || true
-        # Job не упадёт, даже если найдёт несоответствия лицензий — отчёт сохранится.
+        # Job не упадёт, даже если найдутся несоответствия лицензий
 
-      # ─── 3.4 Static analysis: Bandit, Semgrep
+      # ─── 3.5 Static analysis: Bandit и Semgrep
       - name: Bandit (security linter)
         run: |
           bandit -r src -f json -o bandit-report.json || true
@@ -161,7 +161,7 @@ jobs:
         run: |
           semgrep --config p/ci --sarif-output=semgrep-report.sarif || true
 
-      # ─── 3.5 CodeQL analysis
+      # ─── 3.6 CodeQL analysis
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -173,53 +173,48 @@ jobs:
       - name: Run CodeQL analysis
         uses: github/codeql-action/analyze@v3
 
-      # ─── 3.6 Запись Cosign key из Base64 и установка Cosign
+      # ─── 3.7 Запись Cosign-ключа из Base64 (без проверки if, просто берем секрет)
       - name: Write Cosign private key from Base64
-        if: ${{ secrets.COSIGN_KEY_B64 != '' }}
+        env:
+          COSIGN_KEY_B64: ${{ secrets.COSIGN_KEY_B64 }}
         run: |
           mkdir -p ~/.cosign
           echo "$COSIGN_KEY_B64" | base64 -d > ~/.cosign/cosign.key
           chmod 600 ~/.cosign/cosign.key
 
-      - name: (Option) Write Cosign private key raw PEM
-        if: ${{ secrets.COSIGN_KEY_PEM != '' }}
-        run: |
-          mkdir -p ~/.cosign
-          printf '%s' "$COSIGN_KEY_PEM" > ~/.cosign/cosign.key
-          chmod 600 ~/.cosign/cosign.key
-
+      # ─── 3.8 Установка Cosign (берём конкретную версию или последнюю)
       - name: Install Cosign
         run: |
-          COSIGN_VERSION="v1.14.1"  # или актуальная версия
+          COSIGN_VERSION="v1.14.1"
           curl -sfL https://raw.githubusercontent.com/sigstore/cosign/main/install.sh \
             | sh -s -- -b /usr/local/bin "${COSIGN_VERSION}"
           cosign version
 
-      # ─── 3.7 Устанавливаем инструменты для сборки Python-пакета
+      # ─── 3.9 Устанавливаем инструмент для сборки Python-пакета
       - name: Install build tool
         run: |
           python -m pip install --upgrade pip
           pip install build
 
-      # ─── 3.8 Сборка Python-пакета (wheel + sdist)
+      # ─── 3.10 Сборка Python-пакета (wheel + sdist)
       - name: Build Python package (wheel & sdist)
         run: |
           python -m build --sdist --wheel --outdir dist
 
-      # ─── 3.9 Подписываем артефакты с помощью Cosign
+      # ─── 3.11 Подписываем артефакты с помощью Cosign
       - name: Sign artifacts with Cosign
         env:
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}  # если пароль установлен
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}  # можно не задавать, если ключ не запаролен
         run: |
           set -e
-          # Проверим, что ключ читается (контрольные первые 2 строки PEM)
+          # Покажем первые строки PEM, чтобы убедиться, что ключ записался
           head -n 2 ~/.cosign/cosign.key || true
 
           for artifact in dist/*.{whl,tar.gz}; do
             cosign sign --key ~/.cosign/cosign.key "$artifact"
           done
 
-      # ─── 3.10 Загрузка артефактов (SBOM, отчёты и подписанные пакеты)
+      # ─── 3.12 Загрузка артефактов (SBOM, отчёты, подписанные пакеты)
       - name: Upload SBOM (CycloneDX JSON)
         uses: actions/upload-artifact@v4
         with:
@@ -266,7 +261,7 @@ jobs:
             dist/*.whl.sig
             dist/*.tar.gz.sig
 
-      # ─── 3.11 Пост-шаги CodeQL
+      # ─── 3.13 Пост-шаги CodeQL
       - name: Post Run CodeQL analysis
         uses: github/codeql-action/post-analyze@v3
 
