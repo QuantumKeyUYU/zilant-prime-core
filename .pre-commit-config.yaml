@@ -1,26 +1,49 @@
+# .pre-commit-config.yaml
+
 repos:
+  # Black – автоформатирование кода
   - repo: https://github.com/psf/black
     rev: 23.1.0
     hooks:
       - id: black
+        name: Black (format)
         language_version: python3
 
+  # Ruff – линтинг (pre-commit поддерживается через отдельный репо)
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.241
+    rev: v0.0.285
     hooks:
       - id: ruff
-        args: [--fix]
+        name: Ruff (lint)
+        args: ["--fix"]
+        language_version: python3
 
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
+  # isort – проверка и сортировка импортов
+  - repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.10.1
     hooks:
       - id: isort
+        name: isort (check imports)
+        args: ["--profile", "black"]
+        language_version: python3
 
-  - repo: local
+  # Проверка YAML, удаление лишних пробелов, финальная пустая строка
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
     hooks:
-      - id: add-spdx-headers
-        name: Add SPDX headers to all Python files
-        entry: python src/zilant_prime_core/scripts/add_spdx_headers.py src tests
-        language: system
-        files: \.py$
-        stages: [pre-commit]
+      - id: check-yaml
+        name: YAML syntax check
+      - id: end-of-file-fixer
+        name: Ensure file ends with newline
+      - id: trailing-whitespace
+        name: Remove trailing whitespace
+
+  # Mypy – статическая проверка типов (только для кода внутри пакета, не затрагиваем скрипты)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.991
+    hooks:
+      - id: mypy
+        name: mypy (type check)
+        additional_dependencies: ["types-requests"]
+        language_version: python3
+        files: ^src/zilant_prime_core/(?!scripts/).*\.py$

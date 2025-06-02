@@ -1,4 +1,5 @@
-# conftest.py — загружается pytest до любых тестов
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
 
 import sys
 from pathlib import Path

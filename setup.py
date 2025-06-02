@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 from setuptools import find_packages, setup
 
 setup(

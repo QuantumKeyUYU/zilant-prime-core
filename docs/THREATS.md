@@ -22,4 +22,3 @@
 | T1595    | Active Scanning                    | Автоматические SBOM-сканы в CI        |
 | T1588    | Obtain Capabilities                | Загрузка ключей Cosign из Secrets     |
 | T1552    | Unsecured Credentials              | Хранение паролей в переменных среды   |
-

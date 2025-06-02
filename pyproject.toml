@@ -1,18 +1,16 @@
-# pyproject.toml
-
-# ───────────────────────── build system ─────────────────────────
+# ─────────────────────────── Build System ───────────────────────────
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
-# ─────────────────────────── project ────────────────────────────
+# ───────────────────────────── Project ──────────────────────────────
 [project]
 name = "zilant-prime-core"
 version = "0.1.0"
 description = "Ядро ZILANT Prime™: AEAD, KDF, VDF, контейнер .zil и CLI"
 readme = "README.md"
 requires-python = ">=3.10"
-license = "MIT"
+license = { text = "MIT" }
 authors = [
   { name = "Ильдар", email = "you@example.com" },
 ]
@@ -27,8 +25,9 @@ zilant = "zilant_prime_core.cli:main"
 
 [project.optional-dependencies]
 dev = [
+  # Для разработки и CI
   "pytest>=7.0.0",
-  "ruff>=0.0.280",
+  "ruff>=0.0.297",      # Обязательно версия >=0.0.297, чтобы поддерживался новый формат конфигурации
   "black>=23.1.0",
   "isort>=5.10.1",
   "mypy>=0.991",
@@ -39,13 +38,14 @@ dev = [
 ]
 
 [project.urls]
-Homepage        = "https://github.com/yourorg/zilant-prime-core"
-Documentation   = "https://github.com/yourorg/zilant-prime-core#readme"
-"Issue Tracker" = "https://github.com/yourorg/zilant-prime-core/issues"
+Homepage        = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+Documentation   = "https://github.com/QuantumKeyUYU/zilant-prime-core#readme"
+"Issue Tracker" = "https://github.com/QuantumKeyUYU/zilant-prime-core/issues"
 
-# ───────────────────────── tool: Black ──────────────────────────
+# ─────────────────────────── Tool: Black ────────────────────────────
 [tool.black]
-# Убрали py312, py313: оставляем только поддерживаемые target-version
+# Убираем py312/py313, потому что Black версии <23.9 не понимает эти теги.
+# Достаточно поддерживать py310 и py311 (как минимум).
 target-version = ["py310", "py311"]
 line-length = 120
 include = '\.pyi?$'
@@ -61,7 +61,7 @@ exclude = '''
 )/
 '''
 
-# ───────────────────────── tool: isort ──────────────────────────
+# ─────────────────────────── Tool: isort ────────────────────────────
 [tool.isort]
 profile = "black"
 line_length = 120
@@ -72,19 +72,34 @@ use_parentheses = true
 known_first_party = ["zilant_prime_core"]
 default_section = "THIRDPARTY"
 
-# ───────────────────────── tool: Ruff ──────────────────────────
+# ──────────────────────────── Tool: Ruff ─────────────────────────────
+# Поскольку мы обновили ruff до >=0.0.297, можно использовать вложенную секцию lint.
+# Тем не менее, здесь приведён вариант с top-level конфигурацией, чтобы гарантированно
+# не было ошибок парсинга ни в каких версиях ruff, а предупреждение будет игнорироваться.
+
 [tool.ruff]
-# основные правила
+# Выбираем правила (E, F, W — стандартные; C90 — plugin code; B — Bugbear/Bandit и т.д.)
 select = ["E", "F", "W", "C90", "B"]
+
+# Игнорируемые правила
 ignore = ["E402", "B904", "C901"]
-per-file-ignores = { "tests/**/*.py" = ["F841"] }
+
+# Длина строки (синхронизирована с Black/Isort)
 line-length = 120
+
+# Папки/файлы, которые исключаем из проверки
 exclude = ["build", "dist", ".git", ".venv", "__pycache__"]
 
+# Настройка mccabe (цикломатическая сложность)
+# Это top-level, потому что некоторые версии Ruff ожидают его здесь
 [tool.ruff.mccabe]
 max-complexity = 12
 
-# ───────────────────────── tool: MyPy ──────────────────────────
+# Per-file игнорирования (например, тесты могут содержать F841 — «неиспользуемые переменные»)
+[tool.ruff.per-file-ignores]
+"tests/**/*.py" = ["F841"]
+
+# ─────────────────────────── Tool: MyPy ─────────────────────────────
 [tool.mypy]
 python_version           = "3.11"
 check_untyped_defs       = true
@@ -97,7 +112,7 @@ warn_return_any          = false
 warn_unreachable         = false
 exclude                  = '^(src/zil\.py|src/zilant_prime_core/scripts/)'
 
-# ───────────────────────── tool: pytest ─────────────────────────
+# ────────────────────────── Tool: PyTest ────────────────────────────
 [tool.pytest.ini_options]
 minversion     = "7.0"
 addopts        = "-vv --showlocals --disable-warnings --maxfail=1 --durations=10"
@@ -105,7 +120,7 @@ testpaths      = ["src", "tests"]
 xfail_strict   = true
 filterwarnings = ["error"]
 
-# ──────────────────────── tool: coverage ────────────────────────
+# ────────────────────────── Tool: Coverage ──────────────────────────
 [tool.coverage.run]
 branch = true
 source = ["src"]
@@ -119,3 +134,11 @@ omit = [
 show_missing = true
 skip_empty    = true
 precision     = 2
+
+# ─────────────────────────── Tool: REUSE ────────────────────────────
+# Если вы используете REUSE Specification, можете раскомментировать:
+# [tool.reuse]
+# third-party = "LICENSES"
+# full_text = true
+#
+# Достаточно запускать `reuse lint` в CI и держать файлы лицензий в папке LICENSES/.
