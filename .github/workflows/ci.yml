@@ -15,7 +15,7 @@ env:
   PYTHON_VERSION: '3.13'
 
 jobs:
-  # ─── ШАГ 1: Lint → Type → Test → Coverage ────────────────────────────
+  # ─── ШАГ 1: Lint → Type → Test → Coverage ──────────────────────────────────
   lint_and_test:
     name: Lint & Test & Coverage
     runs-on: ubuntu-latest
@@ -36,7 +36,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: 📦 Install dev dependencies (unified)
+      - name: 📦 Install dev dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
 
@@ -44,7 +44,7 @@ jobs:
             python -m pip install -r requirements-dev.txt
           fi
 
-          # Устанавливаем только те инструменты, которые нужны для линтинга/тестов:
+          # Устанавливаем только инструменты для линтинга и тестирования
           python -m pip install \
             pre-commit \
             ruff \
@@ -83,7 +83,7 @@ jobs:
             coverage.xml
             htmlcov/
 
-  # ─── ШАГ 2: Генерация SBOM → Grype/Trivy scan ─────────────────────────
+  # ─── ШАГ 2: Генерация SBOM → Grype/Trivy scan ─────────────────────────────────
   sbom_scan:
     name: SBOM → Grype / Trivy
     needs: lint_and_test
@@ -101,8 +101,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
 
-          # Устанавливаем syft и trivy
-          python -m pip install syft trivy
+          # Устанавливаем syft через PyPI
+          python -m pip install syft
+
+          # Устанавливаем Trivy через официальный скрипт
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
 
       - name: 🔧 Install Grype (CLI)
         run: |
@@ -125,7 +128,7 @@ jobs:
           name: sbom-json
           path: sbom.json
 
-  # ─── ШАГ 3: Semgrep Static Analysis ──────────────────────────────────
+  # ─── ШАГ 3: Semgrep Static Analysis ─────────────────────────────────────────
   semgrep_scan:
     name: Semgrep Static Analysis
     needs: sbom_scan
@@ -142,7 +145,7 @@ jobs:
         with:
           config: 'p/ci'
 
-  # ─── ШАГ 4: CodeQL Analysis ────────────────────────────────────────
+  # ─── ШАГ 4: CodeQL Analysis ─────────────────────────────────────────────────
   codeql_analysis:
     name: CodeQL Analysis
     needs: semgrep_scan
@@ -162,7 +165,7 @@ jobs:
       - name: 🔍 Run CodeQL queries
         uses: github/codeql-action/analyze@v3
 
-  # ─── ШАГ 5: Sign & Release (только при теге v*) ───────────────────────
+  # ─── ШАГ 5: Sign & Release (только при теге v*) ─────────────────────────────────
   sign_and_release:
     name: Sign Artifacts & Publish Release
     if: startsWith(github.ref, 'refs/tags/v')
