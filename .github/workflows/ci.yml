@@ -1,7 +1,7 @@
 ---
 name: CI (Paranoid Stage 0)
 
-'on':
+on:  # yamllint disable-line truthy
   push:
     branches:
       - main
