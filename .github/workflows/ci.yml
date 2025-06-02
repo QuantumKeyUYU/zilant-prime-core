@@ -3,19 +3,16 @@ name: CI (Paranoid Stage 0)
 
 on:  # yamllint disable-line truthy
   push:
-    branches:
-      - main
-    tags:
-      - 'v*.*.*'
+    branches: [main]
+    tags: ['v*.*.*']
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 env:
   PYTHON_VERSION: '3.13'
 
 jobs:
-  # ─── ШАГ 1: Lint → Type → Test → Coverage ──────────────────────────────────
+  # ─── ШАГ 1: Lint → Type → Test → Coverage ───────────────────────────────────
   lint_and_test:
     name: Lint & Test & Coverage
     runs-on: ubuntu-latest
@@ -36,34 +33,31 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: 📦 Install dependencies (dev)
+      - name: 📦 Install dev‑dependencies (+ black/isort гарантированно)
         run: |
           python -m pip install --upgrade pip setuptools wheel
           if [ -f requirements-dev.txt ]; then
             python -m pip install -r requirements-dev.txt
-          else
-            python -m pip install \
-              pre-commit \
-              ruff black isort mypy pytest coverage \
-              syft semgrep cosign
           fi
+          # Всегда ставим black/isort/ruff — вдруг их нет в requirements
+          python -m pip install black isort ruff
 
-      - name: 🔍 Run pre-commit hooks
+      - name: 🔍 Run pre‑commit hooks
         run: pre-commit run --all-files
 
-      - name: 🔍 Run ruff (lint)
+      - name: 🔍 Ruff (lint)
         run: ruff check .
 
-      - name: 🔍 Run black (format check)
-        run: black --check .
+      - name: 🔍 Black (format check)
+        run: python -m black --check .
 
-      - name: 🔍 Run isort (import order)
-        run: isort --check-only .
+      - name: 🔍 isort (import order)
+        run: python -m isort --check-only .
 
-      - name: 🔍 Run mypy (type check)
+      - name: 🔍 mypy (type check)
         run: mypy src
 
-      - name: 🧪 Run pytest with coverage
+      - name: 🧪 Pytest + coverage
         run: |
           pytest --maxfail=1 --disable-warnings -q --cov=src
           coverage xml -o coverage.xml
@@ -77,45 +71,33 @@ jobs:
             coverage.xml
             htmlcov/
 
-  # ─── ШАГ 2: Генерация SBOM → Grype / Trivy scan ─────────────────────────────
+  # ─── ШАГ 2: SBOM → Grype / Trivy ────────────────────────────────────────────
   sbom_scan:
     name: SBOM → Grype / Trivy
     needs: lint_and_test
     runs-on: ubuntu-latest
     steps:
-      - name: 🛎 Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: ⚙️ Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/setup-python@v5
+        with: { python-version: ${{ env.PYTHON_VERSION }} }
 
-      - name: 📦 Install SBOM tools (Syft, Trivy, Grype)
+      - name: 📦 Install Syft / Trivy / Grype (офиц. скрипты)
         run: |
-          # 1) Syft: официальный install-скрипт
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
             | sh -s -- -b /usr/local/bin
-
-          # 2) Trivy: официальный install-скрипт
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
             | sh -s -- -b /usr/local/bin
-
-          # 3) Grype: официальный install-скрипт
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
             | sh -s -- -b /usr/local/bin
 
-      - name: ⚙️ Generate SBOM (CycloneDX JSON)
-        run: |
-          # Исключаем директорию .github, чтобы не попадали Actions-зависимости
-          syft . \
-            -o cyclonedx-json=sbom.json \
-            -x .github
+      - name: ⚙️ Generate SBOM (CycloneDX JSON, исключаем .github)
+        run: syft . -o cyclonedx-json=sbom.json -x .github
 
-      - name: 🔎 Scan SBOM with Grype
+      - name: 🔎 Grype scan (fail‑on medium)
         run: grype sbom:sbom.json --fail-on medium
 
-      - name: 🔎 Scan filesystem with Trivy
+      - name: 🔎 Trivy scan
         run: |
           trivy sbom --format cyclonedx --output sbom-cdx.json .
           trivy fs --severity HIGH,CRITICAL --exit-code 1 .
@@ -126,44 +108,30 @@ jobs:
           name: sbom-json
           path: sbom.json
 
-  # ─── ШАГ 3: Semgrep Static Analysis ───────────────────────────────────────
+  # ─── ШАГ 3: Semgrep Static Analysis ─────────────────────────────────────────
   semgrep_scan:
     name: Semgrep Static Analysis
     needs: sbom_scan
     runs-on: ubuntu-latest
     steps:
-      - name: 🛎 Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - run: python -m pip install semgrep
+      - uses: returntocorp/semgrep-action@v2
+        with: { config: "p/ci" }
 
-      - name: 📦 Install Semgrep
-        run: python -m pip install semgrep
-
-      - name: 🔍 Run Semgrep (OSS rules)
-        uses: returntocorp/semgrep-action@v2
-        with:
-          config: 'p/ci'
-
-  # ─── ШАГ 4: CodeQL Analysis ───────────────────────────────────────────────
+  # ─── ШАГ 4: CodeQL Analysis ────────────────────────────────────────────────
   codeql_analysis:
     name: CodeQL Analysis
     needs: semgrep_scan
     runs-on: ubuntu-latest
     steps:
-      - name: 🛎 Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with: { languages: python }
+      - uses: github/codeql-action/autobuild@v3
+      - uses: github/codeql-action/analyze@v3
 
-      - name: 📦 Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: python
-
-      - name: 🛠 Autobuild (необязательно для Python)
-        uses: github/codeql-action/autobuild@v3
-
-      - name: 🔍 Run CodeQL queries
-        uses: github/codeql-action/analyze@v3
-
-  # ─── ШАГ 5: Sign & Release (только при теге v*) ──────────────────────────
+  # ─── ШАГ 5: Sign & Release (по тегу v*) ─────────────────────────────────────
   sign_and_release:
     name: Sign Artifacts & Publish Release
     if: startsWith(github.ref, 'refs/tags/v')
@@ -171,61 +139,50 @@ jobs:
     runs-on: ubuntu-latest
     env:
       COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-      VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+      VAULT_ADDR:      ${{ secrets.VAULT_ADDR }}
+      VAULT_TOKEN:     ${{ secrets.VAULT_TOKEN }}
+
     steps:
-      - name: 🛎 Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: ⚙️ Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/setup-python@v5
+        with: { python-version: ${{ env.PYTHON_VERSION }} }
 
-      - name: 📦 Install build tools
-        run: |
-          python -m pip install --upgrade pip setuptools wheel build
-          python -m pip install cosign
+      - run: |
+          python -m pip install --upgrade pip setuptools wheel build cosign
 
-      - name: 🔐 (Optional) Fetch Cosign key from Vault
+      - name: (Optional) Fetch Cosign key from Vault
         if: ${{ env.VAULT_ADDR && env.VAULT_TOKEN }}
         uses: hashicorp/vault-action@v2
         id: vault
         with:
-          url: ${{ env.VAULT_ADDR }}
+          url:    ${{ env.VAULT_ADDR }}
           method: token
-          token: ${{ env.VAULT_TOKEN }}
-          path: secret/data/cosign
+          token:  ${{ env.VAULT_TOKEN }}
+          path:   secret/data/cosign
 
-      - name: 📥 Write Cosign Private Key
+      - name: Write Cosign Private Key
         if: steps.vault.outputs['secret/data/cosign']
         run: |
-          echo "${{ steps.vault.outputs['secret/data/cosign'] }}" \
-            | base64 --decode > cosign.key
+          echo "${{ steps.vault.outputs['secret/data/cosign'] }}" | base64 -d > cosign.key
           chmod 600 cosign.key
 
-      - name: 📦 Build Python packages
-        run: python -m build
+      - run: python -m build
 
-      - name: 📝 Create GitHub Release
-        id: create_release
+      - id: create_release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           body: |
-            Автоматический релиз по тегу ${{ github.ref_name }}.
-            – ✅ Все линты, типизация, тесты пройдены
-            – ✅ SBOM + Grype/Trivy: нет рисков ≥ medium
-            – ✅ Semgrep, CodeQL
-            – 📑 Подпись артефактов через Cosign
+            ✅ Линты/типы/тесты пройдены  
+            ✅ SBOM + Grype/Trivy — «medium‑free»  
+            ✅ Semgrep + CodeQL  
+            📑 Артефакты подписаны Cosign
 
-      - name: 🔏 Sign artifacts with Cosign
-        run: |
-          cosign sign --key cosign.key dist/*.tar.gz dist/*.whl
+      - run: cosign sign --key cosign.key dist/*.tar.gz dist/*.whl
 
-      - name: 🏷 Upload signed artifacts to Release
-        uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
           files: |
@@ -233,6 +190,4 @@ jobs:
             dist/*.whl
             cosign.pub
 
-      - name: ➡️ Update badges in README.md
-        run: |
-          echo "✅ Релиз завершён. Проверь и обнови бейджи в README."
+      - run: echo "✅ Релиз завершён — обнови бейджи README при необходимости."
