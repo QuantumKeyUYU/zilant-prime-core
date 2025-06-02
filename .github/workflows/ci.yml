@@ -1,6 +1,7 @@
 # .github/workflows/ci.yml
 name: CI — lint / pytest / coverage / security & sign
 
+# Права для GitHub Actions (чтобы CodeQL мог отправлять результаты, а мы могли выгружать артефакты)
 permissions:
   contents:        read
   actions:         read
@@ -8,14 +9,14 @@ permissions:
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-###############################################################################
-# 1 — Lint / formatting
-###############################################################################
+  ###############################################################################
+  # 1 — Lint / formatting (Black, Ruff, isort)
+  ###############################################################################
   lint-format:
     runs-on: ubuntu-latest
     steps:
@@ -27,7 +28,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Cache pip (for linters)
+      - name: Cache pip (для установки линтеров)
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
@@ -48,15 +49,15 @@ jobs:
       - name: isort (check only)
         run: isort --check-only src tests
 
-###############################################################################
-# 2 — Tests + coverage (matrix 3.10–3.13)
-###############################################################################
+  ###############################################################################
+  # 2 — Tests + coverage (matrix 3.10–3.13)
+  ###############################################################################
   pytest-coverage:
     needs: lint-format
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -66,7 +67,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Cache pip (for tests)
+      - name: Cache pip (для установок зависимостей)
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
@@ -94,15 +95,15 @@ jobs:
           name: htmlcov-${{ matrix.python-version }}
           path: htmlcov
 
-###############################################################################
-# 3 — Security + package signing
-###############################################################################
+  ###############################################################################
+  # 3 — Security checks + package signing
+  ###############################################################################
   security-and-sign:
     needs: pytest-coverage
     runs-on: ubuntu-latest
     env:
-      COSIGN_KEY_B64:    ${{ secrets.COSIGN_KEY_B64 }}
-      COSIGN_PASSWORD:   ${{ secrets.COSIGN_PASSWORD }}
+      COSIGN_KEY_B64:  ${{ secrets.COSIGN_KEY_B64 }}
+      COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -112,42 +113,43 @@ jobs:
         with:
           python-version: "3.13"
 
-      # ─── 3.1 Установим Syft, Grype, Trivy и Python-утилиты ─────────────────────────────────
-      - name: Install Syft / Grype / Trivy / python-helpers
+      # ─── 3.1 Установим Syft, Grype, Trivy и python-утилиты ───────────────────────────
+      - name: Install Syft / Grype / Trivy / Python-helpers
         run: |
           sudo apt-get update -y
-          # Syft (генерация SBOM)
+          # Syft — генерация SBOM
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
             | sudo sh -s -- -b /usr/local/bin
-          # Grype (скан SBOM)
+          # Grype — сканирование SBOM
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
             | sudo sh -s -- -b /usr/local/bin
-          # Trivy (дополнительный SBOM-скан)
+          # Trivy — дополнительный SBOM-скан
           curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
             | sudo sh -s -- -b /usr/local/bin
           python -m pip install --upgrade pip
           pip install reuse bandit semgrep build
 
-      # ─── 3.2 Генерируем SBOM и сканируем на уязвимости ────────────────────────────────────
-      - name: Generate SBOM (Syft → CycloneDX)
-        run: syft . -o cyclonedx-json=sbom.json
+      # ─── 3.2 Генерируем SBOM и сканируем на уязвимости ─────────────────────────────────
+      - name: Generate SBOM (Syft → SPDX JSON)
+        run: |
+          syft . -o spdx-json=spdx.json
 
       - name: Grype scan (fail on CRITICAL)
         run: |
-          grype sbom:sbom.json --fail-on critical
+          grype spdx:spdx.json --fail-on critical
 
       - name: Save full Grype report (JSON)
         if: always()
         run: |
-          grype sbom:sbom.json -o json > grype-report.json || true
+          grype spdx:spdx.json -o json > grype-report.json || true
 
-      - name: Trivy scan (HIGH,CRITICAL)
+      - name: Trivy scan (HIGH,CRITICAL) via SPDX
         run: |
-          trivy --severity HIGH,CRITICAL sbom --format json -o trivy-report.json sbom.json
+          trivy --severity HIGH,CRITICAL spdx --format json -o trivy-report.json spdx.json
         continue-on-error: true
-        # если найдёт HIGH/CRITICAL, отчёт сохранится, но job не провалится
+        # Если найдёт HIGH/CRITICAL, отчёт сохранится, но job не провалится
 
-      # ─── 3.3 Static analysis + REUSE ─────────────────────────────────────────────────────
+      # ─── 3.3 Static analysis + проверка лицензий (REUSE) ───────────────────────────────
       - name: REUSE lint (license compliance)
         run: reuse lint || true
 
@@ -157,7 +159,7 @@ jobs:
       - name: Semgrep (OSS rules)
         run: semgrep --config p/ci --sarif-output semgrep.sarif || true
 
-      # ─── 3.4 CodeQL analysis ───────────────────────────────────────────────────────────────
+      # ─── 3.4 CodeQL analysis ─────────────────────────────────────────────────────────────
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -169,7 +171,7 @@ jobs:
       - name: Run CodeQL analysis
         uses: github/codeql-action/analyze@v3
 
-      # ─── 3.5 Запись Cosign-ключа, если он есть ───────────────────────────────────────────────
+      # ─── 3.5 Запись Cosign-ключа, если он задан в Secrets ────────────────────────────────
       - name: Decode Cosign private key from Base64
         if: env.COSIGN_KEY_B64 != ''
         run: |
@@ -185,11 +187,11 @@ jobs:
           sudo install cosign-linux-amd64 /usr/local/bin/cosign
           cosign version
 
-      # ─── 3.6 Сборка Python-пакета (wheel + sdist) ────────────────────────────────────────
+      # ─── 3.6 Сборка Python-пакета (wheel + sdist) ────────────────────────────────────
       - name: Build Python package
         run: python -m build --sdist --wheel --outdir dist
 
-      # ─── 3.7 Подпись дистрибутивов (если ключ есть) ────────────────────────────────────────
+      # ─── 3.7 Подпись дистрибутивов (если ключ задан) ───────────────────────────────────
       - name: Cosign sign artifacts
         if: env.COSIGN_KEY_B64 != ''
         run: |
@@ -197,12 +199,12 @@ jobs:
             cosign sign --key ~/.cosign/cosign.key "$f"
           done
 
-      # ─── 3.8 Загрузка всех полезных артефактов ─────────────────────────────────────────────
-      - name: Upload SBOM
+      # ─── 3.8 Загрузка всех полезных артефактов ─────────────────────────────────────────
+      - name: Upload SBOM (SPDX)
         uses: actions/upload-artifact@v4
         with:
-          name: sbom
-          path: sbom.json
+          name: sbom-spdx
+          path: spdx.json
 
       - name: Upload Grype report
         uses: actions/upload-artifact@v4
