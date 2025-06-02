@@ -13,16 +13,11 @@ on:
     branches: [main]
 
 jobs:
-# ────────────────────────────────────────────────────────────────────────────────
-# 1) Линтеры (Black / Ruff / isort)
-# ────────────────────────────────────────────────────────────────────────────────
   lint-format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
@@ -31,18 +26,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install black ruff isort
 
-      - name: Black (check‑only)
+      - name: Black (check-only)
         run: black --check src tests
 
-      - name: Ruff (check‑only)
+      - name: Ruff (check-only)
         run: ruff check src tests
 
-      - name: isort (check‑only)
+      - name: isort (check-only)
         run: isort --check-only src tests
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 2) PyTest   (+ coverage upload)
-# ────────────────────────────────────────────────────────────────────────────────
   pytest-coverage:
     needs: lint-format
     runs-on: ubuntu-latest
@@ -51,9 +43,7 @@ jobs:
         python: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
 
@@ -76,48 +66,39 @@ jobs:
           name: htmlcov-${{ matrix.python }}
           path: htmlcov
 
-# ────────────────────────────────────────────────────────────────────────────────
-# 3) Security + подпись артефактов Cosign
-# ────────────────────────────────────────────────────────────────────────────────
   security-and-sign:
     needs: pytest-coverage
     runs-on: ubuntu-latest
     steps:
-    # — Checkout + Python -------------------------------------------------------
       - uses: actions/checkout@v4
-
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
-    # — System tools ------------------------------------------------------------
-      - name: Install Syft / Grype / Trivy + helpers
+      - name: Install Syft / Grype / Trivy + Python tools
         run: |
           sudo apt-get update -y
-          curl -sfL https://raw.githubusercontent.com/anchore/syft/main/install.sh   | sh -s -- -b /usr/local/bin
-          curl -sfL https://raw.githubusercontent.com/anchore/grype/main/install.sh  | sh -s -- -b /usr/local/bin
+          curl -sfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          curl -sfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
           python -m pip install --upgrade pip
           pip install reuse bandit semgrep
 
-    # — SBOM & vuln scan --------------------------------------------------------
       - name: Generate SBOM (Syft)
         run: syft . -o cyclonedx-json=sbom.json
 
-      - name: Scan SBOM with Grype (fail only on CRITICAL)
+      - name: Scan SBOM with Grype (fail on critical)
         run: grype sbom:sbom.json --fail-on critical
 
-      - name: Save Grype report (always)
+      - name: Save Grype report
         if: always()
         run: grype sbom:sbom.json -o json > grype-report.json
 
-      - name: Scan SBOM with Trivy (HIGH/CRITICAL)
+      - name: Scan SBOM with Trivy
         run: trivy sbom:sbom.json --format json --output trivy-report.json --severity HIGH,CRITICAL
         continue-on-error: true
 
-    # — Licence & static analysis ----------------------------------------------
-      - name: REUSE lint
+      - name: REUSE lint
         run: reuse lint || true
 
       - name: Bandit
@@ -126,20 +107,18 @@ jobs:
       - name: Semgrep
         run: semgrep --config p/ci --sarif-output=semgrep-report.sarif || true
 
-    # — CodeQL ------------------------------------------------------------------
-      - name: CodeQL init
+      - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: python
 
-      - name: CodeQL autobuild
+      - name: Autobuild CodeQL
         uses: github/codeql-action/autobuild@v3
 
-      - name: CodeQL analyze
+      - name: Run CodeQL analysis
         uses: github/codeql-action/analyze@v3
 
-    # — Cosign key ----------------------------------------------------------------
-      - name: Write Cosign private key (Base64 from secret)
+      - name: Write Cosign private key (Base64)
         env:
           COSIGN_KEY_B64: ${{ secrets.COSIGN_KEY_B64 }}
         run: |
@@ -147,19 +126,18 @@ jobs:
           echo "$COSIGN_KEY_B64" | base64 -d > ~/.cosign/cosign.key
           chmod 600 ~/.cosign/cosign.key
 
-      - name: Install Cosign
+      - name: Install Cosign (Official binary)
         run: |
-          COSIGN_VERSION="v1.14.1"
-          curl -sfL https://raw.githubusercontent.com/sigstore/cosign/main/install.sh \
-            | sh -s -- -b /usr/local/bin "${COSIGN_VERSION}"
+          COSIGN_VERSION="v2.2.4"
+          curl -LO "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
+          sudo mv cosign-linux-amd64 /usr/local/bin/cosign
+          sudo chmod +x /usr/local/bin/cosign
           cosign version
 
-    # — Build & sign package ----------------------------------------------------
       - name: Install build tool
-        run: |
-          python -m pip install build
+        run: python -m pip install build
 
-      - name: Build wheel & sdist
+      - name: Build wheel & sdist
         run: python -m build --sdist --wheel --outdir dist
 
       - name: Sign artifacts with Cosign
@@ -170,7 +148,6 @@ jobs:
             cosign sign --key ~/.cosign/cosign.key "$artifact"
           done
 
-    # — Upload artifacts --------------------------------------------------------
       - uses: actions/upload-artifact@v4
         with:
           name: sbom-json
