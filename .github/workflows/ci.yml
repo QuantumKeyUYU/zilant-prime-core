@@ -1,27 +1,23 @@
 # .github/workflows/ci.yml
 name: CI — lint / pytest / coverage / security & sign
 
-###############################################################################
-# базовые разрешения для job‑ов
-###############################################################################
 permissions:
-  contents:        read
-  actions:         read
+  contents: read
+  actions: read
   security-events: write
 
-###############################################################################
-# триггеры
-###############################################################################
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
-###############################################################################
-# 1 ───────────────────────── LINT / FORMAT ───────────────────────────────────
-###############################################################################
 jobs:
+###############################################################################
+# 1 — LINT / FORMAT
+###############################################################################
   lint-format:
     runs-on: ubuntu-latest
     steps:
@@ -45,17 +41,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install black ruff isort
 
-      - name: Black (check)
+      - name: Black (check‑only)
         run: black --check src tests
 
-      - name: Ruff (check)
+      - name: Ruff (check‑only)
         run: ruff check src tests
 
-      - name: isort (check)
+      - name: isort (check‑only)
         run: isort --check-only src tests
 
 ###############################################################################
-# 2 ───────────────────────── TESTS + COVERAGE ────────────────────────────────
+# 2 — TESTS + COVERAGE
 ###############################################################################
   pytest-coverage:
     needs: lint-format
@@ -63,6 +59,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -101,14 +98,15 @@ jobs:
           path: htmlcov
 
 ###############################################################################
-# 3 ─────────────────────── SECURITY + PACKAGE SIGNING ────────────────────────
+# 3 — SECURITY SCANS + BUILD & SIGN
 ###############################################################################
   security-and-sign:
     needs: pytest-coverage
     runs-on: ubuntu-latest
     env:
-      COSIGN_KEY_B64:  ${{ secrets.COSIGN_KEY_B64 }}
+      COSIGN_KEY_B64: ${{ secrets.COSIGN_KEY_B64 }}
       COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -118,43 +116,40 @@ jobs:
         with:
           python-version: "3.13"
 
-      #########################################################################
-      # 3.1  install cli tools
-      #########################################################################
-      - name: Install Syft / Grype / Trivy / helpers
+      # 3.1  CLI tools
+      - name: Install Syft / Grype / Trivy / helpers
         run: |
           sudo apt-get update -y
-
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
-            | sudo sh -s -- -b /usr/local/bin
+              | sudo sh -s -- -b /usr/local/bin
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
-            | sudo sh -s -- -b /usr/local/bin
+              | sudo sh -s -- -b /usr/local/bin
           curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
-            | sudo sh -s -- -b /usr/local/bin
-
+              | sudo sh -s -- -b /usr/local/bin
           python -m pip install --upgrade pip
           pip install reuse bandit semgrep build
 
-      #########################################################################
-      # 3.2  SBOM + vulnerability scan
-      #########################################################################
+      # 3.2  SBOM + vuln‑scan
       - name: Generate SBOM (Syft → CycloneDX)
         run: syft . -o cyclonedx-json=sbom.json
 
       - name: Grype scan (fail on CRITICAL)
         run: grype sbom:sbom.json --fail-on critical
 
-      - name: Save full Grype report (JSON)
+      - name: Save full Grype report
         if: always()
         run: grype sbom:sbom.json -o json > grype-report.json || true
 
-      - name: Trivy scan (HIGH,CRITICAL)
-        run: trivy --severity HIGH,CRITICAL sbom --format json -o trivy-report.json sbom.json
-        continue-on-error: true
+      - name: Trivy scan (HIGH/CRITICAL)
+        run: |
+          trivy sbom \
+                --scanners vuln \
+                --severity HIGH,CRITICAL \
+                --format json \
+                -o trivy-report.json \
+                sbom.json || true
 
-      #########################################################################
-      # 3.3  Static analysis + license check
-      #########################################################################
+      # 3.3  Static analysis + license
       - name: REUSE lint
         run: reuse lint || true
 
@@ -164,9 +159,7 @@ jobs:
       - name: Semgrep
         run: semgrep --config p/ci --sarif-output semgrep.sarif || true
 
-      #########################################################################
       # 3.4  CodeQL
-      #########################################################################
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -178,9 +171,7 @@ jobs:
       - name: Run CodeQL analysis
         uses: github/codeql-action/analyze@v3
 
-      #########################################################################
       # 3.5  Cosign key (optional)
-      #########################################################################
       - name: Decode Cosign private key
         if: env.COSIGN_KEY_B64 != ''
         run: |
@@ -196,15 +187,11 @@ jobs:
           sudo install cosign-linux-amd64 /usr/local/bin/cosign
           cosign version
 
-      #########################################################################
       # 3.6  Build wheel + sdist
-      #########################################################################
       - name: Build Python package
         run: python -m build --sdist --wheel --outdir dist
 
-      #########################################################################
-      # 3.7  Sign artifacts (if key present)
-      #########################################################################
+      # 3.7  Sign artifacts
       - name: Cosign sign artifacts
         if: env.COSIGN_KEY_B64 != ''
         env:
@@ -214,41 +201,28 @@ jobs:
             cosign sign --key ~/.cosign/cosign.key "$f"
           done
 
-      #########################################################################
       # 3.8  Upload artifacts
-      #########################################################################
-      - name: Upload SBOM
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: sbom
           path: sbom.json
-
-      - name: Upload Grype report
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: grype-report
           path: grype-report.json
-
-      - name: Upload Trivy report
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: trivy-report
           path: trivy-report.json
-
-      - name: Upload Bandit report
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: bandit-report
           path: bandit-report.json
-
-      - name: Upload Semgrep SARIF
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: semgrep-report
           path: semgrep.sarif
-
-      - name: Upload signed packages
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: signed-packages
           path: |
