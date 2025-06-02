@@ -2,6 +2,7 @@
 
 name: CI — lint/pytest/coverage/security/sign
 
+# Даем Actions минимально необходимые права
 permissions:
   actions: read
   contents: read
@@ -13,14 +14,15 @@ on:
   pull_request:
     branches: [ main ]
 
+# Зафиксированные версии инструментов, чтобы не ловить 404:
 env:
-  # Фиксируем версии, чтобы установки всегда работали (не было 404):
   SYFT_VERSION: "0.83.0"
   GRYPE_VERSION: "0.88.0"
   TRIVY_VERSION: "0.49.0"
   COSIGN_VERSION: "2.1.0"
-  # Если позже подключите HashiCorp Vault, создайте в GitHub Secrets секрет COSIGN_KEY_SECRET
-  COSIGN_KEY_SECRET: "COSIGN_PRIVATE_KEY"
+  # Секрет, в котором хранится пароль (или токен) для Cosign.
+  # Создайте этот секрет в Settings → Secrets → New repository secret → Name: COSIGN_PASSWORD, Value: <ваш пароль>
+  COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
 
 jobs:
   # ────────────────────────────────────────────────────────────────────────────
@@ -93,7 +95,7 @@ jobs:
           path: htmlcov
 
   # ────────────────────────────────────────────────────────────────────────────
-  # 3) Security checks + подпись пакетов
+  # 3) Security checks + сборка+подпись пакета
   # ────────────────────────────────────────────────────────────────────────────
   security-and-sign:
     needs: pytest-coverage
@@ -103,67 +105,66 @@ jobs:
         uses: actions/checkout@v4
 
       ###########################################################################
-      # 3.0 (опционально) — Fetch secrets из Vault (HashiCorp Vault / AWS SM)
+      # 3.1 (опционально) — Fetch secrets из Vault (если понадобится)
       ###########################################################################
       - name: Fetch secrets from Vault (пример)
-        if: ${{ false }}  # <- Поменяйте на true, когда подключите реальный Vault
+        if: ${{ false }}  # <-- Поставьте true, когда подключите реальный Vault/SecretsManager
         run: |
-          # (пример для HashiCorp Vault; замените на вашу логику, если потребуется)
+          # Пример для HashiCorp Vault (замените под свои нужды):
           vault login "$VAULT_TOKEN"
           vault kv get -field=cosign_key secret/data/mypath/cosign > cosign.key
 
       ###########################################################################
-      # 3.1 Устанавливаем Syft, Grype, Trivy, Cosign и Python-инструменты
+      # 3.2 Установить Syft, Grype, Trivy, Cosign и Python‐утилиты
       ###########################################################################
       - name: Install system dependencies (Syft, Grype, Trivy, Cosign) and Python tools
         run: |
           set -exo pipefail
 
-          # ── Syft (для генерации SBOM) ──────────────────────────────────────────
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/v${SYFT_VERSION}/install.sh \
+          # ── Syft (генерация SBOM) ──────────────────────────────────────────────
+          curl -sSfL "https://raw.githubusercontent.com/anchore/syft/v${SYFT_VERSION}/install.sh" \
             | sh -s -- -b /usr/local/bin
 
-          # ── Grype (для сканирования SBOM) ──────────────────────────────────────
-          curl -sSfL https://raw.githubusercontent.com/anchore/grype/v${GRYPE_VERSION}/install.sh \
+          # ── Grype (сканирование SBOM) ────────────────────────────────────────
+          curl -sSfL "https://raw.githubusercontent.com/anchore/grype/v${GRYPE_VERSION}/install.sh" \
             | sh -s -- -b /usr/local/bin
 
-          # ── Trivy (для SBOM) ────────────────────────────────────────────────────
-          curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/v${TRIVY_VERSION}/contrib/install.sh \
+          # ── Trivy (дополнительный скан SBOM) ─────────────────────────────────
+          curl -sSfL "https://raw.githubusercontent.com/aquasecurity/trivy/v${TRIVY_VERSION}/contrib/install.sh" \
             | sh -s -- -b /usr/local/bin
 
-          # ── Cosign (для подписи артефактов) ────────────────────────────────────
-          curl -sSfL https://github.com/sigstore/cosign/releases/download/v${COSIGN_VERSION}/cosign-linux-amd64 \
+          # ── Cosign (подпись артефактов) ───────────────────────────────────────
+          curl -sSfL "https://github.com/sigstore/cosign/releases/download/v${COSIGN_VERSION}/cosign-linux-amd64" \
             -o /usr/local/bin/cosign
           chmod +x /usr/local/bin/cosign
 
-          # ── Python-утилиты: reuse (лицензии), bandit (security), semgrep (OSS rules) ──────
+          # ── Python-утилиты: reuse (лицензии), bandit (security), semgrep (OSS rules), build ────
           pip install reuse bandit semgrep build
 
       ###########################################################################
-      # 3.2 Генерация SBOM и сканирование (Grype + Trivy)
+      # 3.3 SBOM → Grype/Trivy
       ###########################################################################
       - name: Generate SBOM (Syft)
         run: |
           syft . -o cyclonedx-json=sbom.json
 
-      - name: Scan SBOM with Grype (fail on HIGH+CRITICAL)
+      - name: Scan SBOM with Grype (fail on HIGH/CRITICAL)
         run: |
           grype sbom:sbom.json --fail-on high
         continue-on-error: true
-        # ── Если есть уязвимости HIGH/CRITICAL, Grype вернёт ненулевой код, но job продолжится.
+        # ── Если найдены HIGH/CRITICAL, Grype вернёт код ≠0, но job продолжится
 
       - name: Save Grype report (JSON)
         run: |
           grype sbom:sbom.json -o json > grype-report.json || true
 
-      - name: Scan SBOM with Trivy (HIGH+CRITICAL)
+      - name: Scan SBOM with Trivy (HIGH/CRITICAL)
         run: |
-          # Новый синтаксис Trivy SBOM:
           trivy sbom --format json --exit-code 1 --severity HIGH,CRITICAL sbom.json \
             | tee trivy-report.json || true
 
       ###########################################################################
-      # 3.3 Лицензии (REUSE) и статический анализ
+      # 3.4 Лицензии + статический анализ
       ###########################################################################
       - name: REUSE lint (license compliance)
         run: |
@@ -178,7 +179,7 @@ jobs:
           semgrep --config p/ci --sarif-output=semgrep-report.sarif || true
 
       ###########################################################################
-      # 3.4 CodeQL analysis
+      # 3.5 CodeQL analysis
       ###########################################################################
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -192,7 +193,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
 
       ###########################################################################
-      # 3.5 Сборка Python-пакета и подпись через Cosign
+      # 3.6 Сборка Python-пакета и подпись через Cosign
       ###########################################################################
       - name: Build Python package (wheel & sdist)
         run: |
@@ -200,15 +201,15 @@ jobs:
 
       - name: Sign artifacts with Cosign
         env:
-          COSIGN_PASSWORD: ${{ secrets.${{ env.COSIGN_KEY_SECRET }} }}
+          # COSIGN_PASSWORD подтягивается из секрета GitHub Actions → Settings → Secrets → COSIGN_PASSWORD
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          # Подпишем все колёса и архув dist:
           for artifact in dist/*.whl dist/*.tar.gz; do
             cosign sign --key cosign.key "$artifact"
           done
 
       ###########################################################################
-      # 3.6 Upload security‐artifacts и подписи
+      # 3.7 Загрузка артефактов (SBOM, отчёты, подписи)
       ###########################################################################
       - name: Upload SBOM (CycloneDX JSON)
         uses: actions/upload-artifact@v4
