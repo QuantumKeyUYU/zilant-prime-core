@@ -1,7 +1,7 @@
 ---
 name: CI (Paranoid Stage 0)
 
-on:
+on:  # yamllint disable-line truthy
   push:
     branches:
       - main
@@ -42,7 +42,8 @@ jobs:
           if [ -f requirements-dev.txt ]; then
             pip install -r requirements-dev.txt
           else
-            pip install ruff black isort mypy pytest coverage syft grype semgrep cosign
+            pip install ruff black isort mypy pytest coverage \
+              syft grype semgrep cosign
           fi
 
       - name: 🔍 Run pre-commit hooks
@@ -67,7 +68,7 @@ jobs:
           coverage html -d htmlcov
 
       - name: 📁 Upload coverage reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-reports
           path: |
@@ -105,7 +106,7 @@ jobs:
           trivy fs --severity HIGH,CRITICAL --exit-code 1 .
 
       - name: 🏷 Upload SBOM
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sbom-json
           path: sbom.json
@@ -128,7 +129,7 @@ jobs:
           config: 'p/ci'
 
   # ─── ШАГ 4: CodeQL Analysis ───────────────────────────────────────────────
-  codeql-analysis:
+  codeql_analysis:
     name: CodeQL Analysis
     needs: semgrep_scan
     runs-on: ubuntu-latest
@@ -151,7 +152,7 @@ jobs:
   sign_and_release:
     name: Sign Artifacts & Publish Release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: codeql-analysis
+    needs: codeql_analysis
     runs-on: ubuntu-latest
     env:
       COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
@@ -184,7 +185,8 @@ jobs:
       - name: 📥 Write Cosign Private Key
         if: steps.vault.outputs['secret/data/cosign']
         run: |
-          echo "${{ steps.vault.outputs['secret/data/cosign'] }}" | base64 --decode > cosign.key
+          echo "${{ steps.vault.outputs['secret/data/cosign'] }}" \
+            | base64 --decode > cosign.key
           chmod 600 cosign.key
 
       - name: 📦 Build Python packages
