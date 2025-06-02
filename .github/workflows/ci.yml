@@ -2,6 +2,12 @@
 
 name: CI — lint/pytest/coverage/security
 
+# Важный блок: даём GitHub Actions права, в том числе на загрузку результатов CodeQL
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
 on:
   push:
     branches: [ main ]
@@ -117,23 +123,24 @@ jobs:
         run: |
           grype sbom:sbom.json --fail-on high
         continue-on-error: true
-        # ── Если Grype найдёт уязвимости ≥ high, job упадёт. Если только medium/low — CI пройдёт.
+        # ── Если Grype найдёт уязвимости «high» или «critical», job упадёт.
+        # ── Medium/low попадут в отчет и не сломают CI.
 
       - name: Save grype report (JSON)
         run: |
           grype sbom:sbom.json -o json > grype-report.json || true
 
-      - name: Scan SBOM with Trivy (severity HIGH,CRITICAL)
+      - name: Scan SBOM with Trivy (severity CRITICAL,HIGH)
         run: |
           trivy sbom.json --severity CRITICAL,HIGH --format json --output trivy-report.json
         continue-on-error: true
-        # ── Если Trivy найдёт уязвимости HIGH/CRITICAL, job упадёт. Средние/низкие не влияют.
+        # ── Trivy упадёт на «critical» или «high», но medium/low просто попадут в отчет.
 
       # ─── 3.3 Проверка лицензий REUSE (reuse-lint) ───────────────────────────────────────────────
       - name: REUSE lint (license compliance)
         run: |
           reuse lint || true
-        # ── Не падать на отсутствии некоторых SPDX-файлов, но отчёт сохранить.
+        # ── Job не упадёт, но если есть файлы без SPDX, отчет сохранится.
 
       # ─── 3.4 Static analysis: Bandit, Semgrep ─────────────────────────────────────────────────
       - name: Bandit (security linter)
