@@ -4,19 +4,18 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
   lint_and_test:
-    name: 🧪 Lint & Test & Coverage
+    name: "Lint & Test & Coverage"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python 3.13
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Cache pip
         uses: actions/cache@v4
@@ -30,6 +29,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
+          pip install black
 
       - name: Run pre-commit hooks
         run: pre-commit run --all-files || true
@@ -52,7 +52,7 @@ jobs:
           coverage xml -o coverage.xml
           coverage html -d htmlcov
 
-      - name: ⬆️ Upload coverage reports
+      - name: Upload coverage reports
         uses: actions/upload-artifact@v4
         with:
           name: coverage-reports
@@ -61,31 +61,31 @@ jobs:
             htmlcov/
 
   sbom_scan:
-    name: SBOM ➔ Grype / Trivy
+    name: "SBOM ➔ Grype / Trivy"
     needs: lint_and_test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
-      - name: 🛠 Install Syft / Trivy / Grype (официальные скрипты)
+      - name: Install Syft / Trivy / Grype (официальные скрипты)
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
           curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
 
-      - name: ⚙️ Generate SBOM (CycloneDX JSON, исключаем .github)
+      - name: Generate SBOM (CycloneDX JSON, исключаем .github)
         run: syft . -o cyclonedx-json=sbom.json --exclude .github
 
-      - name: 🧪 Grype scan (fail-on medium)
+      - name: Grype scan (fail-on medium)
         run: grype sbom:sbom.json --fail-on medium
 
-      - name: 🔍 Scan filesystem with Trivy (High / Critical)
-        run: trivy fs . --severity HIGH,CRITICAL --exit-code 0 --no-progress
+      - name: Scan filesystem with Trivy (High / Critical)
+        run: trivy fs . --exit-code 1 --severity HIGH,CRITICAL
 
-      - name: ⬆️ Upload SBOM
+      - name: Upload SBOM
         uses: actions/upload-artifact@v4
         with:
           name: sbom
