@@ -178,9 +178,12 @@ jobs:
             --format json \
             --output trivy-report.json \
             sbom.json || true
-        # даже если Trivy найдёт уязвимости уровня HIGH/CRITICAL,
-        # флаг "|| true" не даст упасть всему шагу,
-        # и файл trivy-report.json будет создан (либо пустым, если ошибок не было).
+
+      - name: Ensure trivy-report.json exists
+        run: |
+          if [ ! -f trivy-report.json ]; then
+            echo "{}" > trivy-report.json
+          fi
 
       #############################################################################
       # 3.3 — Static analysis + license check (REUSE, Bandit, Semgrep)
