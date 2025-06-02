@@ -1,70 +1,52 @@
 # SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
-import logging  # pragma: no cover
-import subprocess  # pragma: no cover
-from pathlib import Path  # pragma: no cover
-from typing import Dict, Optional  # pragma: no cover
+from __future__ import annotations
 
-logging.basicConfig(level=logging.DEBUG, format="[%(asctime)s] %(levelname)s: %(message)s")  # pragma: no cover
-
-
-def _run_cmd(cmd: list[str]) -> subprocess.CompletedProcess[bytes]:  # pragma: no cover
-    return subprocess.run(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
+import os
+import shutil
+import subprocess
+from pathlib import Path
+from typing import Optional
 
 
-def read_pcrs(pcr_dir: Path) -> Dict[int, bytes]:  # pragma: no cover
-    """
-    Читает все PCR из указанной директории (каждый файл — один PCR).
-    Возвращает словарь {PCR_index: bytes(PCR_value)}.
-    """
-    values: Dict[int, bytes] = {}
-    for entry in pcr_dir.iterdir():
+def attest_via_tpm() -> Optional[bool]:
+    pcr_env = Path(os.environ.get("ZILANT_PCR_PATH", "/sys/class/tpm/tpm0/pcrs"))
+    if shutil.which("tpm2_quote") is None:
+        return None
+    if not pcr_env.is_dir():
+        return False
+    local_values: dict[int, bytes] = {}
+    for entry in pcr_env.iterdir():
         try:
             idx = int(entry.name)
             data = entry.read_bytes().strip()
-            values[idx] = bytes.fromhex(data.decode())
+            local_values[idx] = data
         except Exception:
             continue
-    return values
-
-
-def attest_via_tpm() -> Optional[bool]:  # pragma: no cover
-    """
-    Делает TPM Quote, сравнивает с локальными PCR.
-    Если не удалось выполнить команды или значения не совпали — возвращает None.
-    Если всё ок — возвращает True.
-    """
-    # 1) Считываем локальные PCR
-    local_values = read_pcrs(Path("/sys/class/tpm/tpm0/pcrs"))  # pragma: no cover
-
-    # 2) Делаем quote
-    quote_file = "/tmp/tpm-quote.out"
-    cmd = [
+    if not local_values:
+        return False
+    quote_file = Path(os.environ.get("ZILANT_QUOTE_FILE", "/tmp/tpm_quote.bin"))
+    cmd_quote = [
         "tpm2_quote",
         "-C",
-        "0x81010001",
+        os.environ.get("ZILANT_TPM_KEY_CTX", "0x81010001"),
         "-l",
         ",".join(str(i) for i in sorted(local_values.keys())),
         "-q",
-        quote_file,
+        str(quote_file),
     ]
-    result = _run_cmd(cmd)
-    if result.returncode != 0:  # pragma: no cover
-        stderr_msg = result.stderr.strip().decode("utf-8", errors="replace")
-        logging.error(f"Error running tpm2_quote: {stderr_msg}; skipping TPM attestation.")
-        return None
-
-    # 3) Считываем выдачу quote (просто «выбросить» содержимое, чтобы проверить наличие файла)
-    try:
-        _ = Path(quote_file).read_bytes()  # pragma: no cover
-    except Exception:
-        return None
-
-    # 4) Парсим и проверяем (в реальном коде — полный разбор структуры)
-    # Здесь просто эмулируем: считаем, что всё совпало
-    return True
+    result = subprocess.run(cmd_quote, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode != 0 or not quote_file.exists():
+        return False
+    cmd_verify = [
+        "tpm2_verifysignature",
+        "-c",
+        os.environ.get("ZILANT_TPM_PUBKEY_CTX", "0x81010002"),
+        "-m",
+        str(quote_file),
+        "-s",
+        f"{quote_file}.sig",
+    ]
+    result_verify = subprocess.run(cmd_verify, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return result_verify.returncode == 0

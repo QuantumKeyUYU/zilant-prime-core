@@ -3,11 +3,15 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import NoReturn
 
 import click
+
+from zilant_prime_core.utils.self_watchdog import init_self_watchdog
+from zilant_prime_core.utils.tpm_attestation import attest_via_tpm
 
 
 def _abort(msg: str, code: int = 1) -> NoReturn:
@@ -45,10 +49,6 @@ def _unpack_bytes(cont: Path, dest_dir: Path, pwd: str) -> Path:
 
 
 def _cleanup_old_file(container: Path) -> None:
-    """
-    При распаковке без --dest удаляем предыдущий результирующий файл.
-    Любые ошибки при чтении или парсинге игнорируем.
-    """
     try:
         raw = container.read_bytes()
         name_raw, _ = raw.split(b"\n", 1)
@@ -62,6 +62,12 @@ def _cleanup_old_file(container: Path) -> None:
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 def cli() -> None:
     """Zilant Prime CLI."""
+    result = attest_via_tpm()  # pragma: no cover
+    if result is False:  # pragma: no cover
+        click.echo("Remote Attestation failed. Exiting.")  # pragma: no cover
+        sys.exit(1)  # pragma: no cover
+
+    init_self_watchdog(module_file=os.path.realpath(__file__), interval=60.0)  # pragma: no cover
 
 
 @cli.command("pack")
@@ -95,7 +101,15 @@ def cmd_pack(source: Path, output: Path | None, password: str | None, overwrite:
     except Exception as e:
         _abort(f"Pack error: {e}")
 
-    dest.write_bytes(blob)
+    tmp_path = dest.with_suffix(dest.suffix + ".tmp")
+    try:
+        with open(tmp_path, "wb") as f:
+            f.write(blob)
+        os.replace(tmp_path, dest)
+        os.chmod(dest, 0o600)
+    except Exception as e:
+        _abort(f"Write error: {e}")
+
     click.echo(str(dest))
 
 
@@ -127,6 +141,11 @@ def cmd_unpack(container: Path, dest: Path | None, password: str | None) -> None
         _abort(f"Unpack error: {ve}")
     except Exception as e:
         _abort(f"Unpack error: {e}")
+
+    try:
+        os.chmod(out, 0o600)
+    except Exception:
+        pass
 
     click.echo(str(out))
 

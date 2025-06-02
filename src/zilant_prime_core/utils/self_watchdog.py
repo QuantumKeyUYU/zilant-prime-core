@@ -1,3 +1,4 @@
+# src/zilant_prime_core/utils/self_watchdog.py
 # SPDX-FileCopyrightText: 2024–2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
 
@@ -40,9 +41,9 @@ def init_self_watchdog(
 ) -> None:
     """
     Инициализировать self-hash + watchdog:
-    1. Захватывает файловую блокировку (FileLock) на lock_file.
-    2. Вычисляет «эталонный» хеш модуля.
-    3. Запускает daemon-поток, проверяющий хеш каждые `interval` секунд.
+      1. Захватывает файловую блокировку (FileLock) на lock_file.
+      2. Вычисляет «эталонный» хеш модуля.
+      3. Запускает daemon-поток, проверяющий хеш каждые `interval` секунд.
     """
     if module_file is None:
         module_file = os.path.realpath(__file__)
