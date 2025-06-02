@@ -105,19 +105,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y curl git unzip
 
-          # Устанавливаем Syft (для генерации SBOM)
+          # ─ Устанавливаем Syft (для генерации SBOM) ─────────────────────────
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
             | sh -s -- -b /usr/local/bin
 
-          # Устанавливаем Grype (для сканирования SBOM)
+          # ─ Устанавливаем Grype (для сканирования SBOM) ──────────────────────
+          #   Важно: явно указываем версию, чтобы скрипт точно нашёл релиз.
+          GRYPE_VERSION="v0.110.0"
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
-            | sh -s -- -b /usr/local/bin
+            | sh -s -- -b /usr/local/bin ${GRYPE_VERSION}
 
-          # Устанавливаем Trivy (для дополнительного сканирования SBOM)
+          # ─ Устанавливаем Trivy (для дополнительного сканирования SBOM) ───────
+          #   Здесь тоже фиксируем версию, иначе скрипт может поменяться.
+          TRIVY_VERSION="0.48.0"
+          # Берём инсталл-скрипт и указываем нужную версию
           curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
-            | sudo sh -s -- -b /usr/local/bin
+            | sudo sh -s -- -b /usr/local/bin ${TRIVY_VERSION}
 
-          # Устанавливаем Python-утилиты: reuse (лицензии), bandit (security), semgrep (OSS rules)
+          # ─ Устанавливаем Python-утилиты: reuse (лицензии), bandit, semgrep ──
           pip install reuse bandit semgrep
 
       # ─── 3.2 Генерация SBOM и скан на уязвимости ───────────────────────────────
@@ -129,22 +134,24 @@ jobs:
         run: |
           grype sbom:sbom.json --fail-on high
         continue-on-error: true
-        # — Если Grype найдёт «high» или «critical», этот шаг завершится с ошибкой, но весь job не упадёт (continue-on-error).
+        # — Если Grype найдёт «high» или «critical», этот шаг завершится с ошибкой,
+        #   но благодаря continue-on-error весь job не упадёт.
 
       - name: Save Grype report (JSON)
         run: |
           grype sbom:sbom.json -o json > grype-report.json || true
 
-      - name: Scan SBOM with Trivy
+      - name: Scan SBOM with Trivy (severity CRITICAL,HIGH)
         run: |
           trivy sbom --format json --output trivy-report.json sbom.json || true
-        # — Trivy сканирует весь SBOM. «high/critical» уязвимости отразятся в trivy-report.json,
+        # — Trivy сканирует sbom.json. «high/critical» уязвимости попадут в trivy-report.json,
         #   но благодаря "|| true" шаг не провалит весь job.
 
       # ─── 3.3 Проверка лицензий REUSE (reuse-lint) ───────────────────────────────
       - name: REUSE lint (license compliance)
         run: |
           reuse lint > reuse-report.txt || true
+        # — Если что-то не так с лицензиями, отработает, но не упадёт.
 
       # ─── 3.4 Static analysis: Bandit, Semgrep ───────────────────────────────────
       - name: Bandit (security linter)
@@ -167,7 +174,7 @@ jobs:
       - name: Run CodeQL analysis
         uses: github/codeql-action/analyze@v3
 
-      # ─── 3.6 Загрузка артефактов security-отчетов ───────────────────────────────
+      # ─── 3.6 Загрузка артефактов security-отчётов ───────────────────────────────
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
         with:
