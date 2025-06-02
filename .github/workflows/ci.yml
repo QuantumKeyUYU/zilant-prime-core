@@ -1,9 +1,9 @@
 # .github/workflows/ci.yml
 
-name: CI — lint/pytest/coverage/security/sign
+name: CI — lint / pytest / coverage / security / sign
 
 ################################################################################
-# Права GitHub Actions: нужен доступ для чтения содержимого и записи security-events
+# Права, необходимые для CodeQL и security-events
 permissions:
   actions: read
   contents: read
@@ -15,17 +15,24 @@ on:
   pull_request:
     branches: [main]
 
+################################################################################
+# Глобальные переменные (версии утилит)
 env:
-  # Задаем фиксированные версии утилит; при необходимости обновите теги
   SYFT_VERSION: "0.83.0"
   GRYPE_VERSION: "0.88.0"
   TRIVY_VERSION: "0.49.0"
   COSIGN_VERSION: "2.1.0"
 
-  # Приватный ключ Cosign должен быть сохранен в Settings → Secrets → Actions
-  # под именем COSIGN_PRIVATE_KEY
-  COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+  # Вместо хранения «сырых» многострочных данных PEM мы храним его в виде Base64.
+  # В Settings → Secrets → Actions создайте секрет с EXACT именем:
+  #   COSIGN_PRIVATE_KEY_B64
+  # И положите туда результат:
+  #   $ cat cosign.key | base64 -w0
+  #
+  # В CI его раскодируем в ~/.cosign/cosign.key
+  COSIGN_PRIVATE_KEY_B64: ${{ secrets.COSIGN_PRIVATE_KEY_B64 }}
 
+################################################################################
 jobs:
   ################################################################################
   # 1) lint-format: проверка black, ruff, isort
@@ -100,7 +107,7 @@ jobs:
 
   ################################################################################
   # 3) security-and-sign: SBOM → Grype/Trivy → REUSE → Bandit/Semgrep → CodeQL →
-  # Build wheel & sdist → Sign via Cosign → выгрузка артефактов
+  # Build wheel & sdist → Sign via Cosign → Выгрузка всех артефактов
   ################################################################################
   security-and-sign:
     needs: pytest-coverage
@@ -111,7 +118,7 @@ jobs:
 
       ##############################################################################
       # 3.1 Устанавливаем системные зависимости: Syft, Grype, Trivy
-     ###############################################################################
+      ##############################################################################
       - name: Install system dependencies (Syft, Grype, Trivy)
         run: |
           set -e
@@ -128,19 +135,18 @@ jobs:
           curl -sSfL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" \
             | tar zxvf - -C /usr/local/bin trivy
 
-          # 4) Устанавливаем Python-утилиты: reuse (лицензии), bandit (security linter), semgrep (OSS rules)
+          # 4) Python-утилиты для REUSE, Bandit, Semgrep
           python -m pip install --upgrade pip
           pip install reuse bandit semgrep
 
       ##############################################################################
       # 3.2 Генерация SBOM и сканирование на уязвимости
-     ###############################################################################
+      ##############################################################################
       - name: Generate SBOM (Syft)
         run: |
           syft . -o cyclonedx-json=sbom.json
 
-      # → Grype: падаем только на CRITICAL, но не на HIGH
-      - name: Scan SBOM with Grype (fail on CRITICAL)
+      - name: Scan SBOM with Grype (fail ONLY on CRITICAL)
         run: |
           grype sbom:sbom.json --fail-on critical
         continue-on-error: true
@@ -149,21 +155,20 @@ jobs:
         run: |
           grype sbom:sbom.json -o json > grype-report.json || true
 
-      # → Trivy: только HIGH и CRITICAL, но workflow не падает (continue-on-error)
       - name: Scan SBOM with Trivy (severity HIGH,CRITICAL)
         run: |
           trivy sbom sbom.json --format json --output trivy-report.json --severity HIGH,CRITICAL || true
 
       ##############################################################################
       # 3.3 Проверка лицензий REUSE
-     ###############################################################################
+      ##############################################################################
       - name: REUSE lint (license compliance)
         run: |
           reuse lint > reuse-report.txt || true
 
       ##############################################################################
       # 3.4 Static analysis: Bandit, Semgrep
-     ###############################################################################
+      ##############################################################################
       - name: Bandit (security linter)
         run: |
           bandit -r src -f json -o bandit-report.json || true
@@ -174,7 +179,7 @@ jobs:
 
       ##############################################################################
       # 3.5 CodeQL analysis
-     ###############################################################################
+      ##############################################################################
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -187,35 +192,35 @@ jobs:
         uses: github/codeql-action/analyze@v3
 
       ##############################################################################
-      # 3.6 Сборка Python-пакета (wheel & sdist) и подпись через Cosign
-     ###############################################################################
+      # 3.6 Сборка Python-пакета и его подпись через Cosign
+      ##############################################################################
 
-      # 3.6.1: Записываем приватный ключ Cosign в файл (из GitHub Secrets)
-      - name: Write Cosign private key to file
+      # 3.6.1 Декодируем Base64-секрет и записываем в ~/.cosign/cosign.key
+      - name: Write Cosign private key from Base64
         run: |
           mkdir -p ~/.cosign
-          echo "${{ env.COSIGN_PRIVATE_KEY }}" > ~/.cosign/cosign.key
+          echo "${{ env.COSIGN_PRIVATE_KEY_B64 }}" | base64 -d > ~/.cosign/cosign.key
           chmod 600 ~/.cosign/cosign.key
 
-      # 3.6.2: Устанавливаем Cosign
+      # 3.6.2 Устанавливаем Cosign
       - name: Install Cosign
         run: |
           curl -sSfL "https://github.com/sigstore/cosign/releases/download/v${COSIGN_VERSION}/cosign-linux-amd64" \
             -o /usr/local/bin/cosign
           chmod +x /usr/local/bin/cosign
 
-      # 3.6.3: Устанавливаем build (для сборки wheel+sdist)
+      # 3.6.3 Устанавливаем build (для сборки wheel+sdist)
       - name: Install build tool
         run: |
           python -m pip install --upgrade pip
           pip install build
 
-      # 3.6.4: Сборка Python-пакета
+      # 3.6.4 Собираем Python-пакет (wheel & sdist)
       - name: Build Python package (wheel & sdist)
         run: |
           python -m build --sdist --wheel --outdir dist
 
-      # 3.6.5: Подпись всех артефактов dist/*.whl, dist/*.tar.gz через Cosign
+      # 3.6.5 Подписываем все артефакты dist/*.whl и dist/*.tar.gz
       - name: Sign artifacts with Cosign
         run: |
           for artifact in dist/*.whl dist/*.tar.gz; do
@@ -223,8 +228,8 @@ jobs:
           done
 
       ##############################################################################
-      # 3.7 Загрузка артефактов (SBOM, отчеты, подписанные пакеты)
-      ###############################################################################
+      # 3.7 Выгружаем все артефакты (SBOM, отчёты, подписанные пакеты)
+      ##############################################################################
       - name: Upload SBOM (CycloneDX JSON)
         uses: actions/upload-artifact@v4
         with:
@@ -261,7 +266,7 @@ jobs:
           name: semgrep-report
           path: semgrep-report.sarif
 
-      - name: Upload signed Python artifacts
+      - name: Upload signed Python artifacts (wheel & tar.gz + сигнатуры)
         uses: actions/upload-artifact@v4
         with:
           name: signed-pypi-artifacts
