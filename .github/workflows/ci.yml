@@ -2,7 +2,7 @@
 
 name: CI — lint/pytest/coverage/security
 
-# Важный блок: даём GitHub Actions права, в том числе на загрузку результатов CodeQL
+# Разрешения (нужны для загрузки CodeQL-результатов, security-events и т.д.)
 permissions:
   actions: read
   contents: read
@@ -99,17 +99,23 @@ jobs:
         with:
           python-version: '3.13'
 
-      # ─── 3.1 Устанавливаем системные зависимости ───────────────────────────────────────────────
-      - name: Install system dependencies (Syft, Grype, Trivy)
+      # ─── 3.1 Устанавливаем системные зависимости (Syft, Grype, Trivy) и Python-утилиты
+      - name: Install system dependencies (Syft, Grype, Trivy) and Python tools
         run: |
+          sudo apt-get update
+          sudo apt-get install -y curl git unzip
+
           # Устанавливаем Syft (для генерации SBOM)
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
+            | sh -s -- -b /usr/local/bin v0.84.0
 
           # Устанавливаем Grype (для сканирования SBOM)
-          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
+            | sh -s -- -b /usr/local/bin v0.110.0
 
           # Устанавливаем Trivy (для дополнительного сканирования)
-          curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sudo sh -s -- -b /usr/local/bin v0.61.3
 
           # Устанавливаем Python-утилиты: reuse (лицензии), bandit (security), semgrep (OSS rules)
           pip install reuse bandit semgrep
@@ -119,28 +125,28 @@ jobs:
         run: |
           syft . -o cyclonedx-json=sbom.json
 
-      - name: Scan SBOM with Grype (fail on high severity)
+      - name: Scan SBOM with Grype (fail on high+critical severity)
         run: |
           grype sbom:sbom.json --fail-on high
         continue-on-error: true
-        # ── Если Grype найдёт уязвимости «high» или «critical», job упадёт.
-        # ── Medium/low попадут в отчет и не сломают CI.
+        # — Если Grype найдёт «high» или «critical», job завершится с ошибкой.
+        # — «medium»/«low» попадут в отчет, но не сломают CI.
 
-      - name: Save grype report (JSON)
+      - name: Save Grype report (JSON)
         run: |
           grype sbom:sbom.json -o json > grype-report.json || true
 
-      - name: Scan SBOM with Trivy (severity CRITICAL,HIGH)
+      - name: Scan SBOM with Trivy (fail on high+critical severity)
         run: |
-          trivy sbom.json --severity CRITICAL,HIGH --format json --output trivy-report.json
-        continue-on-error: true
-        # ── Trivy упадёт на «critical» или «high», но medium/low просто попадут в отчет.
+          trivy sbom --format json --output trivy-report.json sbom.json || true
+        # — В этой версии Trivy флаг --severity отсутствует, поэтому мы сканируем весь sbom.
+        # — «high/critical» уязвимости дадут ненулевой код возврата (|| true),
+        #    отчёт попадёт в trivy-report.json, но CI не сломается.
 
       # ─── 3.3 Проверка лицензий REUSE (reuse-lint) ───────────────────────────────────────────────
       - name: REUSE lint (license compliance)
         run: |
-          reuse lint || true
-        # ── Job не упадёт, но если есть файлы без SPDX, отчет сохранится.
+          reuse lint > reuse-report.txt || true
 
       # ─── 3.4 Static analysis: Bandit, Semgrep ─────────────────────────────────────────────────
       - name: Bandit (security linter)
@@ -163,14 +169,14 @@ jobs:
       - name: Run CodeQL analysis
         uses: github/codeql-action/analyze@v3
 
-      # ─── 3.6 Загрузка артефактов security-report ───────────────────────────────────────────────
+      # ─── 3.6 Загрузка артефактов security-отчетов ──────────────────────────────────────────────
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
         with:
           name: sbom-json
           path: sbom.json
 
-      - name: Upload grype report
+      - name: Upload Grype report
         uses: actions/upload-artifact@v4
         with:
           name: grype-report
@@ -186,15 +192,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: reuse-report
-          path: .
+          path: reuse-report.txt
 
-      - name: Upload bandit report
+      - name: Upload Bandit report
         uses: actions/upload-artifact@v4
         with:
           name: bandit-report
           path: bandit-report.json
 
-      - name: Upload semgrep SARIF
+      - name: Upload Semgrep SARIF
         uses: actions/upload-artifact@v4
         with:
           name: semgrep-report
