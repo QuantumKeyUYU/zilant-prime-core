@@ -1,5 +1,5 @@
 # .github/workflows/ci.yml
-name: Stage 0: Paranoid CI
+name: "Stage 0: Paranoid CI"
 
 on:
   push:
