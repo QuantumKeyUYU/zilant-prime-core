@@ -3,15 +3,19 @@ name: CI (Paranoid Stage 0)
 
 on:  # yamllint disable-line truthy
   push:
-    branches: [main]
-    tags: ['v*.*.*']
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
 env:
   PYTHON_VERSION: '3.13'
 
 jobs:
+  # ─── ШАГ 1: Lint → Type → Test → Coverage ────────────────────────────
   lint_and_test:
     name: Lint & Test & Coverage
     runs-on: ubuntu-latest
@@ -35,10 +39,24 @@ jobs:
       - name: 📦 Install dev dependencies (unified)
         run: |
           python -m pip install --upgrade pip setuptools wheel
+
+          # Если есть requirements-dev.txt — ставим его содержимое
           if [ -f requirements-dev.txt ]; then
             python -m pip install -r requirements-dev.txt
           fi
-          python -m pip install pre-commit ruff black isort mypy pytest coverage syft grype semgrep cosign
+
+          # Всегда гарантировано ставим все нужные dev-утилиты:
+          python -m pip install \
+            pre-commit \
+            ruff \
+            black \
+            isort \
+            mypy \
+            pytest \
+            coverage \
+            syft \
+            semgrep \
+            cosign
 
       - name: 🔍 Run pre-commit hooks
         run: pre-commit run --all-files
@@ -69,6 +87,7 @@ jobs:
             coverage.xml
             htmlcov/
 
+  # ─── ШАГ 2: Генерация SBOM → Grype/Trivy scan ─────────────────────────
   sbom_scan:
     name: SBOM → Grype / Trivy
     needs: lint_and_test
@@ -85,7 +104,16 @@ jobs:
       - name: 📦 Install SBOM tools
         run: |
           python -m pip install --upgrade pip
-          python -m pip install syft grype trivy
+
+          # Syft ставится через PyPI
+          python -m pip install syft
+
+          # Trivy ставим через PyPI (работает без проблем)
+          python -m pip install trivy
+
+      - name: 🔧 Install Grype (CLI) via official install script
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
 
       - name: ⚙️ Generate SBOM (CycloneDX JSON)
         run: syft . -o cyclonedx-json=sbom.json
@@ -104,6 +132,7 @@ jobs:
           name: sbom-json
           path: sbom.json
 
+  # ─── ШАГ 3: Semgrep Static Analysis ──────────────────────────────────
   semgrep_scan:
     name: Semgrep Static Analysis
     needs: sbom_scan
@@ -120,6 +149,7 @@ jobs:
         with:
           config: 'p/ci'
 
+  # ─── ШАГ 4: CodeQL Analysis ────────────────────────────────────────
   codeql_analysis:
     name: CodeQL Analysis
     needs: semgrep_scan
@@ -139,6 +169,7 @@ jobs:
       - name: 🔍 Run CodeQL queries
         uses: github/codeql-action/analyze@v3
 
+  # ─── ШАГ 5: Sign & Release (только при теге v*) ───────────────────────
   sign_and_release:
     name: Sign Artifacts & Publish Release
     if: startsWith(github.ref, 'refs/tags/v')
