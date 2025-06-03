@@ -1,8 +1,6 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
 
-# tests/test_self_watchdog.py
-
 import hashlib
 import time
 
@@ -16,7 +14,7 @@ def test_compute_self_hash(tmp_path):
     assert h == hashlib.sha256(b"abc123").hexdigest()
 
 
-def test_watchdog_detects_change(tmp_path, monkeypatch):
+def test_watchdog_detects_change(tmp_path, monkeypatch, capsys):
     # Подготовка: файл и lock-файл
     p = tmp_path / "mod.py"
     p.write_text("x=1")
@@ -43,14 +41,14 @@ def test_watchdog_detects_change(tmp_path, monkeypatch):
     # Порча файла: хеш перестанет совпадать
     p.write_text("x=2")
 
-    # Ждём чуть больше одного интервала — fake_exit должен был сработать
+    # Ждём чуть больше одного интервала — fake_exit должен сработать
     time.sleep(0.2)
 
     # Проверяем, что exit был вызван с кодом 134
     assert called.get("code") == 134, "Watchdog не обнаружил рассинхронизацию хеша"
 
     # Убедимся, что фоновой поток завершился (нет лишних сообщений)
-    # Дадим ещё немного времени — если поток жив, он бы снова пытался exit
+    # Дадим ещё немного времени — если поток был жив, он бы снова пытался exit
     time.sleep(0.2)
     # Если бы поток был жив, мы бы снова сбросили called, но т.к. он умер, called не меняется
     assert called.get("code") == 134

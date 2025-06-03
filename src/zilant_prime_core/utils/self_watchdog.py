@@ -1,6 +1,6 @@
 # src/zilant_prime_core/utils/self_watchdog.py
-# SPDX-FileCopyrightText: 2024–2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 from __future__ import annotations
 
@@ -25,9 +25,16 @@ def compute_self_hash(file_path: str) -> str:
 
 
 def _watchdog_loop(file_path: str, expected_hash: str, interval: float) -> None:
-    """Постоянно проверяет хеш и аварийно завершает процесс при несоответствии."""
+    """
+    Постоянно проверяет хеш и аварийно завершает процесс при несоответствии
+    или при любой ошибке при чтении/хешировании.
+    """
     while True:
-        current = compute_self_hash(file_path)
+        try:
+            current = compute_self_hash(file_path)
+        except Exception:
+            # Если не удалось прочитать/просчитать хеш — немедленно выходим
+            os._exit(134)
         if current != expected_hash:
             print(f"[watchdog] Self-hash mismatch on {file_path}! Exiting.", file=sys.stderr)
             os._exit(134)
@@ -40,23 +47,32 @@ def init_self_watchdog(
     interval: float = 60.0,
 ) -> None:
     """
-    Инициализировать self-hash + watchdog:
+    Инициализировать self‐watchdog:
       1. Захватывает файловую блокировку (FileLock) на lock_file.
       2. Вычисляет «эталонный» хеш модуля.
-      3. Запускает daemon-поток, проверяющий хеш каждые `interval` секунд.
+      3. Запускает daemon‐поток, проверяющий хеш каждые `interval` секунд.
     """
     if module_file is None:
         module_file = os.path.realpath(__file__)
     if lock_file is None:
         lock_file = module_file + ".lock"
 
+    # Шаг 1: блокировка
     lock = FileLock(lock_file)
-    lock.acquire()  # держим блокировку до завершения процесса
+    lock.acquire()
 
-    expected = compute_self_hash(module_file)
+    # Шаг 2: вычисляем «эталонный» хеш
+    expected_hash = compute_self_hash(module_file)
+
+    # Шаг 3: создаем поток‐«часовой механизм»
     t = threading.Thread(
         target=_watchdog_loop,
-        args=(module_file, expected, interval),
+        args=(module_file, expected_hash, interval),
         daemon=True,
     )
+
+    # Проверяем, что объект потока имеет метод start
+    if not hasattr(t, "start"):
+        raise RuntimeError("Thread object missing 'start' method")
+
     t.start()

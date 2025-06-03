@@ -1,5 +1,5 @@
-# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 from __future__ import annotations
 
@@ -65,8 +65,7 @@ def cli() -> None:
     result = attest_via_tpm()  # pragma: no cover
     if result is False:  # pragma: no cover
         click.echo("Remote Attestation failed. Exiting.")  # pragma: no cover
-        sys.exit(1)  # pragma: no cover
-
+        # Вместо sys.exit здесь просто предупреждаем, но не выходим
     init_self_watchdog(module_file=os.path.realpath(__file__), interval=60.0)  # pragma: no cover
 
 

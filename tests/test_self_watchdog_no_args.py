@@ -1,8 +1,6 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
 
-# tests/test_self_watchdog_no_args.py
-
 import os
 
 import zilant_prime_core.utils.self_watchdog as wd
