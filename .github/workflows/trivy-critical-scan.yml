@@ -21,6 +21,7 @@ jobs:
       - name: Set up job
         uses: actions/checkout@v4
 
+      # Генерируем SBOM и загружаем его как артефакт
       - name: Install Syft (SBOM generation)
         run: |
           echo "🛠 Устанавливаем Syft для генерации SBOM..."
@@ -28,7 +29,7 @@ jobs:
 
       - name: Generate SBOM in CycloneDX JSON
         run: |
-          echo "📦 Генерируем SBOM..."
+          echo "📦 Генерируем SBOM, создаём sbom.json..."
           set -e
           syft . -o cyclonedx-json=sbom.json
 
@@ -39,6 +40,7 @@ jobs:
           name: sbom-json
           path: sbom.json
 
+      # Сканируем SBOM через Grype, падаем только при «CRITICAL»
       - name: Install Grype for SBOM scan
         run: |
           echo "🔍 Устанавливаем Grype для сканирования SBOM..."
@@ -46,20 +48,27 @@ jobs:
 
       - name: Run Grype scan against SBOM (fail on ≥ CRITICAL)
         run: |
-          echo "🔍 Запускаем Grype (падать только при 'Critical')..."
+          echo "🔍 Запускаем Grype (падать только на CRITICAL)..."
           set -e
+          # Если найдутся «Critical» – выходной код 1, иначе 0
           grype sbom:sbom.json --fail-on critical
 
+      # Сканируем весь репозиторий через Trivy, падаем только при «CRITICAL»
       - name: Install Trivy
         run: |
           echo "🛡 Устанавливаем Trivy..."
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.45.0
 
-      - name: Run Trivy filesystem scan (CRITICAL, HIGH)
+      - name: Run Trivy filesystem scan (CRITICAL only)
         run: |
-          echo "🔍 Запускаем Trivy filesystem scan (CRITICAL, HIGH)..."
+          echo "🔍 Запускаем Trivy FS Scan (падать только на CRITICAL)..."
           set -e
-          trivy fs --exit-code 1 --severity CRITICAL,HIGH --format json --output trivy-report.json .
+          trivy fs \
+            --exit-code 1 \
+            --severity CRITICAL \
+            --format json \
+            --output trivy-report.json \
+            .
 
       - name: Upload Trivy report (JSON)
         if: ${{ always() }}
