@@ -39,7 +39,7 @@ def unpack_zil(data: bytes, password: str) -> tuple[bytes, dict]:
         raise ZilFormatError("Unsupported version")
     offset += 1
 
-    flags = buf[offset]
+    buf[offset]
     offset += 1
 
     salt_length = struct.unpack_from("!H", buf, offset)[0]

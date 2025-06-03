@@ -1,11 +1,12 @@
-# src/zilant_prime_core/utils/__init__.py
-
-# SPDX-FileCopyrightText: 2024–2025 Zilant Prime Core contributors
+# SPDX-FileCopyrightText: 2024‑2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
+"""
+Пакет util‑ов ядра ZILANT Prime™.
+"""
 
 from __future__ import annotations
 
-# Константы для AEAD/KDF и контейнера
+# ──────────────────────── Public constants ──────────────────────────
 from .constants import (
     DEFAULT_KEY_LENGTH,
     DEFAULT_NONCE_LENGTH,
@@ -16,16 +17,17 @@ from .constants import (
     VERSION,
 )
 
-# Утилиты кодирования
+# ───────────────────────── Encode / decode ──────────────────────────
 from .formats import from_b64, from_hex, to_b64, to_hex
 
-# Стандартные логгеры
+# ───────────────────────────── Logging ──────────────────────────────
 from .logging import get_file_logger, get_logger
-
-# Защищённый логгер AES-GMAC
 from .secure_logging import SecureLogger, get_secure_logger
 
-__all__ = [
+# ───────────────────────── Vault integration ────────────────────────
+from .vault_client import VaultClient
+
+__all__: list[str] = [
     # constants.py
     "DEFAULT_KEY_LENGTH",
     "DEFAULT_NONCE_LENGTH",
@@ -45,4 +47,6 @@ __all__ = [
     # secure_logging.py
     "SecureLogger",
     "get_secure_logger",
+    # vault_client.py
+    "VaultClient",
 ]

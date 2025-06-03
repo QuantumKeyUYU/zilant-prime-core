@@ -1,144 +1,101 @@
-# ─────────────────────────── Build System ───────────────────────────
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=69", "wheel", "setuptools-scm[toml]>=7"]
 build-backend = "setuptools.build_meta"
 
-# ───────────────────────────── Project ──────────────────────────────
 [project]
-name = "zilant-prime-core"
-version = "0.1.0"
-description = "Ядро ZILANT Prime™: AEAD, KDF, VDF, контейнер .zil и CLI"
-readme = "README.md"
+name            = "zilant-prime-core"
+dynamic         = ["version"]
+description     = "ZILANT Prime™ core: AEAD, Argon2id, Phase-VDF, .zil container & CLI"
+readme          = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
-authors = [
-  { name = "Ильдар", email = "you@example.com" },
+license         = { text = "MIT" }
+authors         = [{ name = "Ильдар", email = "you@example.com" }]
+keywords        = ["crypto", "VDF", "argon2", "AEAD", "secure-storage"]
+classifiers     = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Security :: Cryptography",
+  "Typing :: Typed",
 ]
+
 dependencies = [
-  "cryptography>=40.0.0",
-  "argon2-cffi>=21.3.0",
-  "click>=8.1.0",
+  "cryptography>=42.0,<43.0",
+  "argon2-cffi>=23.1,<24.0",
+  "click>=8.1,<9.0",
+  "hvac>=2.3,<3.0",
 ]
 
 [project.scripts]
 zilant = "zilant_prime_core.cli:main"
 
+[project.urls]
+Homepage      = "https://github.com/QuantumKeyUYU/zilant-prime-core"
+Documentation = "https://github.com/QuantumKeyUYU/zilant-prime-core#readme"
+Issues        = "https://github.com/QuantumKeyUYU/zilant-prime-core/issues"
+
 [project.optional-dependencies]
-dev = [
-  # Для разработки и CI
-  "pytest>=7.0.0",
-  "ruff>=0.0.297",      # Обязательно версия >=0.0.297, чтобы поддерживался новый формат конфигурации
-  "black>=23.1.0",
-  "isort>=5.10.1",
-  "mypy>=0.991",
-  "pre-commit>=2.20.0",
-  "bandit>=1.7.0",
-  "semgrep>=1.18.0",
-  "cyclonedx-bom>=0.16.0",
+test = [
+  "pytest>=8.0,<9.0",
+  "pytest-cov>=5.0,<6.0",
+  "hypothesis>=6.100,<7.0",
 ]
 
-[project.urls]
-Homepage        = "https://github.com/QuantumKeyUYU/zilant-prime-core"
-Documentation   = "https://github.com/QuantumKeyUYU/zilant-prime-core#readme"
-"Issue Tracker" = "https://github.com/QuantumKeyUYU/zilant-prime-core/issues"
+dev = [
+  "black>=24.4,<25.0",
+  "isort>=5.13,<6.0",
+  "ruff>=0.4,<0.5",
+  "mypy>=1.10,<2.0",
+  "pre-commit>=3.7,<4.0",
+  "types-hvac>=2.3.0.0",
+  "bandit>=1.7,<2.0",
+  "semgrep>=1.68,<2.0",
+  "cyclonedx-bom>=3.16,<7.0",
+  "pytest>=8.0,<9.0",
+  "pytest-cov>=5.0,<6.0",
+  "hypothesis>=6.100,<7.0",
+]
 
-# ─────────────────────────── Tool: Black ────────────────────────────
+docs = [
+  "sphinx>=7.2,<8.0",
+  "furo>=2023.9",
+  "sphinx-autodoc-typehints>=1.25,<2.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = false
+
+[tool.setuptools_scm]
+version_scheme = "post-release"
+local_scheme   = "no-local-version"
+
 [tool.black]
-# Убираем py312/py313, потому что Black версии <23.9 не понимает эти теги.
-# Достаточно поддерживать py310 и py311 (как минимум).
+line-length    = 120
 target-version = ["py310", "py311"]
-line-length = 120
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.pytest_cache
-  | build
-  | dist
-  | \.venv
-)/
-'''
 
-# ─────────────────────────── Tool: isort ────────────────────────────
 [tool.isort]
-profile = "black"
-line_length = 120
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
+profile           = "black"
+line_length       = 120
 known_first_party = ["zilant_prime_core"]
-default_section = "THIRDPARTY"
-
-# ──────────────────────────── Tool: Ruff ─────────────────────────────
-# Поскольку мы обновили ruff до >=0.0.297, можно использовать вложенную секцию lint.
-# Тем не менее, здесь приведён вариант с top-level конфигурацией, чтобы гарантированно
-# не было ошибок парсинга ни в каких версиях ruff, а предупреждение будет игнорироваться.
 
 [tool.ruff]
-# Выбираем правила (E, F, W — стандартные; C90 — plugin code; B — Bugbear/Bandit и т.д.)
-select = ["E", "F", "W", "C90", "B"]
-
-# Игнорируемые правила
-ignore = ["E402", "B904", "C901"]
-
-# Длина строки (синхронизирована с Black/Isort)
 line-length = 120
+select      = ["E", "F", "W", "C90", "B"]
+ignore      = ["E402", "B904", "C901"]
 
-# Папки/файлы, которые исключаем из проверки
-exclude = ["build", "dist", ".git", ".venv", "__pycache__"]
-
-# Настройка mccabe (цикломатическая сложность)
-# Это top-level, потому что некоторые версии Ruff ожидают его здесь
 [tool.ruff.mccabe]
 max-complexity = 12
 
-# Per-file игнорирования (например, тесты могут содержать F841 — «неиспользуемые переменные»)
-[tool.ruff.per-file-ignores]
-"tests/**/*.py" = ["F841"]
-
-# ─────────────────────────── Tool: MyPy ─────────────────────────────
 [tool.mypy]
-python_version           = "3.11"
-check_untyped_defs       = true
-disallow_untyped_defs    = true
-disallow_incomplete_defs = true
-strict_optional          = true
-ignore_missing_imports   = true
-warn_unused_configs      = true
+python_version           = "3.13"
+strict                   = true
+allow_untyped_decorators = true
 warn_return_any          = false
-warn_unreachable         = false
-exclude                  = '^(src/zil\.py|src/zilant_prime_core/scripts/)'
-
-# ────────────────────────── Tool: PyTest ────────────────────────────
-[tool.pytest.ini_options]
-minversion     = "7.0"
-addopts        = "-vv --showlocals --disable-warnings --maxfail=1 --durations=10"
-testpaths      = ["src", "tests"]
-xfail_strict   = true
-filterwarnings = ["error"]
-
-# ────────────────────────── Tool: Coverage ──────────────────────────
-[tool.coverage.run]
-branch = true
-source = ["src"]
-omit = [
-  "tests/*",
-  "docs/*",
-  "setup.py",
-]
-
-[tool.coverage.report]
-show_missing = true
-skip_empty    = true
-precision     = 2
-
-# ─────────────────────────── Tool: REUSE ────────────────────────────
-# Если вы используете REUSE Specification, можете раскомментировать:
-# [tool.reuse]
-# third-party = "LICENSES"
-# full_text = true
-#
-# Достаточно запускать `reuse lint` в CI и держать файлы лицензий в папке LICENSES/.
+ignore_missing_imports   = true
+disable_error_code       = ["attr-defined"]
+exclude                  = '(^(src/zil\.py)|^scripts/)'

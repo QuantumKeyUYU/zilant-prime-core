@@ -33,7 +33,7 @@ def test_unpack_missing_password(tmp_path, monkeypatch):
     # create a dummy container
     cont = tmp_path / "c.zil"
     cont.write_bytes(b"hdr\npayload")
-    outdir = tmp_path / "out"
+    tmp_path / "out"
     # none exists yet
     result = runner.invoke(cli, ["unpack", str(cont)])
     assert "Missing password" in result.output
