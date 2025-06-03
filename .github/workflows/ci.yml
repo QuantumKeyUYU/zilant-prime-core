@@ -1,4 +1,7 @@
 # .github/workflows/ci.yml
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+
 name: CI — lint / pytest / coverage / security & sign
 
 ###############################################################################
@@ -25,7 +28,9 @@ jobs:
   # 1 — LINT / FORMAT
   #############################################################################
   lint-format:
+    name: Lint & Format
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -61,11 +66,13 @@ jobs:
           isort --check-only src tests
 
   #############################################################################
-  # 2 — TESTS + COVERAGE (matrix 3.10–3.13)
+  # 2 — TESTS + COVERAGE (матрица 3.10–3.13)
   #############################################################################
   pytest-coverage:
+    name: Pytest & Coverage (Python ${{ matrix.python-version }})
     needs: lint-format
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         python-version:
@@ -94,12 +101,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
+          # Сначала устанавливаем все production-зависимости пакета:
           pip install .
+          # Далее устанавливаем dev-зависимости, включая hvac и pytest:
+          pip install -r requirements-dev.txt
 
       - name: Run pytest
         run: |
-          pytest -q
+          pytest --maxfail=1 --disable-warnings --showlocals --cov=src --cov-report=xml --cov-report=html -q
 
       - name: Upload coverage XML
         uses: actions/upload-artifact@v4
@@ -117,6 +126,7 @@ jobs:
   # 3 — SECURITY SCANS + BUILD & SIGN
   #############################################################################
   security-and-sign:
+    name: Security Scans & Build/Sign
     needs: pytest-coverage
     runs-on: ubuntu-latest
     env:
@@ -157,7 +167,7 @@ jobs:
       #############################################################################
       # 3.2 — Генерируем SBOM и сканируем на уязвимости
       #############################################################################
-      - name: Generate SBOM (Syft → CycloneDX)
+      - name: Generate SBOM (Syft → CycloneDX JSON)
         run: |
           syft . -o cyclonedx-json=sbom.json
 
