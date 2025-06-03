@@ -51,25 +51,29 @@ jobs:
       - name: Install linters
         run: |
           python -m pip install --upgrade pip
-          pip install black ruff isort
+          pip install black ruff isort mypy
 
-      - name: Black (check-only)
-        run: |
-          black --check src tests
-
-      - name: Ruff (check-only)
-        run: |
-          ruff check src tests
-
-      - name: isort (check-only)
+      - name: Run isort (check-only)
         run: |
           isort --check-only src tests
 
+      - name: Run black (check-only)
+        run: |
+          black --check src tests
+
+      - name: Run ruff (lint)
+        run: |
+          ruff check src tests
+
+      - name: Run mypy (type check)
+        run: |
+          mypy src
+
   #############################################################################
-  # 2 — TESTS + COVERAGE (матрица 3.10–3.13)
+  # 2 — TESTS + COVERAGE (матрица Python 3.10–3.13)
   #############################################################################
   pytest-coverage:
-    name: Pytest & Coverage (Python ${{ matrix.python-version }})
+    name: Pytest & Coverage (${{ matrix.python-version }})
     needs: lint-format
     runs-on: ubuntu-latest
 
@@ -98,15 +102,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install dependencies
+      - name: Install dev dependencies
         run: |
           python -m pip install --upgrade pip
-          # Сначала устанавливаем все production-зависимости пакета:
-          pip install .
-          # Далее устанавливаем dev-зависимости, включая hvac и pytest:
+          # Устанавливаем все dev-зависимости, включая pytest, hypothesis, hvac и прочие
           pip install -r requirements-dev.txt
 
-      - name: Run pytest
+      - name: Install package
+        run: |
+          python -m pip install .
+
+      - name: Run pytest with coverage
         run: |
           pytest --maxfail=1 --disable-warnings --showlocals --cov=src --cov-report=xml --cov-report=html -q
 
@@ -129,6 +135,7 @@ jobs:
     name: Security Scans & Build/Sign
     needs: pytest-coverage
     runs-on: ubuntu-latest
+
     env:
       COSIGN_KEY_B64:  ${{ secrets.COSIGN_KEY_B64 }}
       COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
@@ -145,7 +152,7 @@ jobs:
       #############################################################################
       # 3.1 — Установим Syft, Grype, Trivy и Python-утилиты
       #############################################################################
-      - name: Install Syft / Grype / Trivy / python-helpers
+      - name: Install Syft / Grype / Trivy / python-tools
         run: |
           sudo apt-get update -y
 
@@ -165,7 +172,7 @@ jobs:
           pip install reuse bandit semgrep build
 
       #############################################################################
-      # 3.2 — Генерируем SBOM и сканируем на уязвимости
+      # 3.2 — Генерируем SBOM и сканируем
       #############################################################################
       - name: Generate SBOM (Syft → CycloneDX JSON)
         run: |
@@ -196,7 +203,7 @@ jobs:
           fi
 
       #############################################################################
-      # 3.3 — Static analysis + license check (REUSE, Bandit, Semgrep)
+      # 3.3 — Static analysis + license check
       #############################################################################
       - name: REUSE lint (license compliance)
         run: |
@@ -211,7 +218,7 @@ jobs:
           semgrep --config p/ci --sarif-output semgrep.sarif || true
 
       #############################################################################
-      # 3.4 — CodeQL analysis (init → autobuild → analyze)
+      # 3.4 — CodeQL analysis
       #############################################################################
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -225,7 +232,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
 
       #############################################################################
-      # 3.5 — Подготовка Cosign-ключа (если есть)
+      # 3.5 — Подготовка Cosign-ключа
       #############################################################################
       - name: Decode Cosign private key from Base64
         if: env.COSIGN_KEY_B64 != ''
@@ -262,7 +269,7 @@ jobs:
           done
 
       #############################################################################
-      # 3.8 — Загрузка всех полезных артефактов
+      # 3.8 — Загрузка артефактов
       #############################################################################
       - name: Upload SBOM
         uses: actions/upload-artifact@v4
