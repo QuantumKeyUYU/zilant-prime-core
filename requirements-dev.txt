@@ -1,15 +1,27 @@
-﻿# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
-# SPDX-License-Identifier: MIT
-# requirements-dev.txt
+﻿# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+
+# Для тестирования и CI:
 pytest>=8.0.0
 pytest-cov>=5.0.0
-flake8>=7.0.0
-ruff>=0.2.0
-bandit>=1.7.0
-mypy>=1.8.0
 hypothesis>=6.0.0
+
+# Линтеры и форматтеры:
+ruff>=0.2.0
+black>=23.1.0
+isort>=5.10.1
+mypy>=1.8.0
+
+# Security:
+bandit>=1.7.0
+semgrep>=1.18.0
+reuse>=2.1.0
+
+# HashiCorp Vault client (для тестов)
+hvac>=2.3.0,<3.0.0
+
+# Прочее:
 argon2-cffi>=23.1.0
 cryptography>=42.0.0
-click>=8.1.0
 filelock>=3.13.0
 pre-commit>=2.20.0

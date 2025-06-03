@@ -1,7 +1,5 @@
-# .github/workflows/ci.yml
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
-
 name: CI — lint / pytest / coverage / security & sign
 
 ###############################################################################
@@ -19,6 +17,7 @@ on:
   push:
     branches:
       - main
+      - 'releases/**'
   pull_request:
     branches:
       - main
@@ -30,7 +29,6 @@ jobs:
   lint-format:
     name: Lint & Format
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -53,19 +51,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install black ruff isort mypy
 
-      - name: Run isort (check-only)
+      - name: isort (check-only)
         run: |
           isort --check-only src tests
 
-      - name: Run black (check-only)
+      - name: Black (check-only)
         run: |
           black --check src tests
 
-      - name: Run ruff (lint)
+      - name: Ruff (lint)
         run: |
           ruff check src tests
 
-      - name: Run mypy (type check)
+      - name: mypy (type check)
         run: |
           mypy src
 
@@ -98,21 +96,21 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements-dev.txt') }}
+          key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements-dev.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install dev dependencies
+      - name: Install dev dependencies (включая hvac)
         run: |
           python -m pip install --upgrade pip
-          # Устанавливаем все dev-зависимости, включая pytest, hypothesis, hvac и прочие
+          pip install "hvac>=2.3.0,<3.0.0"
           pip install -r requirements-dev.txt
 
       - name: Install package
         run: |
           python -m pip install .
 
-      - name: Run pytest with coverage
+      - name: Run pytest
         run: |
           pytest --maxfail=1 --disable-warnings --showlocals --cov=src --cov-report=xml --cov-report=html -q
 
@@ -135,7 +133,6 @@ jobs:
     name: Security Scans & Build/Sign
     needs: pytest-coverage
     runs-on: ubuntu-latest
-
     env:
       COSIGN_KEY_B64:  ${{ secrets.COSIGN_KEY_B64 }}
       COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
@@ -174,7 +171,7 @@ jobs:
       #############################################################################
       # 3.2 — Генерируем SBOM и сканируем
       #############################################################################
-      - name: Generate SBOM (Syft → CycloneDX JSON)
+      - name: Generate SBOM (Syft → CycloneDX)
         run: |
           syft . -o cyclonedx-json=sbom.json
 
@@ -203,7 +200,7 @@ jobs:
           fi
 
       #############################################################################
-      # 3.3 — Static analysis + license check
+      # 3.3 — Static analysis + license check (REUSE, Bandit, Semgrep)
       #############################################################################
       - name: REUSE lint (license compliance)
         run: |
@@ -218,7 +215,7 @@ jobs:
           semgrep --config p/ci --sarif-output semgrep.sarif || true
 
       #############################################################################
-      # 3.4 — CodeQL analysis
+      # 3.4 — CodeQL analysis (init → autobuild → analyze)
       #############################################################################
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -232,7 +229,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
 
       #############################################################################
-      # 3.5 — Подготовка Cosign-ключа
+      # 3.5 — Подготовка Cosign-ключа (если есть)
       #############################################################################
       - name: Decode Cosign private key from Base64
         if: env.COSIGN_KEY_B64 != ''
@@ -269,7 +266,7 @@ jobs:
           done
 
       #############################################################################
-      # 3.8 — Загрузка артефактов
+      # 3.8 — Загрузка всех полезных артефактов
       #############################################################################
       - name: Upload SBOM
         uses: actions/upload-artifact@v4
