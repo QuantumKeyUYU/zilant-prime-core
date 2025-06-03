@@ -1,4 +1,5 @@
-# .github/workflows/cosign-sign-artifacts.yml
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
 name: Sign Artifacts with Cosign
 
 on:
@@ -12,42 +13,62 @@ permissions:
   id-token: write
 
 env:
-  # COSIGN_PASSWORD подтянется из fetch-secrets → outputs или из GitHub Secrets напрямую:
-  COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+  COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
 
 jobs:
   build-and-sign:
-    name: Build Python package and sign with Cosign
+    name: Build and Sign Distributions
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v4
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: "3.11"
 
-      - name: Install build dependencies
+      - name: Install build tools & Cosign
         run: |
           python -m pip install --upgrade pip
-          pip install build
+          pip install build==0.10.0 cosign==2.4.0
 
-      - name: Build distribution packages
+      - name: Build source and wheel distributions
         run: |
           python -m build --sdist --wheel
+        working-directory: .
 
-      - name: Download Cosign (v2.0.1)
+      - name: Verify distributions exist
         run: |
-          COSIGN_VERSION="v2.0.1"
-          curl -LsS "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" \
-            -o cosign
-          chmod +x cosign
-          sudo mv cosign /usr/local/bin/cosign
+          ls dist
+        working-directory: .
 
-      - name: Sign each artifact in dist/
+      - name: Sign each artifact with Cosign
         run: |
+          set -e
           for artifact in dist/*; do
-            cosign sign --key cosign.key --password-env COSIGN_PASSWORD "$artifact"
+            echo "Signing $artifact"
+            cosign sign \
+              --key "$COSIGN_KEY" \
+              "$artifact"
           done
+        shell: bash
+
+      - name: Verify Cosign signatures
+        run: |
+          set -e
+          for artifact in dist/*; do
+            echo "Verifying signature on $artifact"
+            cosign verify \
+              --key "$COSIGN_KEY" \
+              "$artifact"
+          done
+        shell: bash
+
+      - name: Upload signed artifacts to Release
+        if: ${{ github.event_name == 'release' }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.release.tag_name }}
+          files: dist/*

@@ -1,15 +1,15 @@
-# .github/workflows/vault-rotate-app-token.yml
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
 name: Rotate Vault App Token
 
-# Запускается по расписанию (каждые 8 часов)
 on:
   schedule:
-    - cron: "0 */8 * * *"
+    - cron: "0 */8 * * *"   # Каждые 8 часов
   workflow_dispatch:
 
 permissions:
   contents: read
-  security-events: write
+  secrets: write
 
 jobs:
   rotate-token:
@@ -18,21 +18,70 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Login to HashiCorp Vault
-        uses: hashicorp/vault-action@v2
-        with:
-          url: ${{ secrets.VAULT_ADDR }}
-          method: token
-          token: ${{ secrets.VAULT_TOKEN }}
-
-      - name: Rotate application token in Vault
+      - name: Ensure Vault credentials are available
         run: |
-          # Здесь ваш конкретный скрипт/аналог curl-запроса для ротации токена
-          # Например:
-          # curl --header "X-Vault-Token: ${{ secrets.VAULT_TOKEN }}" \
-          #      --request POST \
-          #      --data '{"policies":["app-policy"],"ttl":"1h"}' \
-          #      https://vault.example.com/v1/auth/token/create
-          echo "Rotation logic goes here"
+          if [ -z "${VAULT_ADDR}" ] || [ -z "${VAULT_TOKEN}" ]; then
+            echo "❌ VAULT_ADDR или VAULT_TOKEN не установлены, пропускаем ротацию."
+            exit 0
+          fi
+
+      - name: Request new Vault token
+        id: request_token
+        run: |
+          set -e
+          echo "🔐 Ротация токена в Vault..."
+          NEW_TOKEN=$(curl --silent \
+            --header "X-Vault-Token: ${{ secrets.VAULT_TOKEN }}" \
+            --request POST \
+            --data '{"policies":["app-policy"],"ttl":"8h"}' \
+            ${{ secrets.VAULT_ADDR }}/v1/auth/token/create \
+            | jq -r .auth.client_token)
+          if [ -z "$NEW_TOKEN" ] || [ "$NEW_TOKEN" == "null" ]; then
+            echo "❌ Не удалось получить новый токен."
+            exit 1
+          fi
+          echo "Новый токен получен."
+          echo "::set-output name=new_token::$NEW_TOKEN"
+
+      - name: Fetch GitHub public key for encrypting secret
+        id: getkey
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const publicKey = await github.actions.getPublicKeyForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            return publicKey.data;
+
+      - name: Encrypt new token
+        id: encrypt
+        run: |
+          echo "${{ steps.getkey.output.key }}" | base64 --decode > public.key
+          NEW_TOKEN="${{ steps.request_token.outputs.new_token }}"
+          ENCRYPTED=$(openssl rsautl -encrypt -pubin -inkey public.key -oaep -in <(echo -n "$NEW_TOKEN") | base64)
+          echo "::set-output name=encrypted_value::$ENCRYPTED"
+          echo "::set-output name=key_id::$(jq -r .key_id <<< '${{ steps.getkey.output }}')"
+
+      - name: Update GitHub Secret VAULT_APP_TOKEN
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const keyId = `${{ steps.encrypt.outputs.key_id }}`;
+            const encryptedValue = `${{ steps.encrypt.outputs.encrypted_value }}`;
+            await github.actions.createOrUpdateRepoSecret({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              secret_name: 'VAULT_APP_TOKEN',
+              encrypted_value: encryptedValue,
+              key_id: keyId
+            });
+
+      - name: Revoke old Vault token (опционально)
+        if: ${{ always() }}
+        run: |
+          # Если требуется — можно отозвать старый токен здесь.
+          # Например: curl --header "X-Vault-Token: ${{ secrets.VAULT_TOKEN }}" --request POST ${{ secrets.VAULT_ADDR }}/v1/auth/token/revoke-self
+          echo "Старая версия токена может быть отозвана по мере необходимости."

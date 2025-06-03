@@ -1,6 +1,6 @@
-# .github/workflows/trivy-critical-scan.yml
-
-name: "Trivy Critical Vulnerability Scan on source tree"
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+name: Trivy Critical Vulnerability Scan
 
 on:
   push:
@@ -13,31 +13,51 @@ permissions:
   security-events: write
 
 jobs:
-  trivy-critical-scan:
-    name: Run Trivy Critical Scan on source
+  trivy-scan:
+    name: SBOM & Trivy/Grype Scan
     runs-on: ubuntu-latest
 
     steps:
-      # ────────────────────────────────────────────────────────────────
-      - name: 🔄 Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ────────────────────────────────────────────────────────────────
-      - name: 🛠 Install Trivy (v0.45.0 – совместимый)
+      - name: Install Syft (SBOM generation)
         run: |
-          # Скачиваем и ставим Trivy v0.45.0
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
-            | sh -s -- -b /usr/local/bin v0.45.0
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 
-      # ────────────────────────────────────────────────────────────────
-      - name: 🔍 Run Trivy Critical Scan on full source tree
+      - name: Generate SBOM in CycloneDX JSON
         run: |
-          # Запускаем Trivy в режиме full filesystem scan (по-умолчанию CVE + License)
-          trivy fs . --format json --output trivy-full-report.json --severity CRITICAL,HIGH
+          set -e
+          syft . -o cyclonedx-json=sbom.json
 
-      # ────────────────────────────────────────────────────────────────
-      - name: 📤 Upload Trivy full source scan report (JSON)
+      - name: Upload SBOM artifact
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: trivy-full-report
-          path: trivy-full-report.json
+          name: sbom-json
+          path: sbom.json
+
+      - name: Install Grype for SBOM scan
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Run Grype scan against SBOM (fail on ≥ MEDIUM)
+        run: |
+          set -e
+          grype sbom:sbom.json --fail-on medium
+
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.45.0
+
+      - name: Run Trivy filesystem scan (CRITICAL,HIGH)
+        run: |
+          set -e
+          trivy fs --exit-code 1 --severity CRITICAL,HIGH --format json --output trivy-report.json .
+
+      - name: Upload Trivy report (JSON)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.json
