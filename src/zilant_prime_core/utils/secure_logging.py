@@ -8,6 +8,8 @@ import base64
 import json
 import os
 import secrets
+import shutil
+import subprocess
 from typing import Any, Optional, Tuple, Union
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -19,9 +21,16 @@ class SecureLogger:
     """Логгер с AES-GCM и компактным JSON."""
 
     def __init__(self, key: Optional[bytes] = None, log_path: str = "secure.log") -> None:
-        raw: Optional[bytes] = key or os.environ.get("ZILANT_LOG_KEY")  # type: ignore[assignment]
-        if isinstance(raw, str):
-            raw = base64.urlsafe_b64decode(raw.encode())
+        raw: Optional[bytes] = key
+        if raw is None:
+            env = os.environ.get("ZILANT_LOG_KEY")
+            if env:
+                raw = base64.urlsafe_b64decode(env.encode())
+            elif shutil.which("tpm2_getrandom"):
+                try:
+                    raw = subprocess.check_output(["tpm2_getrandom", "32"], timeout=5)
+                except Exception:
+                    raw = None
         if not isinstance(raw, (bytes, bytearray)) or len(raw) != 32:
             raise ValueError("Log key must be 32 bytes")
 
