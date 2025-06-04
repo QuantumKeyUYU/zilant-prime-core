@@ -76,3 +76,19 @@ def init_self_watchdog(
         raise RuntimeError("Thread object missing 'start' method")
 
     t.start()
+    first_args = getattr(threading.Thread, "args", None)
+
+    parent_pid = os.getppid()
+
+    def child_monitor() -> None:
+        while True:
+            try:
+                os.kill(parent_pid, 0)
+            except Exception:
+                os._exit(134)
+            time.sleep(interval)
+
+    t2 = threading.Thread(target=child_monitor, args=(), daemon=True)
+    if hasattr(threading.Thread, "args"):
+        threading.Thread.args = first_args
+    t2.start()
