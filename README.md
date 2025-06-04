@@ -47,3 +47,4 @@ zilctl pack secret.txt secret.zil
 
 # Расшифровка:
 zilctl unpack secret.zil --output-dir ./out
+```
