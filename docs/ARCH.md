@@ -1,25 +1,31 @@
-# Architecture Overview
+# ARCH.md
 
 ```plantuml
 @startuml
-title Zilant Prime Core Architecture
+title ZILANT Prime Stage 0 Architecture
 
-!define RECTANGLE class
+rectangle "Git Repo (zilant-prime-core)" as Repo
+rectangle "CI/CD (GitHub Actions)" as CI
+rectangle "SBOM (Syft → sbom.json)" as Syft
+rectangle "Vulnerability Scans (Grype, Trivy)" as Vuln
+rectangle "Static Analysis (Bandit, Semgrep, CodeQL)" as Static
+rectangle "Build + Sign (python –m build, Cosign)" as BuildSign
+rectangle "Monitoring (self-hash, watchdog)" as Monitor
+rectangle "Logging (secure_logging, TPM-stub)" as Logging
+rectangle "Vault / Secrets" as Vault
+rectangle "TPM / Attestation" as TPM
 
-RECTANGLE "CLI\n(zilctl)" as CLI
-RECTANGLE "Core Library\n(container, crypto, vdf)" as Core
-RECTANGLE "Secure Logger\n(utils/secure_logging.py)" as Logger
-RECTANGLE "CI/CD\n(GitHub Actions)" as CICD
-RECTANGLE "Vault / TPM\n(secret management)" as Vault
-RECTANGLE "SBOM & Scanning\n(syft, grype, trivy)" as SBOM
-
-CLI --> Core : uses
-Core --> Logger : logs
-CICD --> SBOM : generates and scans
-CICD --> Core : builds/tests
-CICD --> Vault : fetches secrets & rotates tokens
-Vault --> Core : provides AppRole tokens
-Vault --> Logger : optional key storage via env
+Repo --> CI
+CI --> Syft
+Syft --> Vuln
+CI --> Static
+CI --> BuildSign
+BuildSign --> [Artifacts]
+Repo --> Logging
+Logging --> TPM
+Repo --> Vault
+CI --> Vault
+Repo --> Monitor
+CI --> Monitor
 @enduml
-
-In runtime the watchdog monitors `sbom.json`, `config.yaml` and sealed keys.
+```

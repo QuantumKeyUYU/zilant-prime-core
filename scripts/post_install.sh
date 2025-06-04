@@ -1,6 +1,5 @@
-#!/bin/sh
-# Ensure strict permissions on critical files
+#!/usr/bin/env bash
+set -e
 umask 027
-for f in config.yaml sbom.json sealed_aes_key.bin context_key.ctx; do
-    [ -f "$f" ] && chmod 600 "$f"
-done
+chmod 600 config.yaml sbom.json
+chmod 600 grype-report.json trivy-report.json semgrep-report.sarif

@@ -9,6 +9,9 @@ from pathlib import Path
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
+# TODO: реализовать heartbeats parent-child
+# TODO: добавить FileLock или flock для бинаря
+
 __all__ = ["start_file_monitor"]
 
 
@@ -22,11 +25,14 @@ class _ExitOnChange(FileSystemEventHandler):  # type: ignore[misc]
             sys.exit(1)
 
 
-def start_file_monitor(files: list[str]) -> Observer:
+from typing import Any, cast
+
+
+def start_file_monitor(files: list[str]) -> Any:
     """Start watchdog observer for the given files."""
-    observer = Observer()
+    observer: Any = Observer()
     handler = _ExitOnChange(files)
     for f in files:
-        observer.schedule(handler, Path(f).parent, recursive=False)
-    observer.start()
+        cast(Any, observer).schedule(handler, Path(f).parent, recursive=False)
+    cast(Any, observer).start()
     return observer

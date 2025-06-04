@@ -1,32 +1,30 @@
-# Threat Model
+# THREATS.md
 
-Этот документ описывает угрозы для Zilant Prime Core по методикам STRIDE и MITRE ATT&CK.
+## Spoofing (Подделка)
+- Пример: злоумышленник пытается выдать себя за CI-агент и подменяет результаты билдов.
+- Mitigation: Cosign подписи, Vault-секреты в GitHub Secrets
 
-## STRIDE
+## Tampering (Подмена)
+- Пример: sbom.json изменён вручную после генерации.
+- Mitigation: umask 027, inotify/watchdog, HMAC sbom.json
 
-| Категория           | Угроза                                                                 |
-|---------------------|------------------------------------------------------------------------|
-| **Spoofing**        | Подмена ключей (Vault AppRole, TPM); фейковые сервисы CI/CD            |
-| **Tampering**       | Модификация SBOM, логов или скомпилированных артефактов                |
-| **Repudiation**     | Отсутствие следов операций (логов), отсутствие подписи артефактов      |
-| **Information Disclosure** | Утечка логов (без шифрования), секретов из CI/CD или TPM             |
-| **Denial of Service** | Отказ в обслуживании CI (удаление workflow), истощение ресурсов KDF     |
-| **Elevation of Privilege** | Неавторизованная подпись через Cosign, привилегии Vault-токенов        |
+## Repudiation (Отказ от действий)
+- Пример: отсутствие аудита действий при сборке.
+- Mitigation: защищённые журналы с AES-GCM, TPM-ключ.
+
+## Information Disclosure (Разглашение)
+- Пример: утечка ключей Cosign или секретов Vault.
+- Mitigation: шифрование логов, ограниченные права доступа.
+
+## Denial of Service (Отказ в обслуживании)
+- Пример: DoS на CI/CD через нагрузку фазового VDF.
+- Mitigation: лимиты ресурсов и мониторинг watchdog.
+
+## Elevation of Privilege (Повышение привилегий)
+- Пример: использование скомпрометированных токенов для подписи.
+- Mitigation: двухфакторная подпись, аттестация TPM.
 
 ## MITRE ATT&CK
-
-| ID       | Technique                          | Пример                                |
-|----------|------------------------------------|---------------------------------------|
-| T1550    | Use Alternate Authentication Material | Кража AppRole SecretID                |
-| T1486    | Data Encrypted for Impact          | Шифрование логов без хранения ключа   |
-| T1595    | Active Scanning                    | Автоматические SBOM-сканы в CI        |
-| T1588    | Obtain Capabilities                | Загрузка ключей Cosign из Secrets     |
-| T1552    | Unsecured Credentials              | Хранение паролей в переменных среды   |
-
-## Mitigations
-- **Spoofing**: все секреты доставляются из Vault, токены короткоживущие.
-- **Tampering**: self-hash и мониторинг файлов, подпись артефактов Cosign.
-- **Repudiation**: ведём защищённые журналы с TPM-ключом.
-- **Information Disclosure**: логи шифруются AES-GCM, файлы имеют chmod 600.
-- **DoS**: в watchdog реализован выход при нарушении целостности.
-- **Elevation of Privilege**: attestation через TPM и строгие разрешения.
+- T1552.001 (Credentials in Secret) → Mitigation: Vault + ротация
+- T1588 (Obtain Resources) → Mitigation: ограниченные токены, IAM
+- T1499 (Resource Hijacking/DoS) → Mitigation: лимиты ресурсов

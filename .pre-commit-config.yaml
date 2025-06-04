@@ -11,7 +11,7 @@ repos:
 
   # Ruff – линтинг (pre-commit поддерживается через отдельный репо)
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.285
+    rev: v0.4.4
     hooks:
       - id: ruff
         name: Ruff (lint)
@@ -38,10 +38,17 @@ repos:
         name: Ensure file ends with newline
       - id: trailing-whitespace
         name: Remove trailing whitespace
+      - id: mixed-line-ending
+        name: Unix line endings
+        args: ["--fix=lf"]
+        files: ^scripts/.*
+      - id: check-executables-have-shebangs
+        name: Executable has shebang
+        files: ^scripts/.*
 
   # Mypy – статическая проверка типов (только для кода внутри пакета, не затрагиваем скрипты)
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.991
+    rev: v1.10.0
     hooks:
       - id: mypy
         name: mypy (type check)

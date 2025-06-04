@@ -28,6 +28,12 @@ from .secure_logging import SecureLogger, get_secure_logger
 # ───────────────────────── Vault integration ────────────────────────
 from .vault_client import VaultClient
 
+
+def get_tpm_key() -> bytes:  # pragma: no cover
+    """Заглушка для Stage 0: Для будущей интеграции с TPM (tpm2_unseal)"""
+    raise NotImplementedError("TPM not configured yet")
+
+
 __all__: list[str] = [
     # constants.py
     "DEFAULT_KEY_LENGTH",
@@ -52,4 +58,5 @@ __all__: list[str] = [
     "VaultClient",
     # file_monitor.py
     "start_file_monitor",
+    "get_tpm_key",
 ]
