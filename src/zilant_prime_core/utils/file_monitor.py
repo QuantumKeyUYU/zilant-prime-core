@@ -28,11 +28,30 @@ class _ExitOnChange(FileSystemEventHandler):  # type: ignore[misc]
 from typing import Any, cast
 
 
+class _DummyObserver:
+    """Fallback observer used when watchdog cannot start."""
+
+    def stop(self) -> None:  # pragma: no cover - behaviour trivial
+        pass
+
+    def join(self, timeout: float | None = None) -> None:  # pragma: no cover
+        pass
+
+
 def start_file_monitor(files: list[str]) -> Any:
-    """Start watchdog observer for the given files."""
-    observer: Any = Observer()
-    handler = _ExitOnChange(files)
-    for f in files:
-        cast(Any, observer).schedule(handler, Path(f).parent, recursive=False)
-    cast(Any, observer).start()
-    return observer
+    """Start watchdog observer for the given files.
+
+    If the observer cannot be started (e.g. missing platform support), a dummy
+    observer that exposes ``stop`` and ``join`` is returned instead of raising an
+    exception.  This mirrors the expected interface but performs no monitoring.
+    """
+
+    try:
+        observer: Any = Observer()
+        handler = _ExitOnChange(files)
+        for f in files:
+            cast(Any, observer).schedule(handler, Path(f).parent, recursive=False)
+        cast(Any, observer).start()
+        return observer
+    except Exception:  # pragma: no cover - platform dependent
+        return _DummyObserver()
