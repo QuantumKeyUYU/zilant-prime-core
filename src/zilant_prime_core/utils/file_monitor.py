@@ -1,4 +1,5 @@
 """Watch critical files and exit if modified."""
+
 from __future__ import annotations
 
 import os
