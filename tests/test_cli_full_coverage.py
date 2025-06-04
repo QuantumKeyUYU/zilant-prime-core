@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: MIT
+from pathlib import Path
+
 from click.testing import CliRunner
 
+import zilant_prime_core.cli as cli_mod
 from zilant_prime_core.cli import cli
 
 runner = CliRunner()
@@ -52,10 +55,7 @@ def test_pack_file_exists_and_yes_overwrite(tmp_path, monkeypatch):
 
 def test_pack_internal_error(monkeypatch, tmp_path):
     src = make_file(tmp_path)
-    monkeypatch.setattr(
-        "zilant_prime_core.cli._pack_bytes",
-        lambda *a, **k: (_ for _ in ()).throw(Exception("fail")),
-    )
+    monkeypatch.setattr(Path, "read_bytes", lambda self: (_ for _ in ()).throw(Exception("fail")))
     result = runner.invoke(cli, ["pack", str(src), "-p", "pw"])
     assert result.exit_code == 1
     assert "Pack error: fail" in result.output
@@ -113,10 +113,7 @@ def test_unpack_too_small(tmp_path):
 def test_unpack_internal_error(monkeypatch, tmp_path):
     cont = tmp_path / "c.zil"
     cont.write_bytes(b"hdr\npayload")
-    monkeypatch.setattr(
-        "zilant_prime_core.cli._unpack_bytes",
-        lambda *a, **k: (_ for _ in ()).throw(Exception("fail")),
-    )
+    monkeypatch.setattr(cli_mod, "_unpack_bytes", lambda *a, **k: (_ for _ in ()).throw(Exception("fail")))
     result = runner.invoke(cli, ["unpack", str(cont), "-p", "pw"])
     assert result.exit_code == 1
     assert "Unpack error: fail" in result.output

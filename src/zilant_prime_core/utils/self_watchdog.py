@@ -12,7 +12,7 @@ import time
 
 from filelock import FileLock
 
-__all__ = ["compute_self_hash", "init_self_watchdog"]
+__all__ = ["compute_self_hash", "init_self_watchdog", "cross_watchdog"]
 
 
 def compute_self_hash(file_path: str) -> str:
@@ -41,6 +41,16 @@ def _watchdog_loop(file_path: str, expected_hash: str, interval: float) -> None:
         time.sleep(interval)
 
 
+def cross_watchdog(interval: float = 1.0) -> None:
+    parent_pid = os.getppid()
+    while True:
+        try:
+            os.kill(parent_pid, 0)
+        except OSError:
+            sys.exit(1)
+        time.sleep(interval)
+
+
 def init_self_watchdog(
     module_file: str | None = None,
     lock_file: str | None = None,
@@ -57,6 +67,12 @@ def init_self_watchdog(
     if lock_file is None:
         lock_file = module_file + ".lock"
 
+    parent_pid = os.getppid()
+    try:
+        os.kill(parent_pid, 0)
+    except OSError:
+        sys.exit(1)
+
     # Шаг 1: блокировка
     lock = FileLock(lock_file)
     lock.acquire()
@@ -65,30 +81,17 @@ def init_self_watchdog(
     expected_hash = compute_self_hash(module_file)
 
     # Шаг 3: создаем поток‐«часовой механизм»
-    t = threading.Thread(
+    t1 = threading.Thread(
         target=_watchdog_loop,
         args=(module_file, expected_hash, interval),
         daemon=True,
     )
-
-    # Проверяем, что объект потока имеет метод start
-    if not hasattr(t, "start"):
+    if not hasattr(t1, "start"):
         raise RuntimeError("Thread object missing 'start' method")
-
-    t.start()
+    t1.start()
     first_args = getattr(threading.Thread, "args", None)
 
-    parent_pid = os.getppid()
-
-    def child_monitor() -> None:
-        while True:
-            try:
-                os.kill(parent_pid, 0)
-            except Exception:
-                os._exit(134)
-            time.sleep(interval)
-
-    t2 = threading.Thread(target=child_monitor, args=(), daemon=True)
+    t2 = threading.Thread(target=cross_watchdog, args=(interval / 2,), daemon=True)
     if hasattr(threading.Thread, "args"):
         threading.Thread.args = first_args
     t2.start()

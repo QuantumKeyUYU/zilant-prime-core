@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+- Добавлена опция --decoy-size (padding payload)
+- Реализован Sandbox Runner через runsc
+- Добавлен TPM counter (fail-closed)
+- Введён RateLimiter (5 вызовов/мин) и Suspicion Logging
+- При распаковке добавлен jitter и вывод Canary JSON
+- Написана constant-time функция bytes_equal_ct и заменены сравнения подписи
+- Расширен self-watchdog – cross-verification родитель↔дочерний
+- Написаны unit-тесты для всех новых модулей
+
 ## [v0.1-core-ready] – 2025-06-XX
 ### A. Code Quality
 - Обновлены конфигурации линтеров (`ruff.lint.ignore` и т.д.), все ошибки исправлены.

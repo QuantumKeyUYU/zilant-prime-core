@@ -3,6 +3,7 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 import builtins
+import json
 import os
 
 from click.testing import CliRunner
@@ -39,5 +40,6 @@ def test_unpack_chmod_exception(tmp_path, monkeypatch):
     result = runner.invoke(cli, ["unpack", str(container), "-p", "pwd"])
     out = tmp_path / "hello.bin"
     assert result.exit_code == 0
-    assert str(out) in result.output
+    data = json.loads(result.output.strip())
+    assert data["result"] == "OK"
     assert out.exists()

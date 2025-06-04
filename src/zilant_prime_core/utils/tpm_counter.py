@@ -1,28 +1,39 @@
-from __future__ import annotations
-
 import subprocess
 
-__all__ = ["get_and_increment_tpm_counter"]
+
+class TpmCounterError(Exception):
+    pass
 
 
-def get_and_increment_tpm_counter() -> int | None:
+__all__ = ["read_tpm_counter", "increment_tpm_counter", "TpmCounterError"]
+
+
+def read_tpm_counter() -> int:
+    """Read TPM counter value via tpm2_getcap."""
+    if subprocess.call(["which", "tpm2_getcap"], stdout=subprocess.DEVNULL) != 0:
+        raise TpmCounterError("TPM utility not found")
     try:
-        res_read = subprocess.run(
-            ["tpm2_getcounter", "--object-context", "0x01500020"],
-            capture_output=True,
-            text=True,
+        result = subprocess.run(
+            ["tpm2_getcap", "properties-variable"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
         )
-        if res_read.returncode != 0:
-            return 0
-        current = int(res_read.stdout.strip())
-        res_inc = subprocess.run(
-            ["tpm2_incrementcounter", "--object-context", "0x01500020", "--auth=sys"],
-            capture_output=True,
-        )
-        if res_inc.returncode != 0:
-            raise RuntimeError("Cannot increment TPM counter")
-        return current + 1
-    except FileNotFoundError:
-        return 0
-    except Exception as e:
-        raise RuntimeError(f"TPM counter error: {e}") from e
+        out = result.stdout.decode()
+        for line in out.splitlines():
+            if "TPM_PT_PERSISTENT" in line:
+                parts = line.split()
+                return int(parts[-1], 0)
+    except Exception as e:  # pragma: no cover - fallback
+        raise TpmCounterError(f"Cannot read TPM counter: {e}")
+    raise TpmCounterError("Unable to parse TPM counter")
+
+
+def increment_tpm_counter() -> None:
+    """Increment TPM counter via tpm2_increment."""
+    if subprocess.call(["which", "tpm2_increment"], stdout=subprocess.DEVNULL) != 0:
+        raise TpmCounterError("TPM increment utility not found")
+    try:
+        subprocess.run(["tpm2_increment", "0x81010001"], check=True)
+    except Exception as e:  # pragma: no cover - system call
+        raise TpmCounterError(f"Cannot increment TPM counter: {e}")
