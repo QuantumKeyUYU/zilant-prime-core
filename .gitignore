@@ -58,6 +58,7 @@ desktop.ini
 # Logs and databases
 *.log
 *.sqlite3
+*.lock
 
 # Backup files
 *~
