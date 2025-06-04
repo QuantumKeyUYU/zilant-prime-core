@@ -3,8 +3,12 @@
 
 from __future__ import annotations
 
+import json
 import os
+import random
+import shutil
 import sys
+import time
 from pathlib import Path
 from typing import NoReturn
 
@@ -12,7 +16,10 @@ import click
 
 from zilant_prime_core.utils.attest import attest_via_tpm
 from zilant_prime_core.utils.file_monitor import start_file_monitor
+from zilant_prime_core.utils.rate_limit import RateLimiter
 from zilant_prime_core.utils.self_watchdog import init_self_watchdog
+from zilant_prime_core.utils.suspicion import increment_suspicion
+from zilant_prime_core.utils.tpm_counter import get_and_increment_tpm_counter
 
 
 def _abort(msg: str, code: int = 1) -> NoReturn:
@@ -60,9 +67,25 @@ def _cleanup_old_file(container: Path) -> None:
         return
 
 
+def _maybe_sandbox() -> None:
+    if shutil.which("runsc"):
+        cmd = [
+            "runsc",
+            "run",
+            "--root",
+            "/tmp/gsandbox",
+            "--",
+            sys.argv[0],
+        ] + sys.argv[1:]
+        os.execvp("runsc", cmd)
+
+
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 def cli() -> None:
     """Zilant Prime CLI."""
+    _maybe_sandbox()
+    if get_and_increment_tpm_counter() is None:
+        _abort("TPM counter failed")
     attest_via_tpm()  # pragma: no cover
     init_self_watchdog(module_file=os.path.realpath(__file__), interval=60.0)  # pragma: no cover
     start_file_monitor(["sbom.json", "sealed_aes_key.bin", "config.yaml"])  # pragma: no cover
@@ -79,7 +102,8 @@ def cli() -> None:
 )
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
 @click.option("--overwrite/--no-overwrite", default=False, show_default=True)
-def cmd_pack(source: Path, output: Path | None, password: str | None, overwrite: bool) -> None:
+@click.option("--decoy-size", type=int)
+def cmd_pack(source: Path, output: Path | None, password: str | None, overwrite: bool, decoy_size: int | None) -> None:
     dest = output or source.with_suffix(".zil")
 
     if dest.exists() and not overwrite:
@@ -92,8 +116,17 @@ def cmd_pack(source: Path, output: Path | None, password: str | None, overwrite:
     if password == "-":
         password = _ask_pwd(confirm=True)
 
+    limiter = RateLimiter(key=str(source), max_calls=5, period=60)
+    if not limiter.allow_request():
+        increment_suspicion("rate_limit_exceeded")
+        _abort("Too many pack requests, slow down")
+
     try:
         blob = _pack_bytes(source, password, dest, overwrite)
+        if decoy_size is not None:
+            if len(blob) > decoy_size:
+                raise ValueError("Payload too large for decoy-size")
+            blob = blob + b"\x00" * (decoy_size - len(blob))
     except FileExistsError:
         _abort(f"{dest.name} already exists")
     except Exception as e:
@@ -121,6 +154,11 @@ def cmd_unpack(container: Path, dest: Path | None, password: str | None) -> None
     if password == "-":
         password = _ask_pwd()
 
+    limiter = RateLimiter(key=str(container), max_calls=5, period=60)
+    if not limiter.allow_request():
+        increment_suspicion("rate_limit_exceeded")
+        _abort("Too many pack/unpack requests, slow down")
+
     out_dir = dest if dest is not None else container.parent
 
     if dest is not None and out_dir.exists():
@@ -145,7 +183,11 @@ def cmd_unpack(container: Path, dest: Path | None, password: str | None) -> None
     except Exception:
         pass
 
-    click.echo(str(out))
+    time.sleep(random.uniform(0.01, 0.05))
+    if dest is None:
+        click.echo(json.dumps({"result": "OK", "canary": True}))
+    else:
+        click.echo(str(out))
 
 
 main = cli  # alias for `python -m zilant_prime_core.cli`

@@ -73,4 +73,6 @@ def verify(pub: bytes, msg: bytes, sig: bytes, strict: bool = False) -> bool:
 
     # Наконец, сравнение хэшей
     expected = hashlib.sha256(pub + msg).digest()
-    return expected == sig
+    from zilant_prime_core.utils.constant_time import bytes_equal_ct
+
+    return bytes_equal_ct(expected, sig)
