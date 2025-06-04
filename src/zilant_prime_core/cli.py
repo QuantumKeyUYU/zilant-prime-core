@@ -185,6 +185,7 @@ def cmd_unpack(container: Path, dest: Path | None, password: str | None) -> None
 
     time.sleep(random.uniform(0.01, 0.05))
     if dest is None:
+        click.echo(str(out))
         click.echo(json.dumps({"result": "OK", "canary": True}))
     else:
         click.echo(str(out))
