@@ -1,7 +1,9 @@
 import json
-from click.testing import CliRunner
-from zilant_prime_core.cli import cli
 from pathlib import Path
+
+from click.testing import CliRunner
+
+from zilant_prime_core.cli import cli
 
 
 def test_unpack_jitter_outputs_json(tmp_path: Path, monkeypatch):

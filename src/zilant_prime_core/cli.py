@@ -19,7 +19,7 @@ from zilant_prime_core.utils.file_monitor import start_file_monitor
 from zilant_prime_core.utils.rate_limit import RateLimiter
 from zilant_prime_core.utils.self_watchdog import init_self_watchdog
 from zilant_prime_core.utils.suspicion import log_suspicious_event
-from zilant_prime_core.utils.tpm_counter import read_tpm_counter, TpmCounterError
+from zilant_prime_core.utils.tpm_counter import TpmCounterError, read_tpm_counter
 
 _pack_rate_limiter = RateLimiter(max_calls=5, period=60.0)
 

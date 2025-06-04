@@ -1,4 +1,5 @@
 import pytest
+
 from zilant_prime_core.utils.self_watchdog import init_self_watchdog
 
 

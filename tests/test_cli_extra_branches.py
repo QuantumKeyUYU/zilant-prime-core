@@ -4,9 +4,10 @@
 # tests/test_cli_extra_branches.py
 
 
+from pathlib import Path
+
 import pytest
 from click.testing import CliRunner
-from pathlib import Path
 
 import zilant_prime_core.cli as cli_mod
 

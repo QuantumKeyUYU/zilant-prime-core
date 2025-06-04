@@ -1,5 +1,6 @@
 import pytest
-from zilant_prime_core.utils.tpm_counter import read_tpm_counter, TpmCounterError
+
+from zilant_prime_core.utils.tpm_counter import TpmCounterError, read_tpm_counter
 
 
 def test_read_tpm_counter_no_utility(monkeypatch):

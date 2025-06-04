@@ -1,4 +1,5 @@
 import json
+
 from zilant_prime_core.utils.suspicion import log_suspicious_event
 
 

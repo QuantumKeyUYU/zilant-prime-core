@@ -3,8 +3,8 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 import builtins
-import os
 import json
+import os
 
 from click.testing import CliRunner
 

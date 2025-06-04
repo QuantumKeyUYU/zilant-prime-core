@@ -1,4 +1,5 @@
 import pytest
+
 from zilant_prime_core.utils.constant_time import bytes_equal_ct
 
 
