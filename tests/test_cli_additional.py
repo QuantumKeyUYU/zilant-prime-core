@@ -48,3 +48,22 @@ def test_unpack_dest_exists(tmp_path, monkeypatch):
     result = runner.invoke(cli, ["unpack", str(cont), "-p", "pw", "-d", str(outdir)])
     assert "already exists" in result.output
     assert result.exit_code != 0
+
+
+def test_cli_handles_monitor_failure(tmp_path, monkeypatch):
+    """CLI should still report missing password if file monitor fails."""
+
+    class BrokenObserver:
+        def schedule(self, handler, path, recursive=False):
+            pass
+
+        def start(self):  # pragma: no cover - executed under test
+            raise TypeError("bad handle")
+
+    monkeypatch.setattr("zilant_prime_core.utils.file_monitor.Observer", BrokenObserver)
+
+    src = tmp_path / "foo.txt"
+    src.write_text("data")
+    result = runner.invoke(cli, ["pack", str(src)])
+    assert "Missing password" in result.output
+    assert result.exit_code != 0
