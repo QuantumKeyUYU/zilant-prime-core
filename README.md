@@ -64,3 +64,16 @@ python -m build
 ```
 
 Signed artifacts can be produced via CI or locally using `cosign sign` with your key. After installation run `scripts/post_install.sh` to enforce permissions.
+
+## Vault integration
+Чтобы подключить Vault в будущем, добавьте шаг в CI:
+```yaml
+- name: Fetch secrets from Vault
+  uses: hashicorp/vault-action@v2
+  with:
+    url: ${{ secrets.VAULT_URL }}
+    method: github
+    path: secret/data/zilant
+    token: ${{ secrets.VAULT_TOKEN }}
+```
+И настройте `secrets.VAULT_URL` и `secrets.VAULT_TOKEN` в репозитории.

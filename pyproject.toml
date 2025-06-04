@@ -28,6 +28,7 @@ dependencies = [
   "argon2-cffi>=23.1,<24.0",
   "click>=8.1,<9.0",
   "hvac>=2.3,<3.0",
+  "watchdog>=3.0,<4.0",
 ]
 
 [project.scripts]
@@ -87,10 +88,12 @@ known_first_party = ["zilant_prime_core"]
 
 [tool.ruff]
 line-length = 120
-select      = ["E", "F", "W", "C90", "B"]
-ignore      = ["E402", "B904", "C901"]
 
-[tool.ruff.mccabe]
+[tool.ruff.lint]
+select = ["E", "F", "W", "C90", "B"]
+ignore = ["E402", "B904", "C901"]
+
+[tool.ruff.lint.mccabe]
 max-complexity = 12
 
 [tool.mypy]
@@ -99,5 +102,5 @@ strict                   = true
 allow_untyped_decorators = true
 warn_return_any          = false
 ignore_missing_imports   = true
-disable_error_code       = ["attr-defined"]
+disable_error_code       = ["attr-defined", "unused-ignore"]
 exclude                  = '(^(src/zil\.py)|^scripts/)'

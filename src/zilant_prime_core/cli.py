@@ -10,9 +10,9 @@ from typing import NoReturn
 
 import click
 
+from zilant_prime_core.utils.attest import attest_via_tpm
 from zilant_prime_core.utils.file_monitor import start_file_monitor
 from zilant_prime_core.utils.self_watchdog import init_self_watchdog
-from zilant_prime_core.utils.tpm_attestation import attest_via_tpm
 
 
 def _abort(msg: str, code: int = 1) -> NoReturn:
@@ -63,10 +63,7 @@ def _cleanup_old_file(container: Path) -> None:
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 def cli() -> None:
     """Zilant Prime CLI."""
-    result = attest_via_tpm()  # pragma: no cover
-    if result is False:  # pragma: no cover
-        click.echo("Remote Attestation failed. Exiting.")  # pragma: no cover
-        # Вместо sys.exit здесь просто предупреждаем, но не выходим
+    attest_via_tpm()  # pragma: no cover
     init_self_watchdog(module_file=os.path.realpath(__file__), interval=60.0)  # pragma: no cover
     start_file_monitor(["sbom.json", "sealed_aes_key.bin", "config.yaml"])  # pragma: no cover
 
