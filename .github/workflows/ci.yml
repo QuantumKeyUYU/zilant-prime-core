@@ -251,4 +251,4 @@ jobs:
       - name: Scan SBOM with Grype
         run: grype sbom:sbom.json --fail-on medium
       - name: Scan SBOM with Trivy
-        run: trivy sbom.json --severity HIGH,CRITICAL
+        run: trivy sbom sbom.json --severity HIGH,CRITICAL
