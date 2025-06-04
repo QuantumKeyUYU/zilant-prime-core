@@ -49,6 +49,11 @@ jobs:
       - name: isort (check)
         run: isort --check-only src tests
 
+      - name: Doc Lint
+        run: |
+          npm install -g remark-cli
+          remark docs/ README.md --frail
+
 ###############################################################################
 # 2 — TESTS + COVERAGE
 ###############################################################################
@@ -109,6 +114,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Fetch secrets from Vault
+        uses: hashicorp/vault-action@v2
+        with:
+          url: ${{ secrets.VAULT_URL }}
+          method: github
+          path: secret/data/zilant
+          token: ${{ secrets.VAULT_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:

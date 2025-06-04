@@ -8,6 +8,7 @@ import base64
 import json
 import os
 import secrets
+import subprocess
 from typing import Any, Optional, Tuple, Union
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -20,6 +21,17 @@ class SecureLogger:
 
     def __init__(self, key: Optional[bytes] = None, log_path: str = "secure.log") -> None:
         raw: Optional[bytes] = key or os.environ.get("ZILANT_LOG_KEY")  # type: ignore[assignment]
+        if raw is None and os.getenv("ZILANT_TPM_SEALED_KEY"):
+            sealed: str = os.environ["ZILANT_TPM_SEALED_KEY"]
+            try:  # pragma: no cover - environment dependent
+                res = subprocess.run(
+                    ["tpm2_unseal", "-c", sealed],
+                    capture_output=True,
+                    check=True,
+                )
+                raw = res.stdout.strip()
+            except Exception as exc:  # pragma: no cover - environment dependent
+                raise RuntimeError("tpm2_unseal failed") from exc
         if isinstance(raw, str):
             raw = base64.urlsafe_b64decode(raw.encode())
         if not isinstance(raw, (bytes, bytearray)) or len(raw) != 32:

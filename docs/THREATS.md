@@ -22,3 +22,11 @@
 | T1595    | Active Scanning                    | Автоматические SBOM-сканы в CI        |
 | T1588    | Obtain Capabilities                | Загрузка ключей Cosign из Secrets     |
 | T1552    | Unsecured Credentials              | Хранение паролей в переменных среды   |
+
+## Mitigations
+- **Spoofing**: все секреты доставляются из Vault, токены короткоживущие.
+- **Tampering**: self-hash и мониторинг файлов, подпись артефактов Cosign.
+- **Repudiation**: ведём защищённые журналы с TPM-ключом.
+- **Information Disclosure**: логи шифруются AES-GCM, файлы имеют chmod 600.
+- **DoS**: в watchdog реализован выход при нарушении целостности.
+- **Elevation of Privilege**: attestation через TPM и строгие разрешения.

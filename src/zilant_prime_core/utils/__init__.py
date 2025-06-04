@@ -16,6 +16,7 @@ from .constants import (
     MAGIC,
     VERSION,
 )
+from .file_monitor import start_file_monitor
 
 # ───────────────────────── Encode / decode ──────────────────────────
 from .formats import from_b64, from_hex, to_b64, to_hex
@@ -49,4 +50,6 @@ __all__: list[str] = [
     "get_secure_logger",
     # vault_client.py
     "VaultClient",
+    # file_monitor.py
+    "start_file_monitor",
 ]
