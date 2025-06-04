@@ -238,6 +238,11 @@ jobs:
     needs: [security-and-sign]
     steps:
       - uses: actions/checkout@v3
+      - name: Install Syft / Grype / Trivy
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sudo sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sudo sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
       - name: Generate SBOM
         run: syft . -o cyclonedx-json=sbom.json
       - name: Scan SBOM with Grype
