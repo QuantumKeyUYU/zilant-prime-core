@@ -127,7 +127,7 @@ def cmd_pack(source: Path, output: Path | None, password: str | None, overwrite:
             _abort(f"{dest.name} already exists")
         overwrite = True
 
-    if password is None:
+    if not password:
         _abort("Missing password")
     if password == "-":
         password = _ask_pwd(confirm=True)
