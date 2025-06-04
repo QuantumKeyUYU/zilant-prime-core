@@ -1,0 +1,23 @@
+@startuml
+!define RECTANGLE class
+RECTANGLE "Git Repo" as Git
+RECTANGLE "CI/CD" as CI
+RECTANGLE "SBOM" as SBOM
+RECTANGLE "Scans" as Scans
+RECTANGLE "Build/Sign" as Build
+RECTANGLE "Artifacts" as Art
+RECTANGLE "Monitoring/Logging" as Mon
+RECTANGLE "Vault" as Vault
+RECTANGLE "TPM" as TPM
+RECTANGLE "Release" as Rel
+Git --> CI
+CI --> SBOM
+CI --> Scans
+CI --> Build
+Build --> Art
+Art --> Rel
+CI --> Vault
+Mon --> Vault
+Vault --> TPM
+TPM --> Rel
+@enduml
