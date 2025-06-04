@@ -115,13 +115,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch secrets from Vault
-        uses: hashicorp/vault-action@v2
-        with:
-          url: ${{ secrets.VAULT_URL }}
-          method: github
-          path: secret/data/zilant
-          token: ${{ secrets.VAULT_TOKEN }}
+      #- name: Fetch secrets from Vault
+      #  uses: hashicorp/vault-action@v2
+      #  with:
+      #    url: ${{ secrets.VAULT_URL }}
+      #    method: github
+      #    path: secret/data/zilant
+      #    token: ${{ secrets.VAULT_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:
