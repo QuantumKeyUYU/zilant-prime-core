@@ -3,6 +3,7 @@
 
 
 from click.testing import CliRunner
+from pathlib import Path
 
 import zilant_prime_core.cli as cli_mod
 from zilant_prime_core.container.metadata import MetadataError
@@ -31,7 +32,7 @@ def test_pack_missing_password(tmp_path):
 def test_pack_metadata_error(tmp_path, monkeypatch):
     src = tmp_path / "a.txt"
     src.write_text("A")
-    monkeypatch.setattr(cli_mod, "_pack_bytes", lambda *args, **kw: (_ for _ in ()).throw(MetadataError("bad")))
+    monkeypatch.setattr(Path, "read_bytes", lambda self: (_ for _ in ()).throw(MetadataError("bad")))
     result = runner.invoke(cli_mod.cli, ["pack", str(src), "-p", "pw"])
     assert result.exit_code == 1
     assert "bad" in result.output

@@ -6,6 +6,7 @@
 
 import pytest
 from click.testing import CliRunner
+from pathlib import Path
 
 import zilant_prime_core.cli as cli_mod
 
@@ -66,7 +67,7 @@ def test_pack_prompt_password(monkeypatch, tmp_path, runner):
 def test_pack_internal_exception(monkeypatch, tmp_path, runner):
     src = tmp_path / "file.txt"
     src.write_text("x")
-    monkeypatch.setattr(cli_mod, "_pack_bytes", lambda *a, **k: (_ for _ in ()).throw(Exception("boom")))
+    monkeypatch.setattr(Path, "read_bytes", lambda self: (_ for _ in ()).throw(Exception("boom")))
     res = runner.invoke(cli_mod.cli, ["pack", str(src), "-p", "pwd"])
     assert res.exit_code == 1
     assert "Pack error: boom" in res.output
@@ -75,7 +76,11 @@ def test_pack_internal_exception(monkeypatch, tmp_path, runner):
 def test_pack_cli_raises_fileexists(monkeypatch, tmp_path, runner):
     src = tmp_path / "file.txt"
     src.write_text("x")
-    monkeypatch.setattr(cli_mod, "_pack_bytes", lambda *a, **k: (_ for _ in ()).throw(FileExistsError("fail")))
+
+    def raise_exists(*a, **k):
+        raise FileExistsError("fail")
+
+    monkeypatch.setattr(Path, "read_bytes", raise_exists)
     res = runner.invoke(cli_mod.cli, ["pack", str(src), "-p", "pwd"])
     assert res.exit_code == 1
     assert "already exists" in res.output

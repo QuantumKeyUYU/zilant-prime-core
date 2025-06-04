@@ -1,15 +1,20 @@
+import pytest
 from zilant_prime_core.utils.constant_time import bytes_equal_ct
 
 
-def test_bytes_equal_ct_basic():
-    assert bytes_equal_ct(b"abc", b"abc")
-    assert not bytes_equal_ct(b"abc", b"abd")
+@pytest.mark.parametrize(
+    "a,b,expected",
+    [
+        (b"", b"", True),
+        (b"\x00\xff", b"\x00\xff", True),
+        (b"\x00\xff", b"\x00\xfe", False),
+        (b"abc", b"abcd", False),
+    ],
+)
+def test_bytes_equal_ct(a, b, expected):
+    assert bytes_equal_ct(a, b) is expected
 
 
-def test_bytes_equal_ct_property():
-    for a in [b"", b"123", b"foo", b"bar"]:
-        for b in [b"", b"123", b"foo", b"bar"]:
-            if len(a) == len(b):
-                assert bytes_equal_ct(a, b) == (a == b)
-            else:
-                assert not bytes_equal_ct(a, b)
+def test_bytes_equal_ct_invalid_type():
+    with pytest.raises(TypeError):
+        bytes_equal_ct("string", b"bytes")

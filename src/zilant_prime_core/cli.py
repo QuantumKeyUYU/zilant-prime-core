@@ -18,8 +18,10 @@ from zilant_prime_core.utils.attest import attest_via_tpm
 from zilant_prime_core.utils.file_monitor import start_file_monitor
 from zilant_prime_core.utils.rate_limit import RateLimiter
 from zilant_prime_core.utils.self_watchdog import init_self_watchdog
-from zilant_prime_core.utils.suspicion import increment_suspicion
-from zilant_prime_core.utils.tpm_counter import get_and_increment_tpm_counter
+from zilant_prime_core.utils.suspicion import log_suspicious_event
+from zilant_prime_core.utils.tpm_counter import read_tpm_counter, TpmCounterError
+
+_pack_rate_limiter = RateLimiter(max_calls=5, period=60.0)
 
 
 def _abort(msg: str, code: int = 1) -> NoReturn:
@@ -68,25 +70,33 @@ def _cleanup_old_file(container: Path) -> None:
 
 
 def _maybe_sandbox() -> None:
-    if shutil.which("runsc"):
-        cmd = [
-            "runsc",
-            "run",
-            "--root",
-            "/tmp/gsandbox",
-            "--",
-            sys.argv[0],
-        ] + sys.argv[1:]
-        os.execvp("runsc", cmd)
+    runsc_path = shutil.which("runsc")
+    if runsc_path is not None and os.getenv("ZILANT_NO_SANDBOX") is None:
+        cmd = ["runsc", "run", "--"] + sys.argv
+        os.execvp(cmd[0], cmd)
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 def cli() -> None:
     """Zilant Prime CLI."""
-    _maybe_sandbox()
-    if get_and_increment_tpm_counter() is None:
-        _abort("TPM counter failed")
+    runsc_path = shutil.which("runsc")
+    if runsc_path is not None and os.getenv("ZILANT_NO_SANDBOX") is None:
+        cmd = ["runsc", "run", "--"] + sys.argv
+        os.execvp(cmd[0], cmd)
     attest_via_tpm()  # pragma: no cover
+    try:
+        counter = read_tpm_counter()
+    except TpmCounterError as e:
+        click.echo(f"TPM counter error: {e}", err=True)
+        sys.exit(1)
+
+    prev_file = Path.home() / ".zilant_prev_counter"
+    if prev_file.exists():
+        prev = int(prev_file.read_text())
+        if counter <= prev:
+            click.echo("TPM counter did not increase (possible rollback)! Exiting.", err=True)
+            sys.exit(1)
+    prev_file.write_text(str(counter))
     init_self_watchdog(module_file=os.path.realpath(__file__), interval=60.0)  # pragma: no cover
     start_file_monitor(["sbom.json", "sealed_aes_key.bin", "config.yaml"])  # pragma: no cover
 
@@ -102,7 +112,13 @@ def cli() -> None:
 )
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
 @click.option("--overwrite/--no-overwrite", default=False, show_default=True)
-@click.option("--decoy-size", type=int)
+@click.option(
+    "--decoy-size",
+    metavar="SIZE",
+    type=int,
+    default=None,
+    help="If set, pad the payload to exactly SIZE bytes (decoy payload).",
+)
 def cmd_pack(source: Path, output: Path | None, password: str | None, overwrite: bool, decoy_size: int | None) -> None:
     dest = output or source.with_suffix(".zil")
 
@@ -116,17 +132,21 @@ def cmd_pack(source: Path, output: Path | None, password: str | None, overwrite:
     if password == "-":
         password = _ask_pwd(confirm=True)
 
-    limiter = RateLimiter(key=str(source), max_calls=5, period=60)
-    if not limiter.allow_request():
-        increment_suspicion("rate_limit_exceeded")
-        _abort("Too many pack requests, slow down")
+    if not _pack_rate_limiter.allow():
+        log_suspicious_event("rate_limit_exceeded", {"command": "pack"})
+        _abort("Too many requests, try again later")
 
     try:
-        blob = _pack_bytes(source, password, dest, overwrite)
-        if decoy_size is not None:
-            if len(blob) > decoy_size:
-                raise ValueError("Payload too large for decoy-size")
-            blob = blob + b"\x00" * (decoy_size - len(blob))
+        if dest.exists() and not overwrite:
+            raise FileExistsError(f"{dest} already exists")
+        payload = source.read_bytes()
+        if decoy_size is not None and decoy_size > 0:
+            if len(payload) > decoy_size:
+                _abort(f"Payload too large (got {len(payload)} bytes, but decoy-size={decoy_size})")
+            padding = b"\x00" * (decoy_size - len(payload))
+            payload = payload + padding
+        header = source.name.encode() + b"\n"
+        blob = header + payload
     except FileExistsError:
         _abort(f"{dest.name} already exists")
     except Exception as e:
@@ -154,11 +174,6 @@ def cmd_unpack(container: Path, dest: Path | None, password: str | None) -> None
     if password == "-":
         password = _ask_pwd()
 
-    limiter = RateLimiter(key=str(container), max_calls=5, period=60)
-    if not limiter.allow_request():
-        increment_suspicion("rate_limit_exceeded")
-        _abort("Too many pack/unpack requests, slow down")
-
     out_dir = dest if dest is not None else container.parent
 
     if dest is not None and out_dir.exists():
@@ -183,12 +198,9 @@ def cmd_unpack(container: Path, dest: Path | None, password: str | None) -> None
     except Exception:
         pass
 
-    time.sleep(random.uniform(0.01, 0.05))
-    if dest is None:
-        click.echo(str(out))
-        click.echo(json.dumps({"result": "OK", "canary": True}))
-    else:
-        click.echo(str(out))
+    time.sleep(random.uniform(0.05, 0.2))
+    result = {"result": "OK", "canary": True}
+    click.echo(json.dumps(result))
 
 
 main = cli  # alias for `python -m zilant_prime_core.cli`

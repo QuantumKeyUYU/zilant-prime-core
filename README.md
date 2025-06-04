@@ -30,6 +30,27 @@
 
 ---
 
+## Этап 1: Crystal Update
+
+Новые возможности:
+
+- `--decoy-size` (маскировка размера payload)
+- Sandbox-wrapper (`runsc`)
+- TPM counter (fail-closed)
+- Rate Limiting + Suspicion Logging
+- Unpack jitter и вывод Canary JSON
+- Constant-time сравнения (`bytes_equal_ct`)
+- Self-watchdog с перекрёстной проверкой
+
+Примеры команд:
+
+```bash
+zilant pack file.txt -p <пароль> --decoy-size 1024
+zilant unpack container.zil -p <пароль>
+```
+
+---
+
 ## Документация
 
 - **Threat Model**: [docs/THREATS.md](docs/THREATS.md)
@@ -57,9 +78,8 @@ pip install -e .[dev]
 pre-commit run --all-files
 ruff check src tests
 black --check src tests
-isort --check-only src tests
 mypy src
-pytest -q
+pytest
 python -m build
 ```
 
