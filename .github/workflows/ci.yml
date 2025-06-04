@@ -130,6 +130,7 @@ jobs:
       - name: Install Syft / Grype / Trivy / helpers
         run: |
           sudo apt-get update -y
+          sudo apt-get install -y jq
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh   | sudo sh -s -- -b /usr/local/bin
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh  | sudo sh -s -- -b /usr/local/bin
           curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
@@ -137,7 +138,9 @@ jobs:
           pip install reuse bandit semgrep build
 
       - name: Generate SBOM (Syft → CycloneDX)
-        run: syft . -o cyclonedx-json=sbom.json
+        run: |
+          syft . -o cyclonedx-json=sbom.json
+          jq '.metadata.component.type="application"' sbom.json > sbom.tmp && mv sbom.tmp sbom.json
 
       - name: Grype scan (CRITICAL)
         run: grype sbom:sbom.json --fail-on critical
@@ -241,13 +244,16 @@ jobs:
       - name: Install Syft / Grype / Trivy
         run: |
           sudo apt-get update -y
+          sudo apt-get install -y jq
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sudo sh -s -- -b /usr/local/bin
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sudo sh -s -- -b /usr/local/bin
           curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
       - name: Verify Syft version
         run: syft --version
       - name: Generate SBOM
-        run: syft . -o cyclonedx-json=sbom.json
+        run: |
+          syft . -o cyclonedx-json=sbom.json
+          jq '.metadata.component.type="application"' sbom.json > sbom.tmp && mv sbom.tmp sbom.json
       - name: Scan SBOM with Grype
         run: grype sbom:sbom.json --fail-on medium
       - name: Scan SBOM with Trivy
