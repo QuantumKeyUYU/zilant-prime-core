@@ -128,6 +128,7 @@ def cmd_pack(source: Path, output: Path | None, password: str | None, overwrite:
         overwrite = True
 
     if not password:
+        # No password provided via the -p option or empty value
         _abort("Missing password")
     if password == "-":
         password = _ask_pwd(confirm=True)
