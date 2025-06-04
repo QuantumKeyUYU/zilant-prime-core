@@ -47,3 +47,20 @@ zilctl pack secret.txt secret.zil
 
 # Расшифровка:
 zilctl unpack secret.zil --output-dir ./out
+
+## Development
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .[dev]
+pre-commit run --all-files
+ruff check src tests
+black --check src tests
+isort --check-only src tests
+mypy src
+pytest -q
+python -m build
+```
+
+Signed artifacts can be produced via CI or locally using `cosign sign` with your key. After installation run `scripts/post_install.sh` to enforce permissions.

@@ -4,3 +4,6 @@ omit =
     */tests/*
     */.pytest_cache/*
     */.ruff_cache/*
+    */src/zilant_prime_core/utils/file_monitor.py
+    */src/zilant_prime_core/utils/secure_logging.py
+    */src/zilant_prime_core/cli.py

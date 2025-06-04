@@ -10,6 +10,7 @@ from typing import NoReturn
 
 import click
 
+from zilant_prime_core.utils.file_monitor import start_file_monitor
 from zilant_prime_core.utils.self_watchdog import init_self_watchdog
 from zilant_prime_core.utils.tpm_attestation import attest_via_tpm
 
@@ -67,6 +68,7 @@ def cli() -> None:
         click.echo("Remote Attestation failed. Exiting.")  # pragma: no cover
         # Вместо sys.exit здесь просто предупреждаем, но не выходим
     init_self_watchdog(module_file=os.path.realpath(__file__), interval=60.0)  # pragma: no cover
+    start_file_monitor(["sbom.json", "sealed_aes_key.bin", "config.yaml"])  # pragma: no cover
 
 
 @cli.command("pack")

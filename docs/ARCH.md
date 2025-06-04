@@ -21,3 +21,5 @@ CICD --> Vault : fetches secrets & rotates tokens
 Vault --> Core : provides AppRole tokens
 Vault --> Logger : optional key storage via env
 @enduml
+
+In runtime the watchdog monitors `sbom.json`, `config.yaml` and sealed keys.
