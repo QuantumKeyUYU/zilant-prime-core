@@ -21,3 +21,4 @@ CICD --> Vault : fetches secrets & rotates tokens
 Vault --> Core : provides AppRole tokens
 Vault --> Logger : optional key storage via env
 @enduml
+```
