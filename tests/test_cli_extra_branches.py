@@ -59,7 +59,7 @@ def test_pack_prompt_password(monkeypatch, tmp_path, runner):
     src = tmp_path / "file.txt"
     src.write_text("x")
     dest = src.with_suffix(".zil")
-    monkeypatch.setattr(cli_mod.click, "prompt", lambda *a, **k: "pwd")
+    monkeypatch.setattr("builtins.input", lambda *a, **k: "pwd")
     res = runner.invoke(cli_mod.cli, ["pack", str(src), "-p", "-"])
     assert res.exit_code == 0
     assert dest.exists()

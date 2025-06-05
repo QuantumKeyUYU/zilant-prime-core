@@ -31,12 +31,25 @@ def _abort(msg: str, code: int = 1) -> NoReturn:
 
 
 def _ask_pwd(*, confirm: bool = False) -> str:
-    """Prompt for a password with fallback for non-TTY environments."""
-    try:
-        pwd = click.prompt("Password", hide_input=True, confirmation_prompt=confirm)
-    except EOFError:
-        # getpass on Windows fails when stdin isn't a TTY (CliRunner). Fallback.
-        pwd = click.prompt("Password", hide_input=False, confirmation_prompt=confirm)
+    """Prompt for a password using getpass when possible."""
+    prompt = "Password: "
+    confirm_prompt = "Repeat password: "
+
+    if sys.stdin.isatty():
+        import getpass
+
+        pwd = getpass.getpass(prompt)
+        if confirm:
+            repeated = getpass.getpass(confirm_prompt)
+            if repeated != pwd:
+                _abort("Passwords do not match")
+    else:
+        pwd = input(prompt)
+        if confirm:
+            repeated = input(confirm_prompt)
+            if repeated != pwd:
+                _abort("Passwords do not match")
+
     if not pwd:
         _abort("Missing password")
     return pwd
