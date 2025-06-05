@@ -3,7 +3,6 @@
 ## [Unreleased]
 - Добавлена опция --decoy-size (padding payload)
 - Реализован Sandbox Runner через runsc
-- Добавлен TPM counter (fail-closed)
 - Введён RateLimiter (5 вызовов/мин) и Suspicion Logging
 - При распаковке добавлен jitter и вывод Canary JSON
 - Написана constant-time функция bytes_equal_ct и заменены сравнения подписи
@@ -22,7 +21,7 @@
 
 ### C. DevSecOps
 - CodeQL, Semgrep включены в CI без ошибок.
-- secure_logging (AES-GCM, заглушка TPM).
+- secure_logging (AES-GCM).
 
 ### D. Документация
 - THREATS.md и ARCH.md авто-генерируются и проходят remark.

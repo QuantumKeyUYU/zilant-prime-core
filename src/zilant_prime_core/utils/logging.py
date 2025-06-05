@@ -3,7 +3,7 @@
 
 import logging
 import os
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 from zilant_prime_core.utils.secure_logging import SecureLogger, get_secure_logger
 
@@ -78,3 +78,14 @@ def get_file_logger(
         logger.addHandler(fh)
         logger.setLevel(logging.INFO)
     return logger
+
+
+def log_event(event_type: str, details: Dict[str, Any]) -> None:
+    logger = cast(logging.Logger, get_logger("pseudohsm"))
+    logger.info("%s %s", event_type, details)
+
+
+def self_destruct_all() -> None:
+    logger = cast(logging.Logger, get_logger("pseudohsm"))
+    logger.error("Self destruct invoked")
+    raise SystemExit(1)

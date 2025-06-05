@@ -14,12 +14,11 @@ from typing import NoReturn
 
 import click
 
-from zilant_prime_core.utils.attest import attest_via_tpm
 from zilant_prime_core.utils.file_monitor import start_file_monitor
+from zilant_prime_core.utils.hardening import apply_runtime_hardening
 from zilant_prime_core.utils.rate_limit import RateLimiter
 from zilant_prime_core.utils.self_watchdog import init_self_watchdog
 from zilant_prime_core.utils.suspicion import log_suspicious_event
-from zilant_prime_core.utils.tpm_counter import TpmCounterError, read_tpm_counter
 
 _pack_rate_limiter = RateLimiter(max_calls=5, period=60.0)
 
@@ -95,30 +94,9 @@ def _maybe_sandbox() -> None:
 
 
 def _init_runtime() -> None:
-    """Run runtime checks like sandbox and TPM counter."""
+    """Run runtime checks and hardening."""
     _maybe_sandbox()
-    if os.getenv("ZILANT_NO_TPM") == "1":
-        init_self_watchdog(module_file=os.path.realpath(__file__), interval=60.0)  # pragma: no cover
-        start_file_monitor(["sbom.json", "sealed_aes_key.bin", "config.yaml"])  # pragma: no cover
-        return
-
-    attest_via_tpm()  # pragma: no cover
-    try:
-        counter = read_tpm_counter()
-    except TpmCounterError as e:
-        click.echo(f"TPM counter error: {e}", err=True)
-        sys.exit(1)
-
-    prev_file = Path.home() / ".zilant_prev_counter"
-    if prev_file.exists():
-        prev = int(prev_file.read_text())
-        if counter <= prev:
-            click.echo(
-                "TPM counter did not increase (possible rollback)! Exiting.",
-                err=True,
-            )
-            sys.exit(1)
-    prev_file.write_text(str(counter))
+    apply_runtime_hardening()
     init_self_watchdog(module_file=os.path.realpath(__file__), interval=60.0)  # pragma: no cover
     start_file_monitor(["sbom.json", "sealed_aes_key.bin", "config.yaml"])  # pragma: no cover
 

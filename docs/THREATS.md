@@ -10,7 +10,7 @@
 
 ## Repudiation (Отказ от действий)
 - Пример: отсутствие аудита действий при сборке.
-- Mitigation: защищённые журналы с AES-GCM, TPM-ключ.
+- Mitigation: защищённые журналы с AES-GCM.
 
 ## Information Disclosure (Разглашение)
 - Пример: утечка ключей Cosign или секретов Vault.
@@ -26,11 +26,11 @@
 
 ## Elevation of Privilege (Повышение привилегий)
 - Пример: использование скомпрометированных токенов для подписи.
-- Mitigation: двухфакторная подпись, аттестация TPM.
+- Mitigation: двухфакторная подпись.
 
 ## MITRE ATT&CK
 - T1552.001 (Credentials in Secret) → Mitigation: Vault + ротация
 - T1588 (Obtain Resources) → Mitigation: ограниченные токены, IAM
 - T1499 (Resource Hijacking/DoS) → Mitigation: лимиты ресурсов
-- T1108 (Redundant Access) → Mitigation: TPM counter + trusted boot
+- T1108 (Redundant Access) → Mitigation: trusted boot
 - T1068 (Exploitation for Privilege Escalation) → Mitigation: изоляция runsc

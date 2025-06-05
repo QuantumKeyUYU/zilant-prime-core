@@ -21,7 +21,6 @@ path = [
   "nonce.bin",
   "scripts/reprod.sh",
   "start_zilant.ps1",
-  "src/zilant_prime_core/utils/tpm_attestation.py",
   "tests/test_cli_full_coverage.py",
   ".hypothesis/constants/*",
   "cosign.pub"
