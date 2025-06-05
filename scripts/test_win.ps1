@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 Write-Host "Running lint, format, mypy, tests on Windows…"
 py -m black --check src tests
 py -m ruff check src tests
