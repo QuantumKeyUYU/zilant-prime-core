@@ -76,13 +76,8 @@ def _maybe_sandbox() -> None:
         os.execvp(cmd[0], cmd)
 
 
-@click.group(context_settings={"help_option_names": ["-h", "--help"]})
-def cli() -> None:
-    """Zilant Prime CLI."""
-    runsc_path = shutil.which("runsc")
-    if runsc_path is not None and os.getenv("ZILANT_NO_SANDBOX") is None:
-        cmd = ["runsc", "run", "--"] + sys.argv
-        os.execvp(cmd[0], cmd)
+def _check_tpm() -> None:
+    """Perform TPM attestation and counter checks."""
     attest_via_tpm()  # pragma: no cover
     try:
         counter = read_tpm_counter()
@@ -94,9 +89,21 @@ def cli() -> None:
     if prev_file.exists():
         prev = int(prev_file.read_text())
         if counter <= prev:
-            click.echo("TPM counter did not increase (possible rollback)! Exiting.", err=True)
+            click.echo(
+                "TPM counter did not increase (possible rollback)! Exiting.",
+                err=True,
+            )
             sys.exit(1)
     prev_file.write_text(str(counter))
+
+
+@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+def cli() -> None:
+    """Zilant Prime CLI."""
+    runsc_path = shutil.which("runsc")
+    if runsc_path is not None and os.getenv("ZILANT_NO_SANDBOX") is None:
+        cmd = ["runsc", "run", "--"] + sys.argv
+        os.execvp(cmd[0], cmd)
     init_self_watchdog(module_file=os.path.realpath(__file__), interval=60.0)  # pragma: no cover
     start_file_monitor(["sbom.json", "sealed_aes_key.bin", "config.yaml"])  # pragma: no cover
 
@@ -131,6 +138,8 @@ def cmd_pack(source: Path, output: Path | None, password: str | None, overwrite:
         _abort("Missing password")
     if password == "-":
         password = _ask_pwd(confirm=True)
+
+    _check_tpm()
 
     if not _pack_rate_limiter.allow():
         log_suspicious_event("rate_limit_exceeded", {"command": "pack"})
@@ -173,6 +182,8 @@ def cmd_unpack(container: Path, dest: Path | None, password: str | None) -> None
         _abort("Missing password")
     if password == "-":
         password = _ask_pwd()
+
+    _check_tpm()
 
     out_dir = dest if dest is not None else container.parent
 
