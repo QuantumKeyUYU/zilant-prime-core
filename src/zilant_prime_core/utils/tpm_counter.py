@@ -31,9 +31,18 @@ def read_tpm_counter() -> int:
 
 def increment_tpm_counter() -> None:
     """Increment TPM counter via tpm2_increment."""
-    if subprocess.call(["which", "tpm2_increment"], stdout=subprocess.DEVNULL) != 0:
+    if (
+        subprocess.call(
+            [
+                "which",
+                "tpm2_increment",
+            ],
+            stdout=subprocess.DEVNULL,
+        )
+        != 0
+    ):  # pragma: no cover - system check
         raise TpmCounterError("TPM increment utility not found")
-    try:
-        subprocess.run(["tpm2_increment", "0x81010001"], check=True)
+    try:  # pragma: no cover - system call
+        subprocess.run(["tpm2_increment", "0x81010001"], check=True)  # pragma: no cover - system call
     except Exception as e:  # pragma: no cover - system call
         raise TpmCounterError(f"Cannot increment TPM counter: {e}")

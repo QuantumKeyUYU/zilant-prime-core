@@ -46,7 +46,7 @@ def cross_watchdog(interval: float = 1.0) -> None:
     while True:
         try:
             os.kill(parent_pid, 0)
-        except OSError:
+        except OSError:  # pragma: no cover - parent process gone
             sys.exit(1)
         time.sleep(interval)
 
