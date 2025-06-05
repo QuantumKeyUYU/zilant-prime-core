@@ -3,7 +3,7 @@
 
 __version__ = "0.3.0"
 # Experimental quantum‑phase primitives
-from .phase import generate_phase_key, hardware_fingerprint, QuantumPhaseCipher
+from .phase import QuantumPhaseCipher, generate_phase_key, hardware_fingerprint
 
 __all__ = [
     "__version__",

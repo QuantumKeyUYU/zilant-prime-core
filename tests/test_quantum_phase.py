@@ -1,8 +1,7 @@
 import pytest
 
 from zilant_prime_core.crypto.aead import AEADInvalidTagError
-
-from zilant_prime_core.phase import generate_phase_key, QuantumPhaseCipher, hardware_fingerprint
+from zilant_prime_core.phase import QuantumPhaseCipher, generate_phase_key, hardware_fingerprint
 
 
 def test_phase_key_unique():
