@@ -10,7 +10,8 @@ RECTANGLE "CLI\n(zilctl)" as CLI
 RECTANGLE "Core Library\n(container, crypto, vdf)" as Core
 RECTANGLE "Secure Logger\n(utils/secure_logging.py)" as Logger
 RECTANGLE "CI/CD\n(GitHub Actions)" as CICD
-RECTANGLE "Vault / TPM\n(secret management)" as Vault
+RECTANGLE "Vault\n(secret management)" as Vault
+RECTANGLE "Pseudo-HSM Modules\n(device_fp, crypto_core, shard_secret, counter, anti_snapshot, logging, hardening)" as PHSM
 RECTANGLE "SBOM & Scanning\n(syft, grype, trivy)" as SBOM
 
 CLI --> Core : uses
@@ -20,4 +21,6 @@ CICD --> Core : builds/tests
 CICD --> Vault : fetches secrets & rotates tokens
 Vault --> Core : provides AppRole tokens
 Vault --> Logger : optional key storage via env
+PHSM --> CLI
+CLI --> PHSM
 @enduml

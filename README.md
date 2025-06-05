@@ -1,49 +1,29 @@
 # Zilant Prime Core
 
-[![Coverage](https://img.shields.io/codecov/c/github/QuantumKeyUYU/zilant-prime-core?branch=main)](https://codecov.io/gh/QuantumKeyUYU/zilant-prime-core) [![Security](https://img.shields.io/badge/security-scan-passed-success.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/security) [![Docs](https://img.shields.io/badge/docs-available-blue.svg)](./docs/ARCH.md)
+Quantum-Pseudo-HSM integration providing secure container operations.
 
-Универсальная CLI и библиотека для создания безопасных контейнеров, шифрования логов, VDF-доказательств и полной DevSecOps-цепочки.
+## Quantum-Pseudo-HSM
 
----
+This release introduces a pseudo-HSM layer with device fingerprinting and secure key derivation.
 
-## Stage 0: Secure Logging (завершено)
-
-В этом этапе мы реализовали и протестировали компонент **SecureLogger**:
-
-- Код записывает зашифрованные AES-GCM записи в файл и корректно их расшифровывает.
-- Обработка log-injection через фильтрацию ASCII-символов и экранирование `\n`, `\r`.
-- Singleton-логирование через `get_secure_logger()`.
-- Полный набор тестов (100 % покрытие):
-  - Проверка сериализации/десериализации (`test_secure_logging.py`).
-  - Обработка некорректных строк и JSON.
-  - Дополнительные поля, валидация типа ключа.
-  - Сценарии tampering и пропуска битых строк.
-- **SPDX-блок** добавлен в каждый файл.
-
-### Чеклист по Secure Logging:
-- [x] `SecureLogger` с AES-GCM и `read_logs()`.
-- [x] Обработка отсутствия файла, некорректного base64, JSON.
-- [x] Экранирование небезопасных символов.
-- [x] Singleton-логгер (`get_secure_logger`).
-- [x] Тесты на все ветки (`test_secure_logging*.py`).
-- [x] README обновлён, добавлен статус Stage 0.
-
----
-
-## Документация
-
-- **Threat Model**: [docs/THREATS.md](docs/THREATS.md)
-- **Architecture**: [docs/ARCH.md](docs/ARCH.md)
-
----
-
-## Quickstart
+### Commands
 
 ```bash
-pip install zilant-prime-core
+zilant enrol myshard.bin
+zilant pack myshard.bin secret.txt secret.zil
+zilant unpack myshard.bin secret.zil restored.txt
+```
 
-# Шифрование файла:
-zilctl pack secret.txt secret.zil
+Compile C modules:
 
-# Расшифровка:
-zilctl unpack secret.zil --output-dir ./out
+```bash
+gcc -fPIC -shared src/zilant_prime_core/utils/crypto_core.c -o src/zilant_prime_core/utils/crypto_core.so -lcrypto
+gcc -fPIC -shared src/zilant_prime_core/utils/hardening.c -o src/zilant_prime_core/utils/hardening_rt.so -lseccomp
+```
+
+Recovery relies on >=80% hardware fingerprint match and a saved recovery phrase.
+Backup shards should be stored offline (e.g. USB).
+
+## Documentation
+
+See [docs/THREATS.md](docs/THREATS.md) and [docs/ARCH.md](docs/ARCH.md).
