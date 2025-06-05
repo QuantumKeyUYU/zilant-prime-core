@@ -25,7 +25,7 @@ def test_pack_missing_password(tmp_path):
 
 def test_pack_password_prompt_abort(monkeypatch, tmp_path):
     src = make_file(tmp_path)
-    monkeypatch.setattr("click.prompt", lambda *a, **k: "")
+    monkeypatch.setattr("builtins.input", lambda *a, **k: "")
     result = runner.invoke(cli, ["pack", str(src), "-p", "-"])
     assert result.exit_code == 1
     assert "Missing password" in result.output
@@ -73,7 +73,7 @@ def test_unpack_missing_password(tmp_path):
 def test_unpack_password_prompt_abort(monkeypatch, tmp_path):
     cont = tmp_path / "cont.zil"
     cont.write_bytes(b"hdr\npayload")
-    monkeypatch.setattr("click.prompt", lambda *a, **k: "")
+    monkeypatch.setattr("builtins.input", lambda *a, **k: "")
     result = runner.invoke(cli, ["unpack", str(cont), "-p", "-"])
     assert result.exit_code == 1
     assert "Missing password" in result.output
