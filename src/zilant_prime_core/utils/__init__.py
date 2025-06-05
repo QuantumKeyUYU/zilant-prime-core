@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+from .anti_snapshot import detect_snapshot
+
 # ──────────────────────── Public constants ──────────────────────────
 from .constants import (
     DEFAULT_KEY_LENGTH,
@@ -16,6 +18,10 @@ from .constants import (
     MAGIC,
     VERSION,
 )
+from .counter import Counter
+
+# ───────────────────────── Pseudo-HSM placeholders ──────────────────────────
+from .device_fp import get_device_fingerprint
 
 # ───────────────────────── Encode / decode ──────────────────────────
 from .formats import from_b64, from_hex, to_b64, to_hex
@@ -23,6 +29,7 @@ from .formats import from_b64, from_hex, to_b64, to_hex
 # ───────────────────────────── Logging ──────────────────────────────
 from .logging import get_file_logger, get_logger
 from .secure_logging import SecureLogger, get_secure_logger
+from .shard_secret import recover_secret, split_secret
 
 # ───────────────────────── Vault integration ────────────────────────
 from .vault_client import VaultClient
@@ -49,4 +56,13 @@ __all__: list[str] = [
     "get_secure_logger",
     # vault_client.py
     "VaultClient",
+    # device fingerprint
+    "get_device_fingerprint",
+    # shard secret
+    "split_secret",
+    "recover_secret",
+    # counter
+    "Counter",
+    # anti snapshot
+    "detect_snapshot",
 ]

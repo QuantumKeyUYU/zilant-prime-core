@@ -10,8 +10,11 @@ from typing import NoReturn
 
 import click
 
+from zilant_prime_core.utils.anti_snapshot import detect_snapshot
+from zilant_prime_core.utils.counter import Counter
+from zilant_prime_core.utils.device_fp import get_device_fingerprint
 from zilant_prime_core.utils.self_watchdog import init_self_watchdog
-from zilant_prime_core.utils.tpm_attestation import attest_via_tpm
+from zilant_prime_core.utils.shard_secret import recover_secret, split_secret
 
 
 def _abort(msg: str, code: int = 1) -> NoReturn:
@@ -62,10 +65,13 @@ def _cleanup_old_file(container: Path) -> None:
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 def cli() -> None:
     """Zilant Prime CLI."""
-    result = attest_via_tpm()  # pragma: no cover
-    if result is False:  # pragma: no cover
-        click.echo("Remote Attestation failed. Exiting.")  # pragma: no cover
-        # Вместо sys.exit здесь просто предупреждаем, но не выходим
+    # initialize Quantum-Pseudo-HSM helpers (placeholders)
+    fp = get_device_fingerprint()  # pragma: no cover
+    split_secret(fp.encode())  # pragma: no cover
+    recover_secret([fp.encode()])  # pragma: no cover
+    ctr = Counter()  # pragma: no cover
+    ctr.increment()  # pragma: no cover
+    detect_snapshot()  # pragma: no cover
     init_self_watchdog(module_file=os.path.realpath(__file__), interval=60.0)  # pragma: no cover
 
 
