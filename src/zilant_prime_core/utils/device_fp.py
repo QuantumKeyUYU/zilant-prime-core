@@ -8,7 +8,6 @@ import hashlib
 import hmac
 import os
 import platform
-from pathlib import Path
 
 
 _HMAC_KEY = b"ZILANT_PRIME_PSEUDOHSM"

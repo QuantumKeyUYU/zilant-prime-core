@@ -20,7 +20,7 @@ def split_secret(secret: bytes, *, parts: int = 1) -> List[bytes]:
     for _ in range(parts - 1):
         rand = os.urandom(len(secret))
         shards.append(rand)
-        accum = bytearray(a ^ b for a, b in zip(accum, rand))
+        accum = bytearray(a ^ b for a, b in zip(accum, rand, strict=False))
     shards.append(bytes(accum))
     return shards
 
@@ -31,5 +31,5 @@ def recover_secret(shards: List[bytes]) -> bytes:
         return b""
     secret = bytearray(shards[0])
     for shard in shards[1:]:
-        secret = bytearray(a ^ b for a, b in zip(secret, shard))
+        secret = bytearray(a ^ b for a, b in zip(secret, shard, strict=False))
     return bytes(secret)
