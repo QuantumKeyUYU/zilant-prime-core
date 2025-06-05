@@ -5,6 +5,7 @@
 
 import os
 
+import pytest
 from click.testing import CliRunner
 
 from zilant_prime_core.cli import cli
@@ -20,6 +21,10 @@ def test_pack_missing_password_when_no_flag(tmp_path):
     assert "Missing password" in result.stdout
 
 
+@pytest.mark.skipif(
+    os.name == "nt" or os.getenv("ZILANT_SKIP_INTERACTIVE_TESTS") == "1",
+    reason="Interactive CLI test skipped on Windows or if ZILANT_SKIP_INTERACTIVE_TESTS is set",
+)
 def test_pack_existing_prompts_overwrite_then_abort(tmp_path):
     # existing .zil and no overwrite flag → prompt and abort
     src = tmp_path / "foo.txt"

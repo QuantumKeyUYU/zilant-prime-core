@@ -15,7 +15,10 @@ def runner():
     return CliRunner()
 
 
-@pytest.mark.skipif(os.name == "nt", reason="Click prompt fails on Windows")
+@pytest.mark.skipif(
+    os.name == "nt" or os.getenv("ZILANT_SKIP_INTERACTIVE_TESTS") == "1",
+    reason="Interactive CLI test skipped on Windows or if ZILANT_SKIP_INTERACTIVE_TESTS is set",
+)
 def test_pack_prompt_password(tmp_path, runner):
     src = tmp_path / "foo.txt"
     src.write_text("hello")
@@ -30,6 +33,10 @@ def test_pack_prompt_password(tmp_path, runner):
     assert out_file.exists()
 
 
+@pytest.mark.skipif(
+    os.name == "nt" or os.getenv("ZILANT_SKIP_INTERACTIVE_TESTS") == "1",
+    reason="Interactive CLI test skipped on Windows or if ZILANT_SKIP_INTERACTIVE_TESTS is set",
+)
 def test_pack_overwrite_decline(tmp_path, runner):
     src = tmp_path / "foo.txt"
     src.write_text("data")
@@ -45,6 +52,10 @@ def test_pack_overwrite_decline(tmp_path, runner):
     assert "already exists" in result.output
 
 
+@pytest.mark.skipif(
+    os.name == "nt" or os.getenv("ZILANT_SKIP_INTERACTIVE_TESTS") == "1",
+    reason="Interactive CLI test skipped on Windows or if ZILANT_SKIP_INTERACTIVE_TESTS is set",
+)
 def test_pack_overwrite_accept(tmp_path, runner):
     src = tmp_path / "foo.txt"
     src.write_text("data")

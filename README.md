@@ -97,8 +97,8 @@ On Windows PowerShell:
 ./scripts/test_win.ps1
 ```
 
-Both scripts set `ZILANT_NO_TPM=1` so tests work without a hardware TPM. Interactive
-CLI prompt tests are automatically skipped on Windows.
+Both scripts set `ZILANT_NO_TPM=1` so tests work without a hardware TPM.
+Interactive CLI prompt tests are automatically skipped on Windows. To skip them on any platform, set `ZILANT_SKIP_INTERACTIVE_TESTS=1` before running the scripts.
 
 Signed artifacts can be produced via CI or locally using `cosign sign` with your key. After installation run `scripts/post_install.sh` to enforce permissions.
 

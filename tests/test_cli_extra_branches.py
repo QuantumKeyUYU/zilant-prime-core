@@ -4,6 +4,7 @@
 # tests/test_cli_extra_branches.py
 
 
+import os
 from pathlib import Path
 
 import pytest
@@ -25,6 +26,10 @@ def test_pack_missing_password(tmp_path, runner):
     assert "Missing password" in res.output
 
 
+@pytest.mark.skipif(
+    os.name == "nt" or os.getenv("ZILANT_SKIP_INTERACTIVE_TESTS") == "1",
+    reason="Interactive CLI test skipped on Windows or if ZILANT_SKIP_INTERACTIVE_TESTS is set",
+)
 def test_pack_file_exists_no_overwrite(tmp_path, runner):
     src = tmp_path / "file.txt"
     src.write_text("x")
@@ -35,6 +40,10 @@ def test_pack_file_exists_no_overwrite(tmp_path, runner):
     assert f"{dest.name} already exists" in res.output
 
 
+@pytest.mark.skipif(
+    os.name == "nt" or os.getenv("ZILANT_SKIP_INTERACTIVE_TESTS") == "1",
+    reason="Interactive CLI test skipped on Windows or if ZILANT_SKIP_INTERACTIVE_TESTS is set",
+)
 def test_pack_file_exists_confirm_overwrite(tmp_path, runner):
     src = tmp_path / "file.txt"
     src.write_text("x")

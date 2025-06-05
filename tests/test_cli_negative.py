@@ -4,11 +4,16 @@
 import os
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
 from zilant_prime_core.cli import cli
 
 
+@pytest.mark.skipif(
+    os.name == "nt" or os.getenv("ZILANT_SKIP_INTERACTIVE_TESTS") == "1",
+    reason="Interactive CLI test skipped on Windows or if ZILANT_SKIP_INTERACTIVE_TESTS is set",
+)
 def test_cli_overwrite(tmp_path: Path):
     runner = CliRunner()
     data = tmp_path / "data.bin"
