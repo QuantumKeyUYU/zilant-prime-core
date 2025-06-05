@@ -45,5 +45,10 @@ pip install zilant-prime-core
 # Шифрование файла:
 zilctl pack secret.txt secret.zil
 
+# Или через HashiCorp Vault (поле `password`):
+export VAULT_ADDR="https://vault.example.com"
+export VAULT_TOKEN="s.1a2b3c4d"
+zilctl pack secret.txt --vault-path secret/data/zilant/password
+
 # Расшифровка:
 zilctl unpack secret.zil --output-dir ./out
