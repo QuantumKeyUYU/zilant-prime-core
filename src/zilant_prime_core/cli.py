@@ -182,12 +182,12 @@ def cmd_unpack(container: Path, dest: Path | None, password: str | None) -> None
     if password == "-":
         password = _ask_pwd()
 
-    _init_runtime()
-
     out_dir = dest if dest is not None else container.parent
 
     if dest is not None and out_dir.exists():
         _abort("Destination path already exists")
+
+    _init_runtime()
 
     if dest is None:
         _cleanup_old_file(container)
