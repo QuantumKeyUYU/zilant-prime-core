@@ -1,0 +1,14 @@
+@startuml
+GitRepo -> "CI/CD"
+"CI/CD" -> SBOM
+SBOM -> "Grype/Trivy"
+"CI/CD" -> StaticTools
+StaticTools -> "Build/Sign"
+"Build/Sign" -> Artifacts
+Artifacts -> Monitoring
+Monitoring -> Logging
+Logging -> Vault
+Vault -> "Pseudo-HSM Modules"
+"Pseudo-HSM Modules" -> CLI
+CLI -> User
+@enduml
