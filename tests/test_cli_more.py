@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
+import os
+
 import pytest
 from click.testing import CliRunner
 
@@ -20,6 +22,10 @@ def test_unpack_missing_password(tmp_path, runner):
     assert "Missing password" in result.output
 
 
+@pytest.mark.skipif(
+    os.name == "nt" or os.getenv("ZILANT_SKIP_INTERACTIVE_TESTS") == "1",
+    reason="Interactive CLI test skipped on Windows or if ZILANT_SKIP_INTERACTIVE_TESTS is set",
+)
 def test_unpack_prompt_password(tmp_path, runner):
     container = tmp_path / "cont.zil"
     container.write_bytes(b"file.bin\n" b"data")

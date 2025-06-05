@@ -1,4 +1,7 @@
+import os
 import subprocess
+
+_MOCK_MODE = os.getenv("ZILANT_NO_TPM") == "1"
 
 
 class TpmCounterError(Exception):
@@ -8,8 +11,16 @@ class TpmCounterError(Exception):
 __all__ = ["read_tpm_counter", "increment_tpm_counter", "TpmCounterError"]
 
 
+_counter_val = 0
+
+
 def read_tpm_counter() -> int:
-    """Read TPM counter value via tpm2_getcap."""
+    """Read TPM counter value via tpm2_getcap or return a mock value."""
+    global _counter_val
+    if _MOCK_MODE:
+        _counter_val += 1
+        return _counter_val
+
     if subprocess.call(["which", "tpm2_getcap"], stdout=subprocess.DEVNULL) != 0:
         raise TpmCounterError("TPM utility not found")
     try:
@@ -30,7 +41,9 @@ def read_tpm_counter() -> int:
 
 
 def increment_tpm_counter() -> None:
-    """Increment TPM counter via tpm2_increment."""
+    """Increment TPM counter via tpm2_increment or no-op in mock mode."""
+    if _MOCK_MODE:
+        return
     if (
         subprocess.call(
             [
@@ -40,7 +53,7 @@ def increment_tpm_counter() -> None:
             stdout=subprocess.DEVNULL,
         )
         != 0
-    ):  # pragma: no cover - system check
+    ):
         raise TpmCounterError("TPM increment utility not found")
     try:  # pragma: no cover - system call
         subprocess.run(["tpm2_increment", "0x81010001"], check=True)  # pragma: no cover - system call

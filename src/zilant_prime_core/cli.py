@@ -97,6 +97,11 @@ def _maybe_sandbox() -> None:
 def _init_runtime() -> None:
     """Run runtime checks like sandbox and TPM counter."""
     _maybe_sandbox()
+    if os.getenv("ZILANT_NO_TPM") == "1":
+        init_self_watchdog(module_file=os.path.realpath(__file__), interval=60.0)  # pragma: no cover
+        start_file_monitor(["sbom.json", "sealed_aes_key.bin", "config.yaml"])  # pragma: no cover
+        return
+
     attest_via_tpm()  # pragma: no cover
     try:
         counter = read_tpm_counter()

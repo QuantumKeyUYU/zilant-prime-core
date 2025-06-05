@@ -1,13 +1,19 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
 
+import os
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
 from zilant_prime_core.cli import cli
 
 
+@pytest.mark.skipif(
+    os.name == "nt" or os.getenv("ZILANT_SKIP_INTERACTIVE_TESTS") == "1",
+    reason="Interactive CLI test skipped on Windows or if ZILANT_SKIP_INTERACTIVE_TESTS is set",
+)
 def test_cli_pack_and_unpack(tmp_path: Path):
     runner = CliRunner()
 

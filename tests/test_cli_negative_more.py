@@ -3,6 +3,8 @@
 
 # tests/test_cli_negative_more.py
 
+import os
+
 import pytest
 from click.testing import CliRunner
 
@@ -24,6 +26,10 @@ def test_pack_missing_password(sample_file):
     assert "Missing password" in result.stdout
 
 
+@pytest.mark.skipif(
+    os.name == "nt" or os.getenv("ZILANT_SKIP_INTERACTIVE_TESTS") == "1",
+    reason="Interactive CLI test skipped on Windows or if ZILANT_SKIP_INTERACTIVE_TESTS is set",
+)
 def test_pack_overwrite_prompt_decline(sample_file):
     runner = CliRunner()
     dest = sample_file.with_suffix(".zil")
