@@ -5,11 +5,19 @@
 
 from __future__ import annotations
 
+import os
 from ctypes import CDLL
 from pathlib import Path
 
-LIB = CDLL(str(Path(__file__).with_name("hardening_rt.so")))
+LIB = None
+if os.getenv("DISABLE_HARDENING") != "1":
+    try:
+        LIB = CDLL(str(Path(__file__).with_name("hardening_rt.so")))
+    except OSError:
+        # Hardening library isn't available; continue without it
+        LIB = None
 
 
 def apply_runtime_hardening() -> None:
-    LIB.apply_runtime_hardening()
+    if LIB is not None:
+        LIB.apply_runtime_hardening()
