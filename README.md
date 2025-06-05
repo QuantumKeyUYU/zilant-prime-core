@@ -83,6 +83,20 @@ pytest
 python -m build
 ```
 
+## Local Testing
+
+On Unix-like systems run:
+
+```bash
+./scripts/test_local.sh
+```
+
+On Windows PowerShell:
+
+```powershell
+./scripts/test_win.ps1
+```
+
 Signed artifacts can be produced via CI or locally using `cosign sign` with your key. After installation run `scripts/post_install.sh` to enforce permissions.
 
 ## Vault integration

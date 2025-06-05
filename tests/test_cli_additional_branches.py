@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 
+import os
 import pytest
 from click.testing import CliRunner
 
@@ -13,6 +14,7 @@ def runner():
     return CliRunner()
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Click prompt fails on Windows")
 def test_pack_prompt_password(tmp_path, runner):
     src = tmp_path / "foo.txt"
     src.write_text("hello")
