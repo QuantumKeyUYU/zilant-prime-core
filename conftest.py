@@ -11,20 +11,31 @@ SRC = ROOT / "src"
 if SRC.is_dir():
     sys.path.insert(0, str(SRC))
 
+import shutil
 import subprocess
+import sys
 
 
 def pytest_configure(config):
     build_dir = SRC / "zilant_prime_core" / "utils"
-    subprocess.run(
-        ["gcc", "-fPIC", "-shared", "crypto_core.c", "-o", "crypto_core.so", "-lcrypto"], cwd=build_dir, check=True
-    )
+    gcc = shutil.which("gcc")
+    if gcc is None or sys.platform.startswith("win"):
+        print("\u26A0\ufe0f Skipping C-extension build (gcc not found or running on Windows)")
+        return
     try:
         subprocess.run(
-            ["gcc", "-fPIC", "-shared", "hardening.c", "-o", "hardening_rt.so", "-lseccomp"],
+            [gcc, "-fPIC", "-shared", "crypto_core.c", "-o", "crypto_core.so", "-lcrypto"],
+            cwd=build_dir,
+            check=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        print(f"Warning: failed to build crypto_core.so: {exc}")
+        return
+    try:
+        subprocess.run(
+            [gcc, "-fPIC", "-shared", "hardening.c", "-o", "hardening_rt.so", "-lseccomp"],
             cwd=build_dir,
             check=True,
         )
     except subprocess.CalledProcessError:
-        # Library may be missing; tests will no-op hardening
         print("Warning: failed to build hardening.so; continuing without")

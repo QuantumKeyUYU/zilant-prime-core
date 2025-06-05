@@ -6,6 +6,7 @@ import hmac
 import json
 import logging
 import os
+import tempfile
 import time
 from pathlib import Path
 from typing import Optional, Union
@@ -14,8 +15,24 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from zilant_prime_core.utils.secure_logging import SecureLogger, get_secure_logger
 
-LOG_PATH = "/var/log/.pseudohsm_incident.enc"
-USB_LOG_PATH = "/mnt/usb/incident_backup.enc"
+if os.name == "nt":
+    base = Path(os.getenv("LOCALAPPDATA", tempfile.gettempdir())) / "ZilantPrime"
+    LOG_PATH = str(base / "incident.enc")
+    USB_LOG_PATH = str(base / "incident_backup.enc")
+else:
+    LOG_PATH = "/var/log/.pseudohsm_incident.enc"
+    USB_LOG_PATH = "/mnt/usb/incident_backup.enc"
+
+
+def __lock_path() -> str:
+    """Return path to snapshot lock file in a cross-platform manner."""
+    if os.name == "nt":
+        base = Path(os.getenv("LOCALAPPDATA", tempfile.gettempdir())) / "ZilantPrime"
+    else:
+        base = Path("/var/lock")
+        if not base.exists():
+            base = Path(tempfile.gettempdir())
+    return str(base / "pseudohsm.lock")
 
 
 def _hmac_sha256(key: bytes, data: bytes) -> bytes:
@@ -116,7 +133,7 @@ def self_destruct_all() -> None:
         str(Path.home() / ".zilant" / ".hidden_counter"),
         str(Path.home() / ".zilant" / ".key_store"),
         str(Path.home() / ".zilant" / ".container"),
-        "/var/lock/pseudohsm.lock",
+        __lock_path(),
     ]
     for path in targets:
         try:

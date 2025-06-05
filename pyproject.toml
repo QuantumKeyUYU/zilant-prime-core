@@ -86,10 +86,12 @@ known_first_party = ["zilant_prime_core"]
 
 [tool.ruff]
 line-length = 120
-select      = ["E", "F", "W", "C90", "B"]
-ignore      = ["E402", "B904", "C901"]
 
-[tool.ruff.mccabe]
+[tool.ruff.lint]
+select = ["E", "F", "W", "C90", "B"]
+ignore = ["E402", "B904", "C901"]
+
+[tool.ruff.lint.mccabe]
 max-complexity = 12
 
 [tool.mypy]
