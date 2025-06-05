@@ -10,6 +10,7 @@ from typing import NoReturn
 
 import click
 
+from zilant_prime_core.utils import VaultClient
 from zilant_prime_core.utils.anti_snapshot import detect_snapshot
 from zilant_prime_core.utils.counter import Counter
 from zilant_prime_core.utils.device_fp import get_device_fingerprint
@@ -85,8 +86,15 @@ def cli() -> None:
     help="Output .zil filename (default: <SRC>.zil)",
 )
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
+@click.option("--vault-path", metavar="VAULT_PATH", help="Путь до секрета в HashiCorp Vault")
 @click.option("--overwrite/--no-overwrite", default=False, show_default=True)
-def cmd_pack(source: Path, output: Path | None, password: str | None, overwrite: bool) -> None:
+def cmd_pack(
+    source: Path,
+    output: Path | None,
+    password: str | None,
+    vault_path: str | None,
+    overwrite: bool,
+) -> None:
     dest = output or source.with_suffix(".zil")
 
     if dest.exists() and not overwrite:
@@ -94,13 +102,29 @@ def cmd_pack(source: Path, output: Path | None, password: str | None, overwrite:
             _abort(f"{dest.name} already exists")
         overwrite = True
 
-    if password is None:
+    pwd = password
+    if pwd is not None:
+        if pwd == "-":
+            pwd = _ask_pwd(confirm=True)
+    elif vault_path is not None:
+        try:
+            vault_client = VaultClient()
+            pwd = vault_client.get_secret(vault_path, key="password")
+        except Exception as exc:
+            click.echo(f"Vault error: {exc}", err=True)
+            click.echo(
+                "Не удалось получить пароль из Vault, запрашиваю вручную …",
+                err=True,
+            )
+            pwd = _ask_pwd(confirm=True)
+    else:
         _abort("Missing password")
-    if password == "-":
-        password = _ask_pwd(confirm=True)
+
+    if pwd is None:
+        _abort("Missing password")
 
     try:
-        blob = _pack_bytes(source, password, dest, overwrite)
+        blob = _pack_bytes(source, pwd, dest, overwrite)
     except FileExistsError:
         _abort(f"{dest.name} already exists")
     except Exception as e:
