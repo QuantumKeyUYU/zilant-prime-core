@@ -10,7 +10,7 @@ RECTANGLE "CLI\n(zilctl)" as CLI
 RECTANGLE "Core Library\n(container, crypto, vdf)" as Core
 RECTANGLE "Secure Logger\n(utils/secure_logging.py)" as Logger
 RECTANGLE "CI/CD\n(GitHub Actions)" as CICD
-RECTANGLE "Vault / TPM\n(secret management)" as Vault
+RECTANGLE "Vault / Pseudo-HSM\n(secret management)" as Vault
 RECTANGLE "SBOM & Scanning\n(syft, grype, trivy)" as SBOM
 
 CLI --> Core : uses

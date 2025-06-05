@@ -27,6 +27,12 @@ from .secure_logging import SecureLogger, get_secure_logger
 # ───────────────────────── Vault integration ────────────────────────
 from .vault_client import VaultClient
 
+# ───────────────────────── Pseudo-HSM placeholders ──────────────────────────
+from .device_fp import get_device_fingerprint
+from .shard_secret import recover_secret, split_secret
+from .counter import Counter
+from .anti_snapshot import detect_snapshot
+
 __all__: list[str] = [
     # constants.py
     "DEFAULT_KEY_LENGTH",
@@ -49,4 +55,13 @@ __all__: list[str] = [
     "get_secure_logger",
     # vault_client.py
     "VaultClient",
+    # device fingerprint
+    "get_device_fingerprint",
+    # shard secret
+    "split_secret",
+    "recover_secret",
+    # counter
+    "Counter",
+    # anti snapshot
+    "detect_snapshot",
 ]
