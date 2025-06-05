@@ -9,7 +9,6 @@ import os
 import time
 from pathlib import Path
 
-
 _LOCK_PATH = Path("/tmp/zilant_snapshot.lock")
 
 

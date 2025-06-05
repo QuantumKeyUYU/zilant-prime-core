@@ -9,7 +9,6 @@ import hmac
 import os
 import platform
 
-
 _HMAC_KEY = b"ZILANT_PRIME_PSEUDOHSM"
 
 
