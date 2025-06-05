@@ -1,5 +1,6 @@
-import os
 import pytest
+
+from zilant_prime_core.crypto.aead import AEADInvalidTagError
 
 from zilant_prime_core.phase import generate_phase_key, QuantumPhaseCipher, hardware_fingerprint
 
@@ -23,7 +24,7 @@ def test_cipher_failure_increases_complexity():
     good = cipher.encrypt(b"data")
     bad = bytearray(good)
     bad[-1] ^= 0xFF
-    with pytest.raises(Exception):
+    with pytest.raises(AEADInvalidTagError):
         cipher.decrypt(bytes(bad))
     assert cipher.complexity > 1
     # encrypt/decrypt again to reset complexity
