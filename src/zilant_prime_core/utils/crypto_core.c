@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <openssl/evp.h>
+#include <openssl/kdf.h>
 #include <openssl/hmac.h>
 #include <openssl/crypto.h>
 
