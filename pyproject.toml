@@ -66,9 +66,6 @@ docs = [
   "sphinx-autodoc-typehints>=1.25,<2.0",
 ]
 
-[tool.setuptools.extension]
-crypto_core = { path = "src/zilant_prime_core/utils/crypto_core.c", language = "c", include_dirs = [], libraries = ["crypto"] }
-hardening = { path = "src/zilant_prime_core/utils/hardening.c", language = "c", libraries = ["seccomp"] }
 
 [tool.setuptools.packages.find]
 where = ["src"]
