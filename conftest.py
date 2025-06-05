@@ -12,10 +12,9 @@ if SRC.is_dir():
     sys.path.insert(0, str(SRC))
 
 
-import pytest
-
-
 import tempfile
+
+import pytest
 
 
 @pytest.fixture(autouse=True)
