@@ -71,16 +71,8 @@ where = ["src"]
 namespaces = false
 
 [tool.setuptools.extension]
-crypto_core = {
-    path = "src/zilant_prime_core/utils/crypto_core.c",
-    language = "c",
-    libraries = ["crypto"],
-}
-hardening = {
-    path = "src/zilant_prime_core/utils/hardening.c",
-    language = "c",
-    libraries = ["seccomp"],
-}
+crypto_core = { path = "src/zilant_prime_core/utils/crypto_core.c", language = "c", libraries = ["crypto"] }
+hardening = { path = "src/zilant_prime_core/utils/hardening.c", language = "c", libraries = ["seccomp"] }
 
 
 [tool.black]

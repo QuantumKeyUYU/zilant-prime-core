@@ -10,11 +10,11 @@ from typing import NoReturn
 
 import click
 
-from zilant_prime_core.utils.self_watchdog import init_self_watchdog
-from zilant_prime_core.utils.device_fp import get_device_fingerprint
-from zilant_prime_core.utils.shard_secret import recover_secret, split_secret
-from zilant_prime_core.utils.counter import Counter
 from zilant_prime_core.utils.anti_snapshot import detect_snapshot
+from zilant_prime_core.utils.counter import Counter
+from zilant_prime_core.utils.device_fp import get_device_fingerprint
+from zilant_prime_core.utils.self_watchdog import init_self_watchdog
+from zilant_prime_core.utils.shard_secret import recover_secret, split_secret
 
 
 def _abort(msg: str, code: int = 1) -> NoReturn:
