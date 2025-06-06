@@ -18,7 +18,7 @@ from .constants import (
     MAGIC,
     VERSION,
 )
-from .counter import Counter
+from .counter import increment_counter, read_counter, write_counter
 
 # ───────────────────────── Pseudo-HSM placeholders ──────────────────────────
 from .device_fp import get_device_fingerprint
@@ -62,7 +62,9 @@ __all__: list[str] = [
     "split_secret",
     "recover_secret",
     # counter
-    "Counter",
+    "read_counter",
+    "write_counter",
+    "increment_counter",
     # anti snapshot
     "detect_snapshot",
 ]

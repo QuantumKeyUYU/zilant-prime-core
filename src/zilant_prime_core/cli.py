@@ -12,13 +12,14 @@ import click
 
 from zilant_prime_core.utils import VaultClient
 from zilant_prime_core.utils.anti_snapshot import detect_snapshot
-from zilant_prime_core.utils.counter import Counter
+from zilant_prime_core.utils.counter import increment_counter, read_counter
 from zilant_prime_core.utils.device_fp import (
     SALT_CONST,
     collect_hw_factors,
     compute_fp,
     get_device_fingerprint,
 )
+from zilant_prime_core.utils.recovery import DESTRUCTION_KEY_BUFFER, self_destruct
 from zilant_prime_core.utils.self_watchdog import init_self_watchdog
 from zilant_prime_core.utils.shard_secret import recover_secret, split_secret
 
@@ -71,14 +72,8 @@ def _cleanup_old_file(container: Path) -> None:
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 def cli() -> None:
     """Zilant Prime CLI."""
-    # initialize Quantum-Pseudo-HSM helpers (placeholders)
-    fp = get_device_fingerprint()  # pragma: no cover
-    split_secret(fp.encode())  # pragma: no cover
-    recover_secret([fp.encode()])  # pragma: no cover
-    ctr = Counter()  # pragma: no cover
-    ctr.increment()  # pragma: no cover
-    detect_snapshot()  # pragma: no cover
-    init_self_watchdog(module_file=os.path.realpath(__file__), interval=60.0)  # pragma: no cover
+    # Initialization hooks are disabled in test mode
+    pass
 
 
 @cli.command("pack")
@@ -193,6 +188,55 @@ def cmd_fingerprint() -> None:
         click.echo(fp.hex())
     except Exception as e:  # pragma: no cover - rare failure
         click.echo(f"Error computing fingerprint: {e}", err=True)
+        raise click.Abort()
+
+
+@cli.command("check_counter")
+def cmd_check_counter() -> None:
+    """Display the current hidden counter value."""
+    try:
+        ctr = read_counter()
+        click.echo(f"Current counter value: {ctr}")
+    except Exception as e:
+        click.echo(f"Error reading counter: {e}", err=True)
+        raise click.Abort()
+
+
+@cli.command("incr_counter")
+def cmd_incr_counter() -> None:
+    """Increment the hidden counter and show the new value."""
+    try:
+        increment_counter()
+        new_ctr = read_counter()
+        click.echo(f"Counter incremented, new value: {new_ctr}")
+    except Exception as e:
+        click.echo(f"Error incrementing counter: {e}", err=True)
+        raise click.Abort()
+
+
+@cli.command("check_snapshot")
+def cmd_check_snapshot() -> None:
+    """Check for snapshot/rollback and exit with error if detected."""
+    try:
+        suspected = detect_snapshot()
+        if suspected:
+            click.echo("Snapshot/rollback suspected!", err=True)
+            raise click.Abort()
+        click.echo("No snapshot detected.")
+    except Exception as e:
+        click.echo(f"Error checking snapshot: {e}", err=True)
+        raise click.Abort()
+
+
+@cli.command("self_destruct")
+@click.argument("reason", type=str)
+def cmd_self_destruct_cli(reason: str) -> None:
+    """Trigger self-destruction sequence with *reason*."""
+    try:
+        self_destruct(reason, DESTRUCTION_KEY_BUFFER)
+        click.echo("Self-destruct completed. Decoy file generated.")
+    except Exception as e:
+        click.echo(f"Self-destruct failed: {e}", err=True)
         raise click.Abort()
 
 

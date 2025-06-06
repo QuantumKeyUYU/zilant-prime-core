@@ -1,4 +1,7 @@
 # Changelog
+## 0.6.0 – Anti-rollback, Anti-snapshot, Self-destruct (Stage 4)
+- Added counter, anti_snapshot, and recovery modules with tests and CLI commands.
+
 
 ## 0.5.0 – Device Fingerprint (Stage 3)
 - Added `device_fp` helpers: `collect_hw_factors` and `compute_fp`.
