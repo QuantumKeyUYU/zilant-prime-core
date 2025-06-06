@@ -4,12 +4,161 @@
 
 from __future__ import annotations
 
-import hashlib
-import hmac
+import json
 import os
 import platform
+import subprocess
+import time
+import uuid
+from typing import Dict, cast
 
-_HMAC_KEY = b"ZILANT_PRIME_PSEUDOHSM"
+from crypto_core import hash_sha3
+from utils.secure_memory import wipe_bytes
+
+SALT_CONST: bytes = b"\x00" * 16
+
+
+def collect_hw_factors() -> Dict[str, str]:
+    """Return a dictionary of hardware factors for this device."""
+    factors: Dict[str, str] = {}
+
+    try:
+        factors["cpu_processor"] = platform.processor() or ""
+    except Exception:
+        factors["cpu_processor"] = ""
+
+    try:
+        factors["machine"] = platform.machine() or ""
+    except Exception:
+        factors["machine"] = ""
+
+    try:
+        factors["platform"] = platform.platform() or ""
+    except Exception:
+        factors["platform"] = ""
+
+    try:
+        factors["python_version"] = platform.python_version()
+    except Exception:
+        factors["python_version"] = ""
+
+    try:
+        factors["node_name"] = platform.node() or ""
+    except Exception:
+        factors["node_name"] = ""
+
+    try:
+        factors["mac_address"] = format(uuid.getnode(), "x")
+    except Exception:
+        factors["mac_address"] = ""
+
+    try:
+        if platform.system().lower().startswith("win"):
+            output = (
+                subprocess.check_output(["wmic", "csproduct", "get", "UUID"], stderr=subprocess.DEVNULL)
+                .decode(errors="ignore")
+                .splitlines()
+            )
+            uuid_win = ""
+            for line in output:
+                line = line.strip()
+                if line and "UUID" not in line:
+                    uuid_win = line
+                    break
+            factors["smbios_uuid"] = uuid_win
+        else:
+            factors["smbios_uuid"] = ""
+    except Exception:
+        factors["smbios_uuid"] = ""
+
+    try:
+        if platform.system().lower().startswith("win"):
+            output = (
+                subprocess.check_output(["wmic", "bios", "get", "SMBIOSBIOSVersion"], stderr=subprocess.DEVNULL)
+                .decode(errors="ignore")
+                .splitlines()
+            )
+            bios_ver = ""
+            for line in output:
+                line = line.strip()
+                if line and "SMBIOSBIOSVersion" not in line:
+                    bios_ver = line
+                    break
+            factors["bios_version"] = bios_ver
+        else:
+            try:
+                with open("/sys/class/dmi/id/bios_version", "r") as f:
+                    factors["bios_version"] = f.read().strip()
+            except Exception:
+                factors["bios_version"] = ""
+    except Exception:
+        factors["bios_version"] = ""
+
+    try:
+        if platform.system().lower().startswith("win"):
+            output = (
+                subprocess.check_output(["wmic", "diskdrive", "get", "SerialNumber"], stderr=subprocess.DEVNULL)
+                .decode(errors="ignore")
+                .splitlines()
+            )
+            ds = ""
+            for line in output:
+                line = line.strip()
+                if line and "SerialNumber" not in line:
+                    ds = line
+                    break
+            factors["disk_serial"] = ds
+        else:
+            try:
+                output = (
+                    subprocess.check_output(["lsblk", "-o", "SERIAL", "-dn"], stderr=subprocess.DEVNULL)
+                    .decode(errors="ignore")
+                    .splitlines()
+                )
+                factors["disk_serial"] = output[0].strip() if output else ""
+            except Exception:
+                factors["disk_serial"] = ""
+    except Exception:
+        factors["disk_serial"] = ""
+
+    try:
+        factors["cpu_count"] = str(os.cpu_count() or "")
+    except Exception:
+        factors["cpu_count"] = ""
+
+    try:
+        t = time.time()
+        time.sleep(0.001)
+        factors["entropy_jitter"] = f"{t}"
+    except Exception:
+        factors["entropy_jitter"] = ""
+
+    try:
+        import psutil
+
+        nics = list(psutil.net_if_addrs().keys())
+        factors["network_interfaces"] = json.dumps(nics, ensure_ascii=False)
+    except Exception:
+        factors["network_interfaces"] = ""
+
+    factors["dummy_factor"] = "zilant"
+
+    return factors
+
+
+def compute_fp(hw: Dict[str, str], salt: bytes) -> bytes:
+    """Return SHA3-256 fingerprint for ``hw`` dictionary and ``salt``."""
+    if not isinstance(hw, dict):
+        raise TypeError("hw must be dict[str, str]")
+    if not isinstance(salt, (bytes, bytearray)):
+        raise TypeError("salt must be bytes or bytearray")
+
+    sorted_keys = sorted(hw.keys())
+    concat_values = ":".join(hw[k] for k in sorted_keys).encode("utf-8")
+    data = concat_values + bytes(salt)
+    digest = cast(bytes, hash_sha3(data))
+    wipe_bytes(bytearray(data))
+    return digest
 
 
 def _read_file_first_line(path: str) -> str:
@@ -21,21 +170,7 @@ def _read_file_first_line(path: str) -> str:
 
 
 def get_device_fingerprint() -> str:
-    """Return deterministic short string identifying this device."""
-    factors: list[str] = [
-        platform.system(),
-        platform.machine(),
-        platform.processor() or "",
-        platform.version(),
-        platform.release(),
-        os.getenv("HOSTNAME", ""),
-        os.getenv("USER", ""),
-        str(os.cpu_count() or 0),
-        platform.python_version(),
-        os.getenv("HOME", ""),
-        _read_file_first_line("/etc/machine-id"),
-        _read_file_first_line("/proc/cpuinfo"),
-    ]
-    blob = "|".join(factors).encode()
-    digest = hmac.new(_HMAC_KEY, blob, hashlib.sha256).hexdigest()
-    return digest[:32]
+    """Return fingerprint of this device as a hex string."""
+    hw = collect_hw_factors()
+    fp = compute_fp(hw, SALT_CONST)
+    return fp.hex()

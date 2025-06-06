@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0 – Device Fingerprint (Stage 3)
+- Added `device_fp` helpers: `collect_hw_factors` and `compute_fp`.
+- Added `zilant fingerprint` CLI command.
+- New tests cover device fingerprint utilities and CLI.
+
 ## 0.3.0 - Pseudo-HSM Stage 1
 - Added hardware fingerprint collection with HMAC.
 - Implemented XOR secret sharding and recovery.

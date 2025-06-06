@@ -13,7 +13,12 @@ import click
 from zilant_prime_core.utils import VaultClient
 from zilant_prime_core.utils.anti_snapshot import detect_snapshot
 from zilant_prime_core.utils.counter import Counter
-from zilant_prime_core.utils.device_fp import get_device_fingerprint
+from zilant_prime_core.utils.device_fp import (
+    SALT_CONST,
+    collect_hw_factors,
+    compute_fp,
+    get_device_fingerprint,
+)
 from zilant_prime_core.utils.self_watchdog import init_self_watchdog
 from zilant_prime_core.utils.shard_secret import recover_secret, split_secret
 
@@ -177,6 +182,18 @@ def cmd_unpack(container: Path, dest: Path | None, password: str | None) -> None
         pass
 
     click.echo(str(out))
+
+
+@cli.command("fingerprint")
+def cmd_fingerprint() -> None:
+    """Output device fingerprint as hex string."""
+    try:
+        hw = collect_hw_factors()
+        fp = compute_fp(hw, SALT_CONST)
+        click.echo(fp.hex())
+    except Exception as e:  # pragma: no cover - rare failure
+        click.echo(f"Error computing fingerprint: {e}", err=True)
+        raise click.Abort()
 
 
 main = cli  # alias for `python -m zilant_prime_core.cli`
