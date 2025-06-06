@@ -17,11 +17,8 @@ from zilant_prime_core.utils.device_fp import (
     SALT_CONST,
     collect_hw_factors,
     compute_fp,
-    get_device_fingerprint,
 )
 from zilant_prime_core.utils.recovery import DESTRUCTION_KEY_BUFFER, self_destruct
-from zilant_prime_core.utils.self_watchdog import init_self_watchdog
-from zilant_prime_core.utils.shard_secret import recover_secret, split_secret
 
 
 def _abort(msg: str, code: int = 1) -> NoReturn:
