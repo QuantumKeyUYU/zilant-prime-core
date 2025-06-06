@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 
-import pytest
 
 from crypto_core import hash_sha3
 from shard_secret import split_secret, recover_secret
