@@ -4,6 +4,7 @@ from typing import Union
 
 __all__ = ["hash_sha3"]
 
+
 def hash_sha3(data: Union[str, bytes, bytearray, Path], *, hex_output: bool = False) -> Union[bytes, str]:
     """Return SHA3-256 hash of the given data.
 
