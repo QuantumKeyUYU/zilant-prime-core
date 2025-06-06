@@ -80,6 +80,7 @@ jobs:
           pip install -e .[dev]
 
       - name: Run pytest + coverage
+        timeout-minutes: 30
         env:
           PYTHONPATH: ${{ github.workspace }}/src
         run: |

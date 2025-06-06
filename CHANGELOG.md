@@ -1,4 +1,9 @@
 # Changelog
+## 0.7.1 – CI timeout improvements
+- Added `pytest-timeout` dependency and global 5 minute timeout for tests.
+- The CI workflow now sets `timeout-minutes: 30` for the pytest step to
+  prevent hanging jobs.
+
 ## 0.7.0 – PQ-Migration (Stage 5)
 - Added `pq_crypto` module with Kyber768 KEM and Dilithium2 signature helpers.
 - Introduced `derive_key_pq` for deriving symmetric keys from PQ secrets.

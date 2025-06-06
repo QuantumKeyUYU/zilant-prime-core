@@ -4,6 +4,7 @@
 # Для тестирования и CI:
 pytest>=8.0.0
 pytest-cov>=5.0.0
+pytest-timeout>=2.3.0
 hypothesis>=6.0.0
 
 # Линтеры и форматтеры:
