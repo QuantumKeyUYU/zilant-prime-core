@@ -34,3 +34,9 @@ def test_dilithium2_sign_and_verify():
 def test_derive_key_pq_type_error():
     with pytest.raises(TypeError):
         derive_key_pq("bad")  # type: ignore
+
+
+def test_derive_key_pq_basic():
+    key = derive_key_pq(b"secret")
+    assert isinstance(key, bytes)
+    assert len(key) == 32

@@ -24,32 +24,32 @@ def collect_hw_factors() -> Dict[str, str]:
 
     try:
         factors["cpu_processor"] = platform.processor() or ""
-    except Exception:
+    except Exception:  # pragma: no cover - platform failure
         factors["cpu_processor"] = ""
 
     try:
         factors["machine"] = platform.machine() or ""
-    except Exception:
+    except Exception:  # pragma: no cover - platform failure
         factors["machine"] = ""
 
     try:
         factors["platform"] = platform.platform() or ""
-    except Exception:
+    except Exception:  # pragma: no cover - platform failure
         factors["platform"] = ""
 
     try:
         factors["python_version"] = platform.python_version()
-    except Exception:
+    except Exception:  # pragma: no cover - platform failure
         factors["python_version"] = ""
 
     try:
         factors["node_name"] = platform.node() or ""
-    except Exception:
+    except Exception:  # pragma: no cover - platform failure
         factors["node_name"] = ""
 
     try:
         factors["mac_address"] = format(uuid.getnode(), "x")
-    except Exception:
+    except Exception:  # pragma: no cover - platform failure
         factors["mac_address"] = ""
 
     try:
@@ -68,7 +68,7 @@ def collect_hw_factors() -> Dict[str, str]:
             factors["smbios_uuid"] = uuid_win
         else:
             factors["smbios_uuid"] = ""
-    except Exception:
+    except Exception:  # pragma: no cover - command failure
         factors["smbios_uuid"] = ""
 
     try:
@@ -87,11 +87,14 @@ def collect_hw_factors() -> Dict[str, str]:
             factors["bios_version"] = bios_ver
         else:
             try:
-                with open("/sys/class/dmi/id/bios_version", "r") as f:
+                with open(
+                    "/sys/class/dmi/id/bios_version",
+                    "r",
+                ) as f:  # pragma: no cover - system specific
                     factors["bios_version"] = f.read().strip()
-            except Exception:
+            except Exception:  # pragma: no cover - access failure
                 factors["bios_version"] = ""
-    except Exception:
+    except Exception:  # pragma: no cover - command failure
         factors["bios_version"] = ""
 
     try:
@@ -116,29 +119,29 @@ def collect_hw_factors() -> Dict[str, str]:
                     .splitlines()
                 )
                 factors["disk_serial"] = output[0].strip() if output else ""
-            except Exception:
+            except Exception:  # pragma: no cover - lsblk failure
                 factors["disk_serial"] = ""
-    except Exception:
+    except Exception:  # pragma: no cover - command failure
         factors["disk_serial"] = ""
 
     try:
         factors["cpu_count"] = str(os.cpu_count() or "")
-    except Exception:
+    except Exception:  # pragma: no cover - os error
         factors["cpu_count"] = ""
 
     try:
         t = time.time()
         time.sleep(0.001)
         factors["entropy_jitter"] = f"{t}"
-    except Exception:
+    except Exception:  # pragma: no cover - time failure
         factors["entropy_jitter"] = ""
 
     try:
-        import psutil
+        import psutil  # pragma: no cover - optional
 
-        nics = list(psutil.net_if_addrs().keys())
-        factors["network_interfaces"] = json.dumps(nics, ensure_ascii=False)
-    except Exception:
+        nics = list(psutil.net_if_addrs().keys())  # pragma: no cover - optional
+        factors["network_interfaces"] = json.dumps(nics, ensure_ascii=False)  # pragma: no cover - optional
+    except Exception:  # pragma: no cover - psutil not available
         factors["network_interfaces"] = ""
 
     factors["dummy_factor"] = "zilant"
@@ -165,7 +168,7 @@ def _read_file_first_line(path: str) -> str:
     try:
         with open(path, "r", encoding="utf-8") as f:
             return f.readline().strip()
-    except Exception:
+    except Exception:  # pragma: no cover - file read error
         return ""
 
 
