@@ -1,43 +1,35 @@
-import json
-import os
+import time
 from pathlib import Path
 
-from zilant_prime_core.utils.anti_snapshot import detect_snapshot
+from zilant_prime_core.utils.anti_snapshot import detect_snapshot, read_timestamp, write_timestamp
 
 
-def test_detect_snapshot_creates_file(tmp_path):
-    lock = tmp_path / "lock.json"
-    assert detect_snapshot(lock) is False
-    assert lock.exists()
+def test_write_timestamp_uses_now(tmp_path, monkeypatch):
+    monkeypatch.setattr("zilant_prime_core.utils.anti_snapshot.TIMESTAMP_FILE", tmp_path / "ts.txt")
+    monkeypatch.setattr(time, "time", lambda: 111.0)
+    write_timestamp()
+    assert abs(read_timestamp() - 111.0) < 1e-6
 
 
-def test_detect_snapshot_old_timestamp(tmp_path, monkeypatch):
-    lock = tmp_path / "lock.json"
-    lock.write_text(json.dumps({"pid": os.getpid(), "ts": 0}))
-    assert detect_snapshot(lock, max_age=1.0)
+def test_detect_snapshot_updates_timestamp(tmp_path, monkeypatch):
+    monkeypatch.setattr("zilant_prime_core.utils.anti_snapshot.TIMESTAMP_FILE", tmp_path / "ts.txt")
+    monkeypatch.setattr(time, "time", lambda: 100.0)
+    assert detect_snapshot() is False
+    monkeypatch.setattr(time, "time", lambda: 101.0)
+    assert detect_snapshot() is False
+    assert abs(read_timestamp() - 101.0) < 1e-6
 
 
-def test_detect_snapshot_dead_pid(tmp_path):
-    lock = tmp_path / "lock.json"
-    lock.write_text(json.dumps({"pid": 999999, "ts": 0}))
-    assert detect_snapshot(lock)
+def test_read_timestamp_handles_error(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "zilant_prime_core.utils.anti_snapshot.TIMESTAMP_FILE",
+        tmp_path / "ts.txt",
+    )
 
-
-def test_detect_snapshot_invalid_json(tmp_path):
-    lock = tmp_path / "lock.json"
-    lock.write_text("not json")
-    assert detect_snapshot(lock)
-
-
-def test_detect_snapshot_write_error(tmp_path, monkeypatch):
-    lock = tmp_path / "lock.json"
-
-    def fail_write(*args, **kwargs):
+    def bad_read():
         raise OSError("boom")
 
-    monkeypatch.setattr(
-        Path,
-        "write_text",
-        lambda self, data: fail_write() if self == lock else Path.write_text(self, data),
-    )
-    assert detect_snapshot(lock) is False
+    f = Path(tmp_path / "ts.txt")
+    f.write_text("123")
+    monkeypatch.setattr(f.__class__, "read_text", lambda self: bad_read())
+    assert read_timestamp() is None

@@ -1,38 +1,46 @@
 # SPDX-License-Identifier: MIT
-# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
-"""Environment anti-snapshot detection placeholders."""
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
+"""Anti-snapshot detection helpers."""
 
 from __future__ import annotations
 
-import json
-import os
 import time
 from pathlib import Path
+from typing import Optional
 
-_LOCK_PATH = Path("/tmp/zilant_snapshot.lock")
+from utils.file_utils import atomic_write
+from zilant_prime_core.utils.counter import read_counter
+
+TIMESTAMP_FILE = Path.home() / ".zilant_timestamp"
+SUSPICION_THRESHOLD = 300
 
 
-def detect_snapshot(lock_path: Path | None = None, *, max_age: float = 300.0) -> bool:
-    """Detect snapshot/rollback by checking a simple lock file."""
-    path = lock_path or _LOCK_PATH
-    now = time.time()
-    data = {"pid": os.getpid(), "ts": now}
-
-    if path.exists():
-        try:
-            loaded = json.loads(path.read_text())
-            pid = int(loaded.get("pid", 0))
-            ts = float(loaded.get("ts", 0.0))
-            # Existing lock: if PID dead or timestamp too old, assume snapshot
-            if pid != os.getpid() and not os.path.exists(f"/proc/{pid}"):
-                return True
-            if now - ts > max_age:
-                return True
-        except Exception:
-            return True
-
+def read_timestamp() -> Optional[float]:
+    """Return stored timestamp or ``None`` if unavailable."""
     try:
-        path.write_text(json.dumps(data))
+        if TIMESTAMP_FILE.exists():
+            text = TIMESTAMP_FILE.read_text().strip()
+            return float(text)
     except Exception:
         pass
+    return None
+
+
+def write_timestamp(ts: Optional[float] = None) -> None:
+    """Write ``ts`` (or current time if ``None``) to ``TIMESTAMP_FILE``."""
+    t = time.time() if ts is None else ts
+    data = str(t).encode("utf-8")
+    tmp = TIMESTAMP_FILE.with_suffix(TIMESTAMP_FILE.suffix + ".tmp")
+    atomic_write(tmp, data)
+    tmp.replace(TIMESTAMP_FILE)
+
+
+def detect_snapshot() -> bool:
+    """Return ``True`` if a snapshot/rollback is suspected."""
+    _ = read_counter()
+    saved = read_timestamp()
+    now = time.time()
+    if saved is not None and abs(now - saved) > SUSPICION_THRESHOLD:
+        return True
+    write_timestamp(now)
     return False

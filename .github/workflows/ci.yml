@@ -80,6 +80,7 @@ jobs:
           pip install -e .[dev]
 
       - name: Run pytest + coverage
+        timeout-minutes: 30
         env:
           PYTHONPATH: ${{ github.workspace }}/src
         run: |
@@ -92,10 +93,10 @@ jobs:
           name: cov-xml-${{ matrix.python-version }}
           path: coverage.xml
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: htmlcov-${{ matrix.python-version }}
-          path: htmlcov
+      # - uses: actions/upload-artifact@v4
+      #   with:
+      #     name: htmlcov-${{ matrix.python-version }}
+      #     path: htmlcov
 
 ###############################################################################
 # 3 — SECURITY SCANS + BUILD & SIGN
