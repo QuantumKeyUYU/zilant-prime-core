@@ -1,11 +1,7 @@
 import pytest
 
 from zilant_prime_core.utils import pq_crypto
-from zilant_prime_core.utils.pq_crypto import (
-    Dilithium2Signature,
-    Kyber768KEM,
-    derive_key_pq,
-)
+from zilant_prime_core.utils.pq_crypto import Dilithium2Signature, Kyber768KEM, derive_key_pq
 
 
 @pytest.mark.skipif(pq_crypto.kyber768 is None, reason="pqclean.kyber768 not installed")

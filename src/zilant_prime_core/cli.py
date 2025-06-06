@@ -14,11 +14,7 @@ from container import pack_file, unpack_file
 from zilant_prime_core.utils import VaultClient
 from zilant_prime_core.utils.anti_snapshot import detect_snapshot
 from zilant_prime_core.utils.counter import increment_counter, read_counter
-from zilant_prime_core.utils.device_fp import (
-    SALT_CONST,
-    collect_hw_factors,
-    compute_fp,
-)
+from zilant_prime_core.utils.device_fp import SALT_CONST, collect_hw_factors, compute_fp
 from zilant_prime_core.utils.pq_crypto import Dilithium2Signature, Kyber768KEM
 from zilant_prime_core.utils.recovery import DESTRUCTION_KEY_BUFFER, self_destruct
 

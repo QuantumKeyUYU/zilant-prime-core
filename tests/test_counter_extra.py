@@ -1,9 +1,4 @@
-from zilant_prime_core.utils.counter import (
-    BACKUP_COUNTER_FILE,
-    COUNTER_FILE,
-    read_counter,
-    write_counter,
-)
+from zilant_prime_core.utils.counter import BACKUP_COUNTER_FILE, COUNTER_FILE, read_counter, write_counter
 
 
 def test_write_creates_files(tmp_path, monkeypatch):

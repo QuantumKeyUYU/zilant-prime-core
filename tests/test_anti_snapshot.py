@@ -6,12 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from zilant_prime_core.utils.anti_snapshot import (
-    TIMESTAMP_FILE,
-    detect_snapshot,
-    read_timestamp,
-    write_timestamp,
-)
+from zilant_prime_core.utils.anti_snapshot import TIMESTAMP_FILE, detect_snapshot, read_timestamp, write_timestamp
 
 
 @pytest.fixture(autouse=True)

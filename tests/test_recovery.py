@@ -2,13 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from zilant_prime_core.utils.recovery import (
-    DECOY_FILE,
-    DESTRUCTION_KEY_BUFFER,
-    LOG_ENC_FILE,
-    LOG_FILE,
-    self_destruct,
-)
+from zilant_prime_core.utils.recovery import DECOY_FILE, DESTRUCTION_KEY_BUFFER, LOG_ENC_FILE, LOG_FILE, self_destruct
 
 
 @pytest.fixture(autouse=True)
