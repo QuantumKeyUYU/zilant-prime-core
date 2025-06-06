@@ -5,7 +5,9 @@ from typing import Tuple
 
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 
-__all__ = ["encrypt", "decrypt"]
+from zilant_prime_core.utils.pq_crypto import Kyber768KEM, derive_key_pq
+
+__all__ = ["encrypt", "decrypt", "PQAEAD"]
 
 
 def encrypt(key: bytes, plaintext: bytes, aad: bytes = b"") -> Tuple[bytes, bytes]:
@@ -28,3 +30,31 @@ def decrypt(key: bytes, nonce: bytes, ciphertext: bytes, aad: bytes = b"") -> by
         raise ValueError("nonce must be 12 bytes long")
     ch = ChaCha20Poly1305(key)
     return ch.decrypt(nonce, ciphertext, aad)
+
+
+class PQAEAD:
+    """Hybrid PQ AEAD using Kyber768 KEM and ChaCha20-Poly1305."""
+
+    _NONCE_LEN = 12
+
+    @staticmethod
+    def encrypt(public_key: bytes, plaintext: bytes, aad: bytes = b"") -> bytes:
+        kem = Kyber768KEM()
+        ct_kem, shared = kem.encapsulate(public_key)
+        key = derive_key_pq(shared)
+        nonce = os.urandom(PQAEAD._NONCE_LEN)
+        ch = ChaCha20Poly1305(key)
+        ct = ch.encrypt(nonce, plaintext, aad)
+        return ct_kem + nonce + ct
+
+    @staticmethod
+    def decrypt(private_key: bytes, payload: bytes, aad: bytes = b"") -> bytes:
+        kem = Kyber768KEM()
+        ct_len = kem.ciphertext_length()
+        kem_ct = payload[:ct_len]
+        nonce = payload[ct_len : ct_len + PQAEAD._NONCE_LEN]
+        ct = payload[ct_len + PQAEAD._NONCE_LEN :]
+        shared = kem.decapsulate(private_key, kem_ct)
+        key = derive_key_pq(shared)
+        ch = ChaCha20Poly1305(key)
+        return ch.decrypt(nonce, ct, aad)

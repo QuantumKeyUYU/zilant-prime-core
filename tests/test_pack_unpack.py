@@ -5,6 +5,7 @@ import pytest
 from cryptography.exceptions import InvalidTag
 
 from container import pack_file, unpack_file
+from zilant_prime_core.utils import pq_crypto
 
 
 @pytest.fixture()
@@ -37,3 +38,14 @@ def test_unpack_with_bad_password(tmp_path: Path, sample_file: Path) -> None:
     with pytest.raises(InvalidTag):
         unpack_file(container, out_file, os.urandom(32))
     assert not out_file.exists()
+
+
+@pytest.mark.skipif(pq_crypto.kyber768 is None, reason="pqclean.kyber768 not installed")
+def test_pack_unpack_pq_roundtrip(tmp_path: Path, sample_file: Path):
+    kem = pq_crypto.Kyber768KEM()
+    pk, sk = kem.generate_keypair()
+    container = tmp_path / "pq.zil"
+    pack_file(sample_file, container, b"", pq_public_key=pk)
+    out_file = tmp_path / "out.txt"
+    unpack_file(container, out_file, b"", pq_private_key=sk)
+    assert out_file.read_bytes() == sample_file.read_bytes()

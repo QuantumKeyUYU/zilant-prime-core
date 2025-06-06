@@ -10,6 +10,7 @@ from typing import NoReturn
 
 import click
 
+from container import pack_file, unpack_file
 from zilant_prime_core.utils import VaultClient
 from zilant_prime_core.utils.anti_snapshot import detect_snapshot
 from zilant_prime_core.utils.counter import increment_counter, read_counter
@@ -18,6 +19,7 @@ from zilant_prime_core.utils.device_fp import (
     collect_hw_factors,
     compute_fp,
 )
+from zilant_prime_core.utils.pq_crypto import Dilithium2Signature, Kyber768KEM
 from zilant_prime_core.utils.recovery import DESTRUCTION_KEY_BUFFER, self_destruct
 
 
@@ -84,12 +86,14 @@ def cli() -> None:
 )
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
 @click.option("--vault-path", metavar="VAULT_PATH", help="Путь до секрета в HashiCorp Vault")
+@click.option("--pq-pub", type=click.Path(exists=True, dir_okay=False, path_type=Path), help="Kyber768 public key")
 @click.option("--overwrite/--no-overwrite", default=False, show_default=True)
 def cmd_pack(
     source: Path,
     output: Path | None,
     password: str | None,
     vault_path: str | None,
+    pq_pub: Path | None,
     overwrite: bool,
 ) -> None:
     dest = output or source.with_suffix(".zil")
@@ -121,20 +125,24 @@ def cmd_pack(
         _abort("Missing password")
 
     try:
-        blob = _pack_bytes(source, pwd, dest, overwrite)
+        if pq_pub is not None:
+            pack_file(source, dest, b"", pq_public_key=pq_pub.read_bytes())
+        else:
+            blob = _pack_bytes(source, pwd, dest, overwrite)
     except FileExistsError:
         _abort(f"{dest.name} already exists")
     except Exception as e:
         _abort(f"Pack error: {e}")
 
-    tmp_path = dest.with_suffix(dest.suffix + ".tmp")
-    try:
-        with open(tmp_path, "wb") as f:
-            f.write(blob)
-        os.replace(tmp_path, dest)
-        os.chmod(dest, 0o600)
-    except Exception as e:
-        _abort(f"Write error: {e}")
+    if pq_pub is None:
+        tmp_path = dest.with_suffix(dest.suffix + ".tmp")
+        try:
+            with open(tmp_path, "wb") as f:
+                f.write(blob)
+            os.replace(tmp_path, dest)
+            os.chmod(dest, 0o600)
+        except Exception as e:
+            _abort(f"Write error: {e}")
 
     click.echo(str(dest))
 
@@ -143,7 +151,8 @@ def cmd_pack(
 @click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option("-d", "--dest", metavar="DIR", type=click.Path(file_okay=False, path_type=Path))
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
-def cmd_unpack(container: Path, dest: Path | None, password: str | None) -> None:
+@click.option("--pq-sk", type=click.Path(exists=True, dir_okay=False, path_type=Path), help="Kyber768 private key")
+def cmd_unpack(container: Path, dest: Path | None, password: str | None, pq_sk: Path | None) -> None:
     if password is None:
         _abort("Missing password")
     if password == "-":
@@ -158,7 +167,12 @@ def cmd_unpack(container: Path, dest: Path | None, password: str | None) -> None
         _cleanup_old_file(container)
 
     try:
-        out = _unpack_bytes(container, out_dir, password)
+        if pq_sk is not None:
+            out_path = out_dir if out_dir.suffix else out_dir / container.stem
+            unpack_file(container, out_path, b"", pq_private_key=pq_sk.read_bytes())
+            out = out_path
+        else:
+            out = _unpack_bytes(container, out_dir, password)
     except FileExistsError:
         _abort("Destination path already exists")
     except ValueError as ve:
@@ -234,6 +248,38 @@ def cmd_self_destruct_cli(reason: str) -> None:
         click.echo("Self-destruct completed. Decoy file generated.")
     except Exception as e:
         click.echo(f"Self-destruct failed: {e}", err=True)
+        raise click.Abort()
+
+
+@cli.command("gen_kem_keys")
+@click.option("--out-pk", type=click.Path(dir_okay=False, path_type=Path), required=True)
+@click.option("--out-sk", type=click.Path(dir_okay=False, path_type=Path), required=True)
+def cmd_gen_kem_keys(out_pk: Path, out_sk: Path) -> None:
+    """Generate Kyber768 keypair."""
+    try:
+        kem = Kyber768KEM()
+        pk, sk = kem.generate_keypair()
+        out_pk.write_bytes(pk)
+        out_sk.write_bytes(sk)
+        click.echo("KEM keypair generated.")
+    except Exception as e:  # pragma: no cover - optional dependency
+        click.echo(f"Error: {e}", err=True)
+        raise click.Abort()
+
+
+@cli.command("gen_sig_keys")
+@click.option("--out-pk", type=click.Path(dir_okay=False, path_type=Path), required=True)
+@click.option("--out-sk", type=click.Path(dir_okay=False, path_type=Path), required=True)
+def cmd_gen_sig_keys(out_pk: Path, out_sk: Path) -> None:
+    """Generate Dilithium2 signature keypair."""
+    try:
+        scheme = Dilithium2Signature()
+        pk, sk = scheme.generate_keypair()
+        out_pk.write_bytes(pk)
+        out_sk.write_bytes(sk)
+        click.echo("Signature keypair generated.")
+    except Exception as e:  # pragma: no cover
+        click.echo(f"Error: {e}", err=True)
         raise click.Abort()
 
 
