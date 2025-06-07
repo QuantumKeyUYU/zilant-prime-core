@@ -43,7 +43,7 @@ def _proc_b(pid_a: int, q: Queue, interval: float) -> None:
     while True:
         try:
             last = q.get(timeout=interval * 1.5)
-        except Exception:
+        except FileNotFoundError:  # nosec: отсутствующий файл — это нормально
             pass
         try:
             os.kill(pid_a, 0)
