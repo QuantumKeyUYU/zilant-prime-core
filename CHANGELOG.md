@@ -1,4 +1,7 @@
 # Changelog
+## [0.1.0] — 2025-06-07
+- Maintenance updates.
+
 ## 0.7.1 – CI timeout improvements
 - Added `pytest-timeout` dependency and global 5 minute timeout for tests.
 - The CI workflow now sets `timeout-minutes: 30` for the pytest step to

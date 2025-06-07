@@ -1,0 +1,19 @@
+name: Publish to PyPI (dry run)
+on:
+  push:
+    branches: [main]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install build tools
+        run: |
+          pip install build twine
+      - name: Run release script
+        run: |
+          scripts/release.sh --repository-url https://test.pypi.org/legacy/
