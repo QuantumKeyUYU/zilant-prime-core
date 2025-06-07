@@ -298,5 +298,20 @@ cli.add_command(pq_genkeypair_cmd)
 
 main = cli  # alias for `python -m zilant_prime_core.cli`
 
+
+@cli.command()
+@click.argument("shell", type=click.Choice(["bash", "zsh", "fish"]))
+@click.pass_context
+def complete(ctx: click.Context, shell: str) -> None:
+    """Generate shell completion script."""
+    import subprocess
+
+    env = os.environ.copy()
+    cmd_name = ctx.info_name or "zilant"
+    env[f"{cmd_name.upper()}_COMPLETE"] = f"{shell}_source"
+    result = subprocess.run([cmd_name], env=env, capture_output=True, text=True)
+    click.echo(result.stdout)
+
+
 if __name__ == "__main__":  # pragma: no cover
     cli()

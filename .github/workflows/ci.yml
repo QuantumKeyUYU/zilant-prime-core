@@ -21,6 +21,8 @@ jobs:
       - run: ruff check .
       - run: black --check .
       - run: isort --check-only .
+      - name: Run MyPy type checks
+        run: mypy src/zilant_prime_core
       - run: bandit -r src -q -ll
       - run: pytest --cov=src
       - name: Install Syft CLI (Anchore)
