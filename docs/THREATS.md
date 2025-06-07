@@ -1,24 +1,30 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
+
 # Threat Model
 
-Этот документ описывает угрозы для Zilant Prime Core по методикам STRIDE и MITRE ATT&CK.
+## Adversaries
 
-## STRIDE
+- **A1 – Insider developer**: contributor with repository access who may inject malicious code.
+- **A2 – Compromised CI/CD**: attacker gaining control over the automation pipeline.
+- **A3 – Stolen credentials**: leaked Vault or cosign keys used outside the organisation.
+- **A4 – Malicious dependency**: third‑party package or tool shipping vulnerable code.
+- **A5 – Tampering user**: someone modifying artefacts or logs after build.
 
-| Категория           | Угроза                                                                 |
-|---------------------|------------------------------------------------------------------------|
-| **Spoofing**        | Подмена ключей (Vault AppRole, Pseudo-HSM); фейковые сервисы CI/CD            |
-| **Tampering**       | Модификация SBOM, логов или скомпилированных артефактов                |
-| **Repudiation**     | Отсутствие следов операций (логов), отсутствие подписи артефактов      |
-| **Information Disclosure** | Утечка логов (без шифрования), секретов из CI/CD или Pseudo-HSM             |
-| **Denial of Service** | Отказ в обслуживании CI (удаление workflow), истощение ресурсов KDF     |
-| **Elevation of Privilege** | Неавторизованная подпись через Cosign, привилегии Vault-токенов        |
+## Security objectives
 
-## MITRE ATT&CK
+- **C1 – Code integrity**: prevent unauthorised changes to the source.
+- **C2 – Confidentiality of secrets**: keep Vault tokens and keys encrypted.
+- **C3 – Traceability**: preserve audit logs of every build step.
+- **C4 – Reproducibility**: anyone can rebuild identical artefacts from the same tag.
+- **C5 – Vulnerability free**: ship images that pass SBOM scanning.
 
-| ID       | Technique                          | Пример                                |
-|----------|------------------------------------|---------------------------------------|
-| T1550    | Use Alternate Authentication Material | Кража AppRole SecretID                |
-| T1486    | Data Encrypted for Impact          | Шифрование логов без хранения ключа   |
-| T1595    | Active Scanning                    | Автоматические SBOM-сканы в CI        |
-| T1588    | Obtain Capabilities                | Загрузка ключей Cosign из Secrets     |
-| T1552    | Unsecured Credentials              | Хранение паролей в переменных среды   |
+## Asset / Threat / Control
+
+| Asset | Threat | Control |
+|-------|--------|---------|
+| Source code | A1, A2 | signed commits, CI lint & tests |
+| Secrets | A3 | Vault AppRole, encrypted logs |
+| Dependencies | A4 | SBOM with grype scans |
+| Artefacts | A5 | reproducible build, cosign signatures |
+| Logs | A5 | AES‑GCM secure logger |

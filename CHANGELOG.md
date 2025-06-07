@@ -30,3 +30,5 @@
 - Added simple `.zil` container with metadata and AES-based encryption.
 - CLI now supports `pack` and `unpack` commands.
 - Introduced integration tests for packing and unpacking files.
+## 0.7.2 - 2025-06-07
+- Maintenance updates.

@@ -1,23 +1,18 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
+
 # Architecture Overview
 
-```plantuml
-@startuml
-title Zilant Prime Core Architecture
+```mermaid
+flowchart TD
+    CLI["CLI\n(zilctl)"] --> Core
+    Core["Core Library"] --> Logger["Secure Logger"]
+    Core --> Vault["Vault/Pseudo‑HSM"]
+    Core --> SBOM["SBOM tools"]
+```
 
-!define RECTANGLE class
-
-RECTANGLE "CLI\n(zilctl)" as CLI
-RECTANGLE "Core Library\n(container, crypto, vdf)" as Core
-RECTANGLE "Secure Logger\n(utils/secure_logging.py)" as Logger
-RECTANGLE "CI/CD\n(GitHub Actions)" as CICD
-RECTANGLE "Vault / Pseudo-HSM\n(secret management)" as Vault
-RECTANGLE "SBOM & Scanning\n(syft, grype, trivy)" as SBOM
-
-CLI --> Core : uses
-Core --> Logger : logs
-CICD --> SBOM : generates and scans
-CICD --> Core : builds/tests
-CICD --> Vault : fetches secrets & rotates tokens
-Vault --> Core : provides AppRole tokens
-Vault --> Logger : optional key storage via env
-@enduml
+- **CLI** – user facing commands.
+- **Core Library** – cryptography and container logic.
+- **Secure Logger** – encrypts audit logs with AES‑GCM.
+- **Vault/Pseudo‑HSM** – secrets storage.
+- **SBOM tools** – reproducible builds and vulnerability scanning.

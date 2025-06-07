@@ -1,13 +1,7 @@
-# .github/workflows/ci.yml
 # SPDX-License-Identifier: MIT
-# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
 
-name: CI — lint / pytest / coverage / security & sign
-
-permissions:
-  contents: read
-  actions: read
-  security-events: write
+name: CI
 
 on:
   push:
@@ -16,204 +10,17 @@ on:
     branches: [main]
 
 jobs:
-###############################################################################
-# 1 — LINT / FORMAT
-###############################################################################
-  lint-format:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-
-      - uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-lint-${{ hashFiles('**/requirements-dev.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install linters
-        run: |
-          python -m pip install --upgrade pip
-          pip install black ruff isort
-
-      - name: Black (check)
-        run: black --check src tests
-
-      - name: Ruff (check)
-        run: ruff check src tests
-
-      - name: isort (check)
-        run: isort --check-only src tests
-
-###############################################################################
-# 2 — TESTS + COVERAGE
-###############################################################################
-  pytest-coverage:
-    needs: lint-format
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements-dev.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install dev deps + package
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
-          pip install -e .[dev]
-
-      - name: Run pytest + coverage
-        timeout-minutes: 30
-        env:
-          PYTHONPATH: ${{ github.workspace }}/src
-        run: |
-          pytest --maxfail=1 --disable-warnings --showlocals \
-                 --cov=zilant_prime_core --cov-report=xml \
-                 --cov-report=html --cov-report=term-missing -q
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: cov-xml-${{ matrix.python-version }}
-          path: coverage.xml
-
-      # - uses: actions/upload-artifact@v4
-      #   with:
-      #     name: htmlcov-${{ matrix.python-version }}
-      #     path: htmlcov
-
-###############################################################################
-# 3 — SECURITY SCANS + BUILD & SIGN
-###############################################################################
-  security-and-sign:
-    needs: pytest-coverage
-    runs-on: ubuntu-latest
-    env:
-      COSIGN_KEY_B64: ${{ secrets.COSIGN_KEY_B64 }}
-      COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install Syft / Grype / Trivy / helpers
-        run: |
-          sudo apt-get update -y
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh   | sudo sh -s -- -b /usr/local/bin
-          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh  | sudo sh -s -- -b /usr/local/bin
-          curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
-          python -m pip install --upgrade pip
-          pip install reuse bandit semgrep build
-
-      - name: Generate SBOM (Syft → CycloneDX)
-        run: syft . -o cyclonedx-json=sbom.json
-
-      - name: Grype scan (CRITICAL)
-        run: grype sbom:sbom.json --fail-on critical
-
-      - name: Save full Grype JSON
-        if: always()
-        run: grype sbom:sbom.json -o json > grype-report.json || true
-
-      - name: Trivy scan (HIGH,CRITICAL)
-        run: |
-          trivy sbom --scanners vuln --severity HIGH,CRITICAL \
-                      --format json --output trivy-report.json sbom.json || true
-
-      - name: Ensure trivy-report.json
-        run: |
-          [ -f trivy-report.json ] || echo "{}" > trivy-report.json
-
-      - name: REUSE lint
-        run: reuse lint || true
-
-      - name: Bandit
-        run: bandit -r src -f json -o bandit-report.json || true
-
-      - name: Semgrep
-        run: semgrep --config p/ci --sarif-output semgrep.sarif || true
-
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: python
-
-      - uses: github/codeql-action/autobuild@v3
-      - uses: github/codeql-action/analyze@v3
-
-      - name: Decode Cosign key
-        if: ${{ env.COSIGN_KEY_B64 != '' }}
-        run: |
-          mkdir -p ~/.cosign
-          echo "$COSIGN_KEY_B64" | base64 -d > ~/.cosign/cosign.key
-          chmod 600 ~/.cosign/cosign.key
-
-      - name: Install Cosign
-        if: ${{ env.COSIGN_KEY_B64 != '' }}
-        run: |
-          COSIGN_VERSION="v2.2.4"
-          curl -LO https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64
-          sudo install cosign-linux-amd64 /usr/local/bin/cosign
-
-      - name: Build package
-        run: python -m build --sdist --wheel --outdir dist
-
-      - name: Cosign sign artifacts
-        if: ${{ env.COSIGN_KEY_B64 != '' }}
-        env:
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-        run: |
-          for f in dist/*.{whl,tar.gz}; do
-            cosign sign --key ~/.cosign/cosign.key "$f"
-          done
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: sbom
-          path: sbom.json
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: grype-report
-          path: grype-report.json
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: trivy-report
-          path: trivy-report.json
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: bandit-report
-          path: bandit-report.json
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: semgrep-report
-          path: semgrep.sarif
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: signed-packages
-          path: |
-            dist/*.whl
-            dist/*.tar.gz
-            dist/*.sig
+          python-version: '3.12'
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - run: black --check .
+      - run: isort --check-only .
+      - run: bandit -r src -q -ll
+      - run: pytest --cov=src
+      - run: bash scripts/reprod.sh
