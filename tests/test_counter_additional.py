@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
-import json
-
 import pytest
 
-from zilant_prime_core.counter import DistributedCounter, SecurityError
+from zilant_prime_core.counter import DistributedCounter
 
 
 def test_short_hmac_key(tmp_path):
@@ -16,9 +14,9 @@ def test_short_hmac_key(tmp_path):
 def test_anchor_store(tmp_path, monkeypatch):
     path = tmp_path / "c.bin"
     posted = {}
-    def fake_post(url, json=None, **kwargs):
+    def fake_post(url, payload=None, **kwargs):
         posted["url"] = url
-        posted["json"] = json
+        posted["json"] = payload
     monkeypatch.setattr("requests.post", fake_post)
     ctr = DistributedCounter(path, b"k" * 32, anchor_url="http://h")
     assert ctr.increment() == 1

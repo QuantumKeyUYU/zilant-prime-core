@@ -3,8 +3,6 @@
 
 import os
 
-import pytest
-
 from zilant_prime_core.utils.device_fp_fallback import device_fp_fallback
 from crypto_core import hash_sha3
 

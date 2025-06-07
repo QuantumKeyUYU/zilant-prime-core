@@ -31,14 +31,34 @@ def test_proc_a_and_b(monkeypatch, tmp_path):
     rec = []
     q = types.SimpleNamespace(put=lambda v: rec.append(v))
     monkeypatch.setattr(wd, "_hash_sources", lambda x: "h")
-    monkeypatch.setattr(wd, "time", types.SimpleNamespace(monotonic=lambda: 1.0, sleep=lambda n: (_ for _ in ()).throw(SystemExit)))
+    monkeypatch.setattr(
+        wd,
+        "time",
+        types.SimpleNamespace(
+            monotonic=lambda: 1.0,
+            sleep=lambda n: (_ for _ in ()).throw(SystemExit),
+        ),
+    )
     with pytest.raises(SystemExit):
         wd._proc_a(tmp_path, "h", 0.01, q)
     assert rec == [1.0]
 
     q2 = types.SimpleNamespace(get=lambda timeout=None: (_ for _ in ()).throw(FileNotFoundError()))
-    monkeypatch.setattr(wd, "os", types.SimpleNamespace(kill=lambda pid, sig: (_ for _ in ()).throw(Exception())))
-    monkeypatch.setattr(wd, "time", types.SimpleNamespace(monotonic=lambda: 1.0, sleep=lambda n: (_ for _ in ()).throw(SystemExit)))
+    monkeypatch.setattr(
+        wd,
+        "os",
+        types.SimpleNamespace(
+            kill=lambda pid, sig: (_ for _ in ()).throw(Exception())
+        ),
+    )
+    monkeypatch.setattr(
+        wd,
+        "time",
+        types.SimpleNamespace(
+            monotonic=lambda: 1.0,
+            sleep=lambda n: (_ for _ in ()).throw(SystemExit),
+        ),
+    )
     with pytest.raises(SystemExit):
         wd._proc_b(123, q2, 0.01)
 

@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
-import sys
-
 import pytest
 
 import zilant_prime_core.watchdog as wd
