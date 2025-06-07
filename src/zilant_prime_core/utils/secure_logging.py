@@ -15,10 +15,13 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 __all__ = ["SecureLogger", "get_secure_logger"]
 
 
+DEFAULT_LOG_PATH = "logs/zilant.log"
+
+
 class SecureLogger:
     """Логгер с AES-GCM и компактным JSON."""
 
-    def __init__(self, key: Optional[bytes] = None, log_path: str = "secure.log") -> None:
+    def __init__(self, key: Optional[bytes] = None, log_path: str = DEFAULT_LOG_PATH) -> None:
         raw: Optional[bytes] = key or os.environ.get("ZILANT_LOG_KEY")  # type: ignore[assignment]
         if isinstance(raw, str):
             raw = base64.urlsafe_b64decode(raw.encode())
@@ -65,14 +68,31 @@ class SecureLogger:
                     out.append((lvl, msg, payload))
         return out
 
+    def zeroize(self) -> None:
+        if not os.path.exists(self.log_path):
+            return
+        data = open(self.log_path, "rb").read()
+        nonce = secrets.token_bytes(12)
+        ct = self._aesgcm.encrypt(nonce, data, None)
+        with open(self.log_path + ".enc", "wb") as f:
+            f.write(base64.b64encode(nonce) + b"|" + base64.b64encode(ct))
+        os.remove(self.log_path)
+
 
 _default: Optional[SecureLogger] = None
 
 
-def get_secure_logger(key: Optional[bytes] = None, log_path: str = "secure.log") -> SecureLogger:  # pragma: no cover
+def get_secure_logger(
+    key: Optional[bytes] = None, log_path: str = DEFAULT_LOG_PATH
+) -> SecureLogger:  # pragma: no cover
     global _default
     if _default is None:
         if key is None and "ZILANT_LOG_KEY" not in os.environ:
             os.environ["ZILANT_LOG_KEY"] = base64.urlsafe_b64encode(secrets.token_bytes(32)).decode()
         _default = SecureLogger(key=key, log_path=log_path)
     return _default
+
+
+def zeroize() -> None:  # pragma: no cover - integration point
+    if _default is not None:
+        _default.zeroize()
