@@ -77,6 +77,14 @@ docs = [
   "furo>=2023.9",
   "sphinx-autodoc-typehints>=1.25,<2.0",
 ]
+metrics = [
+  "prometheus-client",
+  "flask",
+]
+notify = [
+  "slack-sdk",
+  "python-telegram-bot",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
