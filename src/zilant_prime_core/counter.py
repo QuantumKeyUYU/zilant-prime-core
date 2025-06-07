@@ -67,7 +67,8 @@ class DistributedCounter:
                     self.anchor_url,
                     json={"count": count, "hmac": base64.b64encode(mac).decode()},
                 )  # nosec B113 - best effort anchor reporting
-            except Exception:
+            except KeyError:
+                # optional anchor details missing; ignore failures
                 pass
 
     def increment(self) -> int:

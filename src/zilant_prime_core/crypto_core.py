@@ -51,7 +51,8 @@ def derive_key_double(password: bytes, salt: bytes) -> bytes:
     """Branchless double Argon2id derivation."""
     real = derive_key_argon2id(password, salt)
     import hashlib
+    import hmac
 
-    alt_salt = hashlib.sha256(salt + password).digest()
+    alt_salt = hmac.new(salt, password, hashlib.sha256).digest()
     decoy = derive_key_argon2id(password, alt_salt)
     return bytes(a ^ b for a, b in zip(real, decoy, strict=False))

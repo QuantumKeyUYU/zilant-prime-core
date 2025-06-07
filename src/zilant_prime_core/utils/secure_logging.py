@@ -71,7 +71,8 @@ class SecureLogger:
     def zeroize(self) -> None:
         if not os.path.exists(self.log_path):
             return
-        data = open(self.log_path, "rb").read()
+        with open(self.log_path, "rb") as f:
+            data = f.read()
         nonce = secrets.token_bytes(12)
         ct = self._aesgcm.encrypt(nonce, data, None)
         with open(self.log_path + ".enc", "wb") as f:
