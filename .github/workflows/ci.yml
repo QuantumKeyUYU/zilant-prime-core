@@ -17,10 +17,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install -r requirements-dev.txt
+      - run: pip install .[metrics,notify] -r requirements-dev.txt
       - run: ruff check .
       - run: black --check .
       - run: isort --check-only .
+      - name: Run MyPy type checks
+        run: mypy src/zilant_prime_core
       - run: bandit -r src -q -ll
       - run: pytest --cov=src
       - name: Install Syft CLI (Anchore)

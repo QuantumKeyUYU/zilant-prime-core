@@ -28,3 +28,14 @@
 | Dependencies | A4 | SBOM with grype scans |
 | Artefacts | A5 | reproducible build, cosign signatures |
 | Logs | A5 | AES‑GCM secure logger |
+
+```mermaid
+graph LR
+  A[Акторы] -->|атакуют| B[CLI]
+  B -->|шифрует| C[AEAD Core]
+  C --> D[Контейнер]
+  C --> E[Watchdog]
+  A -->|саботаж| E
+  A -->|перехват| F[Журналы]
+  F -->|шифруются| G[SecureLogger]
+```

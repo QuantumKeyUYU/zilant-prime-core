@@ -26,6 +26,15 @@ def _hash_sources(paths: Iterable[Path]) -> str:
 
 
 def _zeroize() -> None:
+    try:
+        from zilant_prime_core.utils.secure_logging import zeroize as log_zeroize
+
+        log_zeroize()
+        from zilant_prime_core.notify import Notifier
+
+        Notifier().notify("watchdog triggered")
+    except Exception:
+        pass
     sys.exit(134)
 
 

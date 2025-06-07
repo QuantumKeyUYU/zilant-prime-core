@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "zilant-prime-core"
-version         = "0.7.1"
+version         = "0.1.0"
 description     = "ZILANT Prime™ core: AEAD, Argon2id, Phase-VDF, .zil container & CLI"
 readme          = "README.md"
 requires-python = ">=3.10"
@@ -62,6 +62,8 @@ dev = [
   "pytest-timeout>=2.3,<3.0",
   "hypothesis>=6.100,<7.0",
   "filelock>=3.13,<4.0",
+  "build",
+  "twine",
 ]
 
 pq = [
@@ -74,6 +76,14 @@ docs = [
   "sphinx>=7.2,<8.0",
   "furo>=2023.9",
   "sphinx-autodoc-typehints>=1.25,<2.0",
+]
+metrics = [
+  "prometheus-client",
+  "flask",
+]
+notify = [
+  "slack-sdk",
+  "python-telegram-bot",
 ]
 
 [tool.setuptools.packages.find]
