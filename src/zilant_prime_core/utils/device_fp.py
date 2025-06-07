@@ -177,3 +177,26 @@ def get_device_fingerprint() -> str:
     hw = collect_hw_factors()
     fp = compute_fp(hw, SALT_CONST)
     return fp.hex()
+
+
+def device_fp_v2() -> bytes:
+    """Return SHA3-256 hash of extended hardware factors."""
+    factors = [
+        _read_file_first_line("/sys/class/dmi/id/product_uuid"),
+        _read_file_first_line("/sys/class/dmi/id/board_serial"),
+        _read_file_first_line("/sys/class/dmi/id/bios_version"),
+        _read_file_first_line("/sys/class/dmi/id/chassis_serial"),
+        _read_file_first_line("/sys/class/dmi/id/product_serial"),
+        platform.node(),
+        format(uuid.getnode(), "x"),
+        str(os.cpu_count() or 0),
+    ]
+    t0 = time.perf_counter_ns()
+    for _ in range(1000):
+        time.perf_counter_ns()
+    jitter = str(time.perf_counter_ns() - t0)
+    factors.append(jitter)
+    blob = "|".join(factors).encode()
+    digest = cast(bytes, hash_sha3(blob))
+    wipe_bytes(bytearray(blob))
+    return digest

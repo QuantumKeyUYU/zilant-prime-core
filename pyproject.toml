@@ -64,6 +64,12 @@ dev = [
   "filelock>=3.13,<4.0",
 ]
 
+pq = [
+  "pqclean[kyber768]",
+  "pqclean[dilithium2]",
+  "oqs-python",
+]
+
 docs = [
   "sphinx>=7.2,<8.0",
   "furo>=2023.9",

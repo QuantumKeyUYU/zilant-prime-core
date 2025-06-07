@@ -11,6 +11,7 @@ __all__ = [
     "encrypt_chacha20_poly1305",
     "decrypt_chacha20_poly1305",
     "derive_key_argon2id",
+    "derive_key_double",
 ]
 
 
@@ -44,3 +45,13 @@ def derive_key_argon2id(
         hash_len=32,
         type=a2.Type.ID,
     )
+
+
+def derive_key_double(password: bytes, salt: bytes) -> bytes:
+    """Branchless double Argon2id derivation."""
+    real = derive_key_argon2id(password, salt)
+    import hashlib
+
+    alt_salt = hashlib.sha256(salt + password).digest()
+    decoy = derive_key_argon2id(password, alt_salt)
+    return bytes(a ^ b for a, b in zip(real, decoy, strict=False))
