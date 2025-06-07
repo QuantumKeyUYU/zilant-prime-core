@@ -50,9 +50,15 @@ def derive_key_argon2id(
 def derive_key_double(password: bytes, salt: bytes) -> bytes:
     """Branchless double Argon2id derivation."""
     real = derive_key_argon2id(password, salt)
-    import hashlib
-    import hmac
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
-    alt_salt = hmac.new(salt, password, hashlib.sha256).digest()
+    kdf = HKDF(
+        algorithm=hashes.SHA256(),
+        length=len(salt),
+        salt=salt,
+        info=b"decoy",
+    )
+    alt_salt = kdf.derive(password)
     decoy = derive_key_argon2id(password, alt_salt)
     return bytes(a ^ b for a, b in zip(real, decoy, strict=False))

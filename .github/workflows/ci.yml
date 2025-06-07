@@ -35,6 +35,5 @@ jobs:
 
       - name: Preload Grype Vulnerability DB
         run: |
-          echo "\u2699\ufe0f Preloading Grype DB..."
-          grype db update || echo "\u26a0\ufe0f could not update Grype DB in CI, will rely on existing cache"
+          grype db update || echo "\u26a0\ufe0f skip DB update"
       - run: bash scripts/reprod.sh
