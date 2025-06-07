@@ -32,4 +32,9 @@ jobs:
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
             | sh -s -- -b /usr/local/bin v0.70.0
+
+      - name: Preload Grype Vulnerability DB
+        run: |
+          echo "\u2699\ufe0f Preloading Grype DB..."
+          grype db update || echo "\u26a0\ufe0f could not update Grype DB in CI, will rely on existing cache"
       - run: bash scripts/reprod.sh

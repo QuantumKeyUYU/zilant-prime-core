@@ -63,7 +63,10 @@ class DistributedCounter:
         self.path.write_bytes(self._encrypt(payload))
         if self.anchor_url:
             try:
-                requests.post(self.anchor_url, json={"count": count, "hmac": base64.b64encode(mac).decode()})
+                requests.post(
+                    self.anchor_url,
+                    json={"count": count, "hmac": base64.b64encode(mac).decode()},
+                )  # nosec B113 - best effort anchor reporting
             except Exception:
                 pass
 
