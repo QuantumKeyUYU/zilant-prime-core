@@ -25,16 +25,8 @@ def test_hmac_tamper_detection(tmp_path):
     path = tmp_path / "c.bin"
     ctr = DistributedCounter(path, b"z" * 32)
     ctr.increment()
-    original = ctr._decrypt
-
-    def fake_decrypt(data: bytes) -> bytes:
-        plain = original(data)
-        obj = json.loads(plain.decode())
-        obj["hmac"] = base64.b64encode(b"0" * 32).decode()
-        return json.dumps(obj).encode()
-
-    monkeypatch = pytest.MonkeyPatch()
-    monkeypatch.setattr(ctr, "_decrypt", fake_decrypt)
+    plain = json.loads(ctr._decrypt(path.read_bytes()).decode())
+    plain["hmac"] = base64.b64encode(b"bad" * 10 + b"xx").decode()
+    path.write_bytes(ctr._encrypt(json.dumps(plain).encode()))
     with pytest.raises(SecurityError):
         ctr.verify_and_load()
-    monkeypatch.undo()
