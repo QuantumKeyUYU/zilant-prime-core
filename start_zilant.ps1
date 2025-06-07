@@ -24,7 +24,7 @@ mypy src
 Write-Host "🧹 Линтеры, форматтеры и mypy завершены"
 
 # 5. Генерируем SBOM и проверяем на уязвимости
-syft . -o cyclonedx-json=sbom.json
+syft packages . -o cyclonedx-json=sbom.json
 grype sbom:sbom.json --fail-on medium
 Write-Host "🔒 SBOM создан и уязвимости проверены"
 

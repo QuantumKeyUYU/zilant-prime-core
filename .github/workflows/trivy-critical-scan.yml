@@ -22,16 +22,16 @@ jobs:
         uses: actions/checkout@v4
 
       # Генерируем SBOM и загружаем его как артефакт
-      - name: Install Syft (SBOM generation)
+      - name: Install Syft CLI
         run: |
-          echo "🛠 Устанавливаем Syft для генерации SBOM..."
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh \
+            | sh -s -- -b /usr/local/bin v0.98.0
 
       - name: Generate SBOM in CycloneDX JSON
         run: |
           echo "📦 Генерируем SBOM, создаём sbom.json..."
           set -e
-          syft . -o cyclonedx-json=sbom.json
+          syft packages . -o cyclonedx-json=sbom.json
 
       - name: Upload SBOM artifact
         if: ${{ always() }}

@@ -12,6 +12,7 @@ from typing import NoReturn
 import click
 
 from container import pack_file, unpack_file
+from zilant_prime_core.cli_commands import derive_key_cmd, pq_genkeypair_cmd
 from zilant_prime_core.utils import VaultClient
 from zilant_prime_core.utils.anti_snapshot import detect_snapshot
 from zilant_prime_core.utils.counter import increment_counter, read_counter
@@ -279,6 +280,9 @@ def cmd_gen_sig_keys(out_pk: Path, out_sk: Path) -> None:
         click.echo(f"Error: {e}", err=True)
         raise click.Abort()
 
+
+cli.add_command(derive_key_cmd)
+cli.add_command(pq_genkeypair_cmd)
 
 main = cli  # alias for `python -m zilant_prime_core.cli`
 
