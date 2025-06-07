@@ -14,9 +14,11 @@ def test_short_hmac_key(tmp_path):
 def test_anchor_store(tmp_path, monkeypatch):
     path = tmp_path / "c.bin"
     posted = {}
+
     def fake_post(url, payload=None, **kwargs):
         posted["url"] = url
         posted["json"] = payload
+
     monkeypatch.setattr("requests.post", fake_post)
     ctr = DistributedCounter(path, b"k" * 32, anchor_url="http://h")
     assert ctr.increment() == 1
@@ -26,10 +28,10 @@ def test_anchor_store(tmp_path, monkeypatch):
 
 def test_anchor_keyerror(tmp_path, monkeypatch):
     path = tmp_path / "c.bin"
+
     def fake_post(*a, **kw):
         raise KeyError("bad")
+
     monkeypatch.setattr("requests.post", fake_post)
     ctr = DistributedCounter(path, b"k" * 32, anchor_url="http://h")
     ctr._store(1)  # should not raise
-
-

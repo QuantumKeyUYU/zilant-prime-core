@@ -22,11 +22,29 @@ def test_hash_sources_and_zeroize(tmp_path, monkeypatch):
     monkeypatch.setattr("zilant_prime_core.notify.Notifier", lambda: type("N", (), {"notify": lambda self, m: None})())
 
     code = {}
+
     def fake_exit(c):
         code["c"] = c
         raise SystemExit(c)
 
     monkeypatch.setattr(wd.sys, "exit", fake_exit)
+    with pytest.raises(SystemExit):
+        wd._zeroize()
+    assert code.get("c") == 134
+
+
+def test_zeroize_handles_errors(monkeypatch):
+    code = {}
+
+    def fake_exit(c):
+        code["c"] = c
+        raise SystemExit(c)
+
+    monkeypatch.setattr(wd.sys, "exit", fake_exit)
+    monkeypatch.setattr(
+        "zilant_prime_core.utils.secure_logging.zeroize",
+        lambda: (_ for _ in ()).throw(RuntimeError()),
+    )
     with pytest.raises(SystemExit):
         wd._zeroize()
     assert code.get("c") == 134

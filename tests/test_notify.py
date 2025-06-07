@@ -28,9 +28,11 @@ def test_notify_slack(monkeypatch):
 
 def test_notify_telegram_and_errors(monkeypatch):
     sent = []
+
     def fake_post(url, json=None, data=None, timeout=None):
         sent.append(url)
         raise Exception("fail")
+
     monkeypatch.setattr("requests.post", fake_post)
     n = Notifier()
     n.slack_url = "http://slack"
@@ -39,4 +41,3 @@ def test_notify_telegram_and_errors(monkeypatch):
     n.notify("hi")
     assert "http://slack" in sent
     assert any("telegram" in u for u in sent)
-

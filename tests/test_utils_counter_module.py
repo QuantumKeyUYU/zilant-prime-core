@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from zilant_prime_core.utils import counter as uc
 
@@ -30,11 +31,13 @@ def test_write_counter_invalid(tmp_path, monkeypatch):
 def test_read_counter_error(monkeypatch):
     class BadPath(Path):
         _flavour = Path("/tmp")._flavour
+
         def exists(self):
             return True
+
         def read_text(self):
             raise OSError
+
     monkeypatch.setattr(uc, "COUNTER_FILE", BadPath("/tmp/x"))
     monkeypatch.setattr(uc, "BACKUP_COUNTER_FILE", BadPath("/tmp/y"))
     assert uc.read_counter() == 0
-

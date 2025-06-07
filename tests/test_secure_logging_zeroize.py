@@ -31,8 +31,10 @@ def test_secure_logger_zeroize(tmp_path):
     enc_path = Path(str(log_path) + ".enc")
     assert enc_path.exists()
 
+
 def test_zeroize_missing(tmp_path):
     from zilant_prime_core.utils.secure_logging import SecureLogger
+
     slog = SecureLogger(key=b"0" * 32, log_path=str(tmp_path / "log"))
     # no file yet
     slog.zeroize()  # just ensures no error when file absent

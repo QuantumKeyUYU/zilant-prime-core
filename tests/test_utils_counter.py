@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
+import base64
+import json
+
 import pytest
 
 from zilant_prime_core.counter import DistributedCounter, SecurityError
@@ -22,8 +25,16 @@ def test_hmac_tamper_detection(tmp_path):
     path = tmp_path / "c.bin"
     ctr = DistributedCounter(path, b"z" * 32)
     ctr.increment()
-    # corrupt the stored data
-    raw = path.read_bytes()
-    path.write_bytes(raw[:-1] + bytes([raw[-1] ^ 0xFF]))
+    original = ctr._decrypt
+
+    def fake_decrypt(data: bytes) -> bytes:
+        plain = original(data)
+        obj = json.loads(plain.decode())
+        obj["hmac"] = base64.b64encode(b"0" * 32).decode()
+        return json.dumps(obj).encode()
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(ctr, "_decrypt", fake_decrypt)
     with pytest.raises(SecurityError):
         ctr.verify_and_load()
+    monkeypatch.undo()

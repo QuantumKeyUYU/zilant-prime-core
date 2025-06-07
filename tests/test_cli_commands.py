@@ -3,8 +3,8 @@
 
 import base64
 import sys
-from types import SimpleNamespace
 from pathlib import Path
+from types import SimpleNamespace
 
 from click.testing import CliRunner
 
@@ -34,4 +34,3 @@ def test_pq_genkeypair_cmd(monkeypatch, tmp_path):
     res2 = runner.invoke(pq_genkeypair_cmd, ["dilithium2"])
     assert res2.exit_code == 0
     assert Path("dilithium2_sk.bin").exists()
-

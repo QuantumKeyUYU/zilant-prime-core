@@ -14,10 +14,11 @@ def test_health_endpoints(monkeypatch):
 
 def test_start_server(monkeypatch):
     called = {}
+
     def fake_run(port):
         called["port"] = port
+
     monkeypatch.setattr(health.app, "run", fake_run)
     th = health.start_server(1234)
     th.join(0.01)
     assert called["port"] == 1234
-
