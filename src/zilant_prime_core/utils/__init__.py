@@ -22,6 +22,7 @@ from .counter import increment_counter, read_counter, write_counter
 
 # ───────────────────────── Pseudo-HSM placeholders ──────────────────────────
 from .device_fp import get_device_fingerprint
+from .device_fp_fallback import device_fp_fallback
 
 # ───────────────────────── Encode / decode ──────────────────────────
 from .formats import from_b64, from_hex, to_b64, to_hex
@@ -58,6 +59,7 @@ __all__: list[str] = [
     "VaultClient",
     # device fingerprint
     "get_device_fingerprint",
+    "device_fp_fallback",
     # shard secret
     "split_secret",
     "recover_secret",
