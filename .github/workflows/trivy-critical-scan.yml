@@ -31,7 +31,7 @@ jobs:
         run: |
           echo "📦 Генерируем SBOM, создаём sbom.json..."
           set -e
-          syft . -o cyclonedx-json=sbom.json
+          syft packages . -o cyclonedx-json=sbom.json
 
       - name: Upload SBOM artifact
         if: ${{ always() }}
