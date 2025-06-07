@@ -21,8 +21,10 @@ def _pad(data: bytes) -> bytes:
 
 
 def pack(metadata: dict, payload: bytes, key: bytes) -> bytes:
-    meta = json.dumps(metadata).encode()
-    plain = len(meta).to_bytes(4, "big") + meta + payload
+    meta = dict(metadata)
+    meta["_payload_length"] = len(payload)
+    meta_json = json.dumps(meta).encode()
+    plain = len(meta_json).to_bytes(4, "big") + meta_json + payload
     blob = _pad(plain)
     nonce = os.urandom(12)
     ct = encrypt_chacha20_poly1305(key, nonce, blob)
@@ -35,5 +37,11 @@ def unpack(blob: bytes, key: bytes) -> Tuple[dict, bytes]:
     plain = decrypt_chacha20_poly1305(key, nonce, ct)
     meta_len = int.from_bytes(plain[:4], "big")
     meta_json = plain[4 : 4 + meta_len]
-    payload = plain[4 + meta_len :].rstrip(b"\x00")
-    return json.loads(meta_json.decode()), payload
+    metadata = json.loads(meta_json.decode())
+    try:
+        payload_len = metadata.pop("_payload_length")
+    except KeyError as exc:
+        raise ValueError("missing payload length in metadata") from exc
+    payload_start = 4 + meta_len
+    payload = plain[payload_start : payload_start + payload_len]
+    return metadata, payload
