@@ -67,8 +67,14 @@ def _cleanup_old_file(container: Path) -> None:
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
-def cli() -> None:
+@click.option("--serve-metrics", type=int, metavar="PORT", help="Expose metrics on PORT")
+@click.pass_context
+def cli(ctx: click.Context, serve_metrics: int | None) -> None:
     """Zilant Prime CLI."""
+    if serve_metrics:
+        from zilant_prime_core.health import start_server
+
+        start_server(serve_metrics)
     # Initialization hooks are disabled in test mode
     pass
 
@@ -94,6 +100,8 @@ def cmd_pack(
     pq_pub: Path | None,
     overwrite: bool,
 ) -> None:
+    from zilant_prime_core.metrics import metrics
+
     dest = output or source.with_suffix(".zil")
 
     if dest.exists() and not overwrite:
@@ -123,10 +131,11 @@ def cmd_pack(
         _abort("Missing password")
 
     try:
-        if pq_pub is not None:
-            pack_file(source, dest, b"", pq_public_key=pq_pub.read_bytes())
-        else:
-            blob = _pack_bytes(source, pwd, dest, overwrite)
+        with metrics.track("pack"):
+            if pq_pub is not None:
+                pack_file(source, dest, b"", pq_public_key=pq_pub.read_bytes())
+            else:
+                blob = _pack_bytes(source, pwd, dest, overwrite)
     except FileExistsError:
         _abort(f"{dest.name} already exists")
     except Exception as e:
@@ -151,6 +160,8 @@ def cmd_pack(
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
 @click.option("--pq-sk", type=click.Path(exists=True, dir_okay=False, path_type=Path), help="Kyber768 private key")
 def cmd_unpack(container: Path, dest: Path | None, password: str | None, pq_sk: Path | None) -> None:
+    from zilant_prime_core.metrics import metrics
+
     if password is None:
         _abort("Missing password")
     if password == "-":
@@ -165,12 +176,13 @@ def cmd_unpack(container: Path, dest: Path | None, password: str | None, pq_sk: 
         _cleanup_old_file(container)
 
     try:
-        if pq_sk is not None:
-            out_path = out_dir if out_dir.suffix else out_dir / container.stem
-            unpack_file(container, out_path, b"", pq_private_key=pq_sk.read_bytes())
-            out = out_path
-        else:
-            out = _unpack_bytes(container, out_dir, password)
+        with metrics.track("unpack"):
+            if pq_sk is not None:
+                out_path = out_dir if out_dir.suffix else out_dir / container.stem
+                unpack_file(container, out_path, b"", pq_private_key=pq_sk.read_bytes())
+                out = out_path
+            else:
+                out = _unpack_bytes(container, out_dir, password)
     except FileExistsError:
         _abort("Destination path already exists")
     except ValueError as ve:

@@ -97,3 +97,9 @@ def get_secure_logger(
 def zeroize() -> None:  # pragma: no cover - integration point
     if _default is not None:
         _default.zeroize()
+    try:
+        from zilant_prime_core.notify import Notifier
+
+        Notifier().notify("logs zeroized")
+    except Exception:
+        pass

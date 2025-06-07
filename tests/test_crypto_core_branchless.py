@@ -4,11 +4,7 @@ import inspect
 import secrets
 import time
 
-from zilant_prime_core.crypto_core import (
-    decrypt_chacha20_poly1305,
-    derive_key_argon2id,
-    encrypt_chacha20_poly1305,
-)
+from zilant_prime_core.crypto_core import decrypt_chacha20_poly1305, derive_key_argon2id, encrypt_chacha20_poly1305
 
 
 def test_chacha_roundtrip_and_timings():
