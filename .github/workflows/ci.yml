@@ -23,4 +23,9 @@ jobs:
       - run: isort --check-only .
       - run: bandit -r src -q -ll
       - run: pytest --cov=src
+      - name: Install Syft and Grype
+        run: |
+          pip install syft
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
+            | sh -s -- -b /usr/local/bin
       - run: bash scripts/reprod.sh
