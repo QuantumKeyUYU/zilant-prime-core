@@ -1,6 +1,6 @@
 import pytest
 
-pytest.importorskip("PyQt5")
+pytest.importorskip("PyQt5.QtWidgets")
 
 from ui.pyqt.main import MainWindow
 

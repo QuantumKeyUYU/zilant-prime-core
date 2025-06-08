@@ -12,9 +12,10 @@ __all__ = ["VaultClient"]
 
 
 class VaultClient:
-    def __init__(self, url: str | None = None, token: str | None = None) -> None:
+    def __init__(self, url: str | None = None, token: str | None = None, key: bytes | None = None) -> None:
         self._url: str = (url or os.getenv("VAULT_ADDR") or "").strip()
         self._token: str = (token or os.getenv("VAULT_TOKEN") or "").strip()
+        self.key = key
         if not self._url or not self._token:
             raise ValueError("VAULT_ADDR / VAULT_TOKEN не заданы")
 

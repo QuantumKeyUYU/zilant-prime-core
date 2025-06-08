@@ -24,3 +24,25 @@ jobs:
       - run: bandit -r src -ll
       - name: Run Semgrep
         run: semgrep ci
+      - run: pytest -q
+
+  perf:
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .[dev]
+      - run: pytest -q -m perf
+  build-pq:
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python tools/build_pq_wheels.py
+      - uses: actions/upload-artifact@v3
+        with:
+          name: pq-wheels
+          path: whl/*.whl

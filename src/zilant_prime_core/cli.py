@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import binascii
 import os
 import sys
 from pathlib import Path
@@ -68,15 +69,21 @@ def _cleanup_old_file(container: Path) -> None:
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option("--serve-metrics", type=int, metavar="PORT", help="Expose metrics on PORT")
+@click.option(
+    "--vault-key",
+    type=lambda s: binascii.unhexlify(s),
+    metavar="HEX",
+    help="AES-key for vault",
+)
 @click.pass_context
-def cli(ctx: click.Context, serve_metrics: int | None) -> None:
+def cli(ctx: click.Context, serve_metrics: int | None, vault_key: bytes | None) -> None:
     """Zilant Prime CLI."""
     if serve_metrics:
         from zilant_prime_core.health import start_server
 
         start_server(serve_metrics)
     # Initialization hooks are disabled in test mode
-    pass
+    ctx.obj = {"vault_key": vault_key}
 
 
 @cli.command("pack")
@@ -92,7 +99,9 @@ def cli(ctx: click.Context, serve_metrics: int | None) -> None:
 @click.option("--vault-path", metavar="VAULT_PATH", help="Путь до секрета в HashiCorp Vault")
 @click.option("--pq-pub", type=click.Path(exists=True, dir_okay=False, path_type=Path), help="Kyber768 public key")
 @click.option("--overwrite/--no-overwrite", default=False, show_default=True)
+@click.pass_context
 def cmd_pack(
+    ctx: click.Context,
     source: Path,
     output: Path | None,
     password: str | None,
@@ -115,7 +124,7 @@ def cmd_pack(
             pwd = _ask_pwd(confirm=True)
     elif vault_path is not None:
         try:
-            vault_client = VaultClient()
+            vault_client = VaultClient(key=ctx.obj.get("vault_key") if ctx.obj else None)
             pwd = vault_client.get_secret(vault_path, key="password")
         except Exception as exc:
             click.echo(f"Vault error: {exc}", err=True)

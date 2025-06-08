@@ -30,6 +30,7 @@ from .formats import from_b64, from_hex, to_b64, to_hex
 # ───────────────────────────── Logging ──────────────────────────────
 from .logging import get_file_logger, get_logger
 from .root_guard import assert_safe_or_die, is_device_rooted
+from .screen_guard import ScreenGuard, SecurityError
 from .secure_logging import SecureLogger, get_secure_logger
 from .shard_secret import recover_secret, split_secret
 
@@ -72,4 +73,6 @@ __all__: list[str] = [
     "detect_snapshot",
     "assert_safe_or_die",
     "is_device_rooted",
+    "ScreenGuard",
+    "SecurityError",
 ]
