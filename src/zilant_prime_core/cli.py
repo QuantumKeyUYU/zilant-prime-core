@@ -20,6 +20,7 @@ from zilant_prime_core.utils.counter import increment_counter, read_counter
 from zilant_prime_core.utils.device_fp import SALT_CONST, collect_hw_factors, compute_fp
 from zilant_prime_core.utils.pq_crypto import Dilithium2Signature, Kyber768KEM
 from zilant_prime_core.utils.recovery import DESTRUCTION_KEY_BUFFER, self_destruct
+from zilant_prime_core.utils.screen_guard import ScreenGuardError, guard
 
 
 def _abort(msg: str, code: int = 1) -> NoReturn:
@@ -78,6 +79,11 @@ def _cleanup_old_file(container: Path) -> None:
 @click.pass_context
 def cli(ctx: click.Context, serve_metrics: int | None, vault_key: bytes | None) -> None:
     """Zilant Prime CLI."""
+    try:
+        guard.assert_secure()
+    except ScreenGuardError as exc:
+        click.echo(f"Security check failed: {exc}", err=True)
+        raise SystemExit(90)
     if serve_metrics:
         from zilant_prime_core.health import start_server
 

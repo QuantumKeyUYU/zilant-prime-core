@@ -6,6 +6,8 @@ import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout, QWidget
 
+from zilant_prime_core.utils.screen_guard import ScreenGuardError, guard
+
 
 class MainWindow(QWidget):
     def __init__(self) -> None:
@@ -60,6 +62,11 @@ class MainWindow(QWidget):
 
 
 def main(args: list[str] | None = None) -> int:
+    try:
+        guard.assert_secure()
+    except ScreenGuardError as exc:
+        print(f"Security check failed: {exc}")
+        return 90
     app = QApplication(args or sys.argv)
     window = MainWindow()
     window.show()

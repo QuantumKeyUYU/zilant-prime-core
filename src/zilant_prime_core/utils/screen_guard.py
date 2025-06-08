@@ -1,43 +1,46 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 from typing import Iterable
 
-__all__ = ["ScreenGuard", "SecurityError"]
+__all__ = ["ScreenGuard", "ScreenGuardError", "guard"]
 
 
-class SecurityError(RuntimeError):
-    """Raised when screen capture is detected."""
+class ScreenGuardError(Exception):
+    """Raised when screen recording is detected."""
 
 
 class ScreenGuard:
     def __init__(self) -> None:
-        self._bad_processes: set[str] = {
-            "obs",
-            "obs.exe",
-            "obs64.exe",
-            "gnome-screenshot",
-            "spectacle",
-        }
+        try:
+            import psutil
 
-    def _iter_process_names(self) -> Iterable[str]:
-        import psutil
+            self._psutil = psutil
+        except ImportError:
+            self._psutil = None
+        self._bad_processes: set[str] = {"obs", "obs.exe", "ffmpeg"}
 
-        for proc in psutil.process_iter(attrs=["name"]):
+    def _iter_proc_names(self) -> Iterable[str]:
+        if not self._psutil:
+            return
+        for proc in self._psutil.process_iter(attrs=["name"]):
             name = proc.info.get("name")
             if name:
                 yield name.lower()
 
-    def _check_unix_video(self) -> bool:
-        if sys.platform.startswith("linux"):
-            for path in Path("/dev").glob("video*"):
-                if path.exists() and path.stat().st_size > 0:
-                    return True
-        return False
-
     def assert_secure(self) -> None:
-        if any(name in self._bad_processes for name in self._iter_process_names()):
-            raise SecurityError("Screen recording software detected")
-        if self._check_unix_video():
-            raise SecurityError("/dev/video* in use")
+        if not self._psutil:
+            return
+        for name in self._iter_proc_names():
+            if any(bad in name for bad in self._bad_processes):
+                raise ScreenGuardError(f"Screen recording detected: {name}")
+        if sys.platform.startswith("linux"):
+            for proc in self._psutil.process_iter(attrs=["open_files"]):
+                for f in proc.info.get("open_files") or []:
+                    path = getattr(f, "path", "")
+                    if path.startswith("/dev/video"):
+                        raise ScreenGuardError("Webcam or screen-capture device in use")
+
+
+# global instance
+guard = ScreenGuard()
