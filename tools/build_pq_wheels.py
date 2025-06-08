@@ -2,14 +2,23 @@ import glob
 import subprocess
 from pathlib import Path
 
-WHL_DIR = Path("whl")
-WHL_DIR.mkdir(exist_ok=True)
+ROOT = Path(__file__).resolve().parent.parent
+PQ_DIR = ROOT / "third_party" / "pqclean"
+OUT = ROOT / "whl"
+OUT.mkdir(exist_ok=True)
 
-for src in glob.glob("third_party/pqclean/**/kyber768*", recursive=True):
+for setup_py in glob.glob(str(PQ_DIR / "**" / "setup.py"), recursive=True):
+    pkg_dir = Path(setup_py).parent
     subprocess.run(
-        ["python", "setup.py", "bdist_wheel", "--plat-name", "manylinux_x86_64"],
-        cwd=src,
+        [
+            "python",
+            "setup.py",
+            "bdist_wheel",
+            "--plat-name",
+            "manylinux_x86_64",
+            "--dist-dir",
+            str(OUT),
+        ],
+        cwd=pkg_dir,
         check=True,
     )
-    for wheel in Path(src, "dist").glob("*.whl"):
-        wheel.rename(WHL_DIR / wheel.name)

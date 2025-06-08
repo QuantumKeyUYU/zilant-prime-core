@@ -4,8 +4,6 @@ import sys
 from pathlib import Path
 from typing import Iterable
 
-import psutil
-
 __all__ = ["ScreenGuard", "SecurityError"]
 
 
@@ -24,6 +22,8 @@ class ScreenGuard:
         }
 
     def _iter_process_names(self) -> Iterable[str]:
+        import psutil
+
         for proc in psutil.process_iter(attrs=["name"]):
             name = proc.info.get("name")
             if name:
