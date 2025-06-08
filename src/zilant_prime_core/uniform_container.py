@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Tuple
+from typing import Any, Tuple
 
 from .crypto_core import decrypt_chacha20_poly1305, encrypt_chacha20_poly1305
 
@@ -20,7 +20,7 @@ def _pad(data: bytes) -> bytes:
     return data + b"\x00" * rem
 
 
-def pack(metadata: dict, payload: bytes, key: bytes) -> bytes:
+def pack(metadata: dict[str, Any], payload: bytes, key: bytes) -> bytes:
     meta_with_len = dict(metadata)
     meta_with_len["_payload_length"] = len(payload)
     meta_json = json.dumps(meta_with_len).encode()
@@ -31,7 +31,7 @@ def pack(metadata: dict, payload: bytes, key: bytes) -> bytes:
     return nonce + ct
 
 
-def unpack(blob: bytes, key: bytes) -> Tuple[dict, bytes]:
+def unpack(blob: bytes, key: bytes) -> Tuple[dict[str, Any], bytes]:
     nonce = blob[:12]
     ct = blob[12:]
     plain = decrypt_chacha20_poly1305(key, nonce, ct)

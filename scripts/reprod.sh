@@ -17,4 +17,3 @@ grype db update || echo "\u26a0\ufe0f DB update failed, proceeding..."
 
 syft packages . -o cyclonedx-json=sbom.json
 grype sbom:sbom.json --fail-on HIGH
-

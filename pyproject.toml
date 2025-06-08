@@ -28,6 +28,8 @@ dependencies = [
   "argon2-cffi>=23.1,<24.0",
   "click>=8.1,<9.0",
   "hvac>=2.3,<3.0",
+  "flask>=2.2,<3.0",
+  "prometheus-client>=0.16.0,<1.0",
 ]
 
 [project.scripts]
@@ -46,7 +48,6 @@ test = [
   "hypothesis>=6.100,<7.0",
   "filelock>=3.13,<4.0",
 ]
-
 dev = [
   "black>=24.4,<25.0",
   "isort>=5.13,<6.0",
@@ -65,21 +66,19 @@ dev = [
   "build",
   "twine",
 ]
-
 pq = [
   "pqclean[kyber768]",
   "pqclean[dilithium2]",
   "oqs-python",
 ]
-
 docs = [
   "sphinx>=7.2,<8.0",
   "furo>=2023.9",
   "sphinx-autodoc-typehints>=1.25,<2.0",
 ]
 metrics = [
-  "prometheus-client",
-  "flask",
+  "prometheus-client>=0.16.0,<1.0",
+  "flask>=2.2,<3.0",
 ]
 notify = [
   "slack-sdk",
@@ -96,7 +95,6 @@ ext-modules = [
   { name = "zilant_prime_core.utils.hardening", sources = ["src/zilant_prime_core/utils/hardening.c"], language = "c" }
 ]
 
-
 [tool.black]
 line-length    = 120
 target-version = ["py310", "py311"]
@@ -107,9 +105,9 @@ line_length       = 120
 known_first_party = ["zilant_prime_core"]
 
 [tool.ruff]
-line-length = 120
 select      = ["E", "F", "W", "C90", "B"]
 ignore      = ["E402", "B904", "C901"]
+line-length = 120
 
 [tool.ruff.mccabe]
 max-complexity = 12

@@ -26,3 +26,10 @@ argon2-cffi>=23.1.0
 cryptography>=42.0.0
 filelock>=3.13.0
 pre-commit>=2.20.0
+
+# Метрики и веб-сервер
+flask>=2.2.0
+prometheus-client>=0.16.0
+
+flask
+prometheus-client

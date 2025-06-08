@@ -15,4 +15,3 @@ function _zilant_completion;
 end;
 
 complete --no-files --command zilant --arguments "(_zilant_completion)";
-

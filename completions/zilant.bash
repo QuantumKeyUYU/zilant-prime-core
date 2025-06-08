@@ -26,4 +26,3 @@ _zilant_completion_setup() {
 }
 
 _zilant_completion_setup;
-

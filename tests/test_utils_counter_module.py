@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
-from pathlib import Path
-
 import pytest
 
 from zilant_prime_core.utils import counter as uc
@@ -29,15 +27,23 @@ def test_write_counter_invalid(tmp_path, monkeypatch):
 
 
 def test_read_counter_error(monkeypatch):
-    class BadPath(Path):
-        _flavour = Path("/tmp")._flavour
+    class BadPath:
+        def __init__(self, *args, **kwargs):
+            # игнорируем входной путь
+            pass
 
         def exists(self):
+            # говорим, что файл "существует"
             return True
 
         def read_text(self):
+            # имитируем ошибку при чтении
             raise OSError
 
+    # подставляем наш "бракованный" путь вместо реальных файлов
     monkeypatch.setattr(uc, "COUNTER_FILE", BadPath("/tmp/x"))
     monkeypatch.setattr(uc, "BACKUP_COUNTER_FILE", BadPath("/tmp/y"))
+
+    # несмотря на то что exists() == True, read_text() бросает OSError,
+    # оба пути пропустятся, и в итоге вернётся 0
     assert uc.read_counter() == 0

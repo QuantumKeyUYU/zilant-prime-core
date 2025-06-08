@@ -26,15 +26,15 @@ class KEM(abc.ABC):
 
     @abc.abstractmethod
     def generate_keypair(self) -> Tuple[bytes, bytes]:
-        """Return ``(public_key, private_key)``."""
+        """Return (public_key, private_key)."""
 
     @abc.abstractmethod
     def encapsulate(self, public_key: bytes) -> Tuple[bytes, bytes]:
-        """Encapsulate ``public_key`` and return ``(ciphertext, shared_secret)``."""
+        """Encapsulate public_key and return (ciphertext, shared_secret)."""
 
     @abc.abstractmethod
     def decapsulate(self, private_key: bytes, ciphertext: bytes) -> bytes:
-        """Decapsulate ``ciphertext`` using ``private_key`` and return ``shared_secret``."""
+        """Decapsulate ciphertext using private_key and return shared_secret."""
 
 
 class SignatureScheme(abc.ABC):
@@ -42,19 +42,19 @@ class SignatureScheme(abc.ABC):
 
     @abc.abstractmethod
     def generate_keypair(self) -> Tuple[bytes, bytes]:
-        """Return ``(public_key, private_key)``."""
+        """Return (public_key, private_key)."""
 
     @abc.abstractmethod
     def sign(self, private_key: bytes, message: bytes) -> bytes:
-        """Return signature for ``message``."""
+        """Return signature for message."""
 
     @abc.abstractmethod
     def verify(self, public_key: bytes, message: bytes, signature: bytes) -> bool:
-        """Verify ``signature`` for ``message``."""
+        """Verify signature for message."""
 
 
 class Kyber768KEM(KEM):
-    """Kyber768 KEM implementation via ``pqclean``."""
+    """Kyber768 KEM implementation via pqclean."""
 
     def __init__(self) -> None:
         if kyber768 is None:
@@ -81,7 +81,7 @@ class Kyber768KEM(KEM):
 
 
 class Dilithium2Signature(SignatureScheme):
-    """Dilithium2 signature scheme via ``pqclean``."""
+    """Dilithium2 signature scheme via pqclean."""
 
     def __init__(self) -> None:
         if dilithium2 is None:  # pragma: no cover - optional
@@ -102,7 +102,7 @@ class Dilithium2Signature(SignatureScheme):
 
 
 class OQSKyberKEM(KEM):
-    """Kyber768 KEM via ``liboqs`` if available."""
+    """Kyber768 KEM via liboqs if available."""
 
     def __init__(self) -> None:
         if oqs is None:  # pragma: no cover - optional
@@ -130,3 +130,9 @@ def derive_key_pq(shared_secret: bytes, length: int = 32) -> bytes:
 
     key = derive_key(bytes(shared_secret), b"pq_salt!")
     return key[:length]
+
+
+# -----------------------------------------------------------------------------
+# Тестовая совместимость: флаги для pytest.skipif в тестах без pqclean
+kyber768 = None
+dilithium2 = None
