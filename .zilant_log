@@ -936,3 +936,29 @@
 2025-06-08 12:30:09,766 [INFO] recovery: Decoy file generated in current directory
 2025-06-08 12:30:09,776 [WARNING] recovery: No log file to encrypt
 2025-06-08 12:30:09,776 [ERROR] recovery: Self-destruct failed: decoy.bin not found
+2025-06-08 17:12:55,822 [INFO] container: Packed 'f.txt' -> 'out.zil', size=212 bytes
+2025-06-08 17:12:55,843 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-08 17:12:55,873 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-08 17:12:55,915 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-08 17:12:55,943 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-08 17:12:55,971 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-08 17:12:55,999 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-08 17:12:56,035 [INFO] container: Packed 'f.txt' -> 'out.zil', size=215 bytes
+2025-06-08 17:12:56,047 [INFO] container: Packed 'f.txt' -> 'pq.zil', size=193 bytes
+2025-06-08 17:12:56,087 [INFO] container: Packed 'input.bin' -> 'out.zil', size=185 bytes
+2025-06-08 17:12:56,098 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-08 17:12:56,112 [INFO] container: Packed 'in.bin' -> 'out.zil', size=218 bytes
+2025-06-08 17:12:56,123 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-08 17:12:56,151 [INFO] container: Packed 'file2.bin' -> 'out2.zil', size=176 bytes
+2025-06-08 17:12:56,164 [INFO] container: Packed 'f3.bin' -> 'out3.zil', size=177 bytes
+2025-06-08 17:12:56,177 [INFO] container: Packed 'in.txt' -> 'out.zil', size=216 bytes
+2025-06-08 17:12:56,189 [INFO] container: Unpacked 'out.zil' -> 'res.txt'
+2025-06-08 17:13:23,823 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-08 17:13:23,837 [INFO] container: Unpacked 'hello.zil' -> 'restored.txt'
+2025-06-08 17:13:23,852 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-08 17:13:25,956 [CRITICAL] recovery: Log encrypted to C:\Users\User\AppData\Local\Temp\pytest-of-User\pytest-1503\test_self_destruct_creates_enc0\log.enc
+2025-06-08 17:13:25,961 [INFO] recovery: Decoy file generated in current directory
+2025-06-08 17:13:25,992 [WARNING] recovery: No log file to encrypt
+2025-06-08 17:13:25,997 [INFO] recovery: Decoy file generated in current directory
+2025-06-08 17:13:26,014 [WARNING] recovery: No log file to encrypt
+2025-06-08 17:13:26,015 [ERROR] recovery: Self-destruct failed: decoy.bin not found

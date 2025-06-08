@@ -5,11 +5,7 @@ import secrets
 
 import pytest
 
-from src.aead import (
-    AEADInvalidTagError,
-    decrypt_chacha20_poly1305,
-    encrypt_chacha20_poly1305,
-)
+from src.aead import AEADInvalidTagError, decrypt_chacha20_poly1305, encrypt_chacha20_poly1305
 
 
 def test_encrypt_invalid_key_length():

@@ -8,11 +8,7 @@ import pytest
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 
-from src.aead import (
-    PQAEAD,
-    AEADInvalidTagError,
-    decrypt_chacha20_poly1305,
-)
+from src.aead import PQAEAD, AEADInvalidTagError, decrypt_chacha20_poly1305
 
 
 def test_decrypt_chacha20_poly1305_invalid_tag(monkeypatch):

@@ -5,12 +5,7 @@ import os
 
 import pytest
 
-from src.aead import (
-    decrypt,
-    decrypt_chacha20_poly1305,
-    encrypt,
-    encrypt_chacha20_poly1305,
-)
+from src.aead import decrypt, decrypt_chacha20_poly1305, encrypt, encrypt_chacha20_poly1305
 
 
 def test_encrypt_invalid_key_type():
