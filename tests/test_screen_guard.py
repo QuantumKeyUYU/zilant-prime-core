@@ -1,5 +1,7 @@
 import pytest
 
+pytest.importorskip("psutil")
+
 from zilant_prime_core.utils.screen_guard import ScreenGuard, SecurityError
 
 
