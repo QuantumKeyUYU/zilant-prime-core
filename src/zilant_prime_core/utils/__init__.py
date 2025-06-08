@@ -29,12 +29,12 @@ from .formats import from_b64, from_hex, to_b64, to_hex
 
 # ───────────────────────────── Logging ──────────────────────────────
 from .logging import get_file_logger, get_logger
+from .root_guard import assert_safe_or_die, is_device_rooted
 from .secure_logging import SecureLogger, get_secure_logger
 from .shard_secret import recover_secret, split_secret
 
 # ───────────────────────── Vault integration ────────────────────────
 from .vault_client import VaultClient
-from .root_guard import assert_safe_or_die, is_device_rooted
 
 __all__: list[str] = [
     # constants.py

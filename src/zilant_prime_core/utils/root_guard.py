@@ -97,4 +97,3 @@ def assert_safe_or_die() -> None:
         sys.stderr.write("Root environment detected. Aborting.\n")
         sys.stderr.flush()
         sys.exit(99)
-

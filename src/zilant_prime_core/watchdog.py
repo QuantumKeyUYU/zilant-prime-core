@@ -10,7 +10,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 
 # export the real multiprocessing primitives so tests can monkey‑patch them
 Process = _mp.Process
@@ -47,7 +47,7 @@ def _zeroize() -> None:
     sys.exit(134)
 
 
-def _proc_a(watch_dir: Path, expected: str, interval: float, q: Queue) -> None:
+def _proc_a(watch_dir: Path, expected: str, interval: float, q: Queue[Any]) -> None:
     files = list(watch_dir.rglob("*.py"))
     while True:
         if _hash_sources(files) != expected:
@@ -56,7 +56,7 @@ def _proc_a(watch_dir: Path, expected: str, interval: float, q: Queue) -> None:
         time.sleep(interval)
 
 
-def _proc_b(pid_a: int, q: Queue, interval: float) -> None:
+def _proc_b(pid_a: int, q: Queue[Any], interval: float) -> None:
     last = time.monotonic()
     while True:
         try:
@@ -79,12 +79,12 @@ class Watchdog:
         self.build_hash = build_hash
         self.interval_s = interval_s
         self.watch_dir = watch_dir or _DEF_DIR
-        self._q: Queue | None = None
+        self._q: Queue[Any] | None = None
         self._a: Process | None = None
         self._b: Process | None = None
 
     def start(self) -> None:
-        q: Queue = Queue()
+        q: Queue[Any] = Queue()
         self._q = q
         self._a = Process(target=_proc_a, args=(self.watch_dir, self.build_hash, self.interval_s, q))
         self._a.start()
