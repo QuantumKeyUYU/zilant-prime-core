@@ -1,74 +1,17 @@
-# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
-# SPDX-License-Identifier: MIT
-name: Sign Artifacts with Cosign
+name: Sign & Publish Artifacts
 
 on:
-  release:
-    types: [created]
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  packages: write
-  id-token: write
-
-env:
-  COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+  workflow_run:
+    workflows: ["Quality"]
+    types: [completed]
 
 jobs:
-  build-and-sign:
-    name: Build and Sign Distributions
+  sign:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install build tools & Cosign
-        run: |
-          python -m pip install --upgrade pip
-          pip install build==0.10.0 cosign==2.4.0
-
-      - name: Build source and wheel distributions
-        run: |
-          python -m build --sdist --wheel
-        working-directory: .
-
-      - name: Verify distributions exist
-        run: |
-          ls dist
-        working-directory: .
-
-      - name: Sign each artifact with Cosign
-        run: |
-          set -e
-          for artifact in dist/*; do
-            echo "Signing $artifact"
-            cosign sign \
-              --key "$COSIGN_KEY" \
-              "$artifact"
-          done
-        shell: bash
-
-      - name: Verify Cosign signatures
-        run: |
-          set -e
-          for artifact in dist/*; do
-            echo "Verifying signature on $artifact"
-            cosign verify \
-              --key "$COSIGN_KEY" \
-              "$artifact"
-          done
-        shell: bash
-
-      - name: Upload signed artifacts to Release
-        if: ${{ github.event_name == 'release' }}
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.event.release.tag_name }}
-          files: dist/*
+      - uses: actions/checkout@v4
+      - run: pip install syft cyclonedx-cli cosign
+      - run: syft . -o cyclonedx-json=sbom.json
+      - run: cosign sign --key ${{ secrets.COSIGN_KEY }} sbom.json
+      - run: cosign sign --key ${{ secrets.COSIGN_KEY }} dist/whitepaper.pdf
+      - run: cosign upload --key ${{ secrets.COSIGN_KEY }} dist/*.whl

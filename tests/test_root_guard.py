@@ -22,3 +22,8 @@ def test_assert_safe_or_die_exits(monkeypatch):
     monkeypatch.delenv("ZILANT_ALLOW_ROOT", raising=False)
     with pytest.raises(SystemExit):
         root_guard.assert_safe_or_die()
+
+
+def test_ld_preload_detection(monkeypatch):
+    monkeypatch.setenv("LD_PRELOAD", "/tmp/inject.so")
+    assert root_guard.is_device_rooted()

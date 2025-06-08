@@ -27,6 +27,8 @@ jobs:
       - run: pytest -q
       - name: Run screen-guard tests
         run: pytest -q tests/test_screen_guard.py
+      - name: Run guard_v2 tests
+        run: pytest -q tests/test_honeyfile.py tests/test_hash_challenge.py
 
   perf:
     needs: quality
@@ -48,3 +50,15 @@ jobs:
         with:
           name: pq-wheels
           path: whl/*.whl
+      - name: Generate Whitepaper
+        run: python tools/gen_whitepaper.py
+      - uses: actions/upload-artifact@v3
+        with:
+          name: whitepaper
+          path: dist/whitepaper.pdf
+      - name: Generate ISO27001 SoA
+        run: python tools/iso_soa_generator.py
+      - uses: actions/upload-artifact@v3
+        with:
+          name: iso-soa
+          path: docs/SoA_ISO27001.md

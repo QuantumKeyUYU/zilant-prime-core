@@ -28,6 +28,10 @@ _ROOT_INDICATORS: Iterable[str] = (
 )
 
 
+def _check_ld_preload() -> bool:
+    return bool(os.environ.get("LD_PRELOAD"))
+
+
 def _check_uid_gid() -> bool:
     return os.geteuid() == 0 or os.getegid() == 0 if hasattr(os, "geteuid") else False
 
@@ -85,6 +89,8 @@ def is_device_rooted() -> bool:
     if _check_selinux():
         return True
     if _check_ptrace():
+        return True
+    if _check_ld_preload():
         return True
     return False
 
