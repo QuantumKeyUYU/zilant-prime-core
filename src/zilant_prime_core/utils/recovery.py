@@ -16,7 +16,7 @@ from utils.secure_memory import wipe_bytes
 
 LOG_FILE = Path.home() / ".zilant_log.json"
 LOG_ENC_FILE = Path.home() / ".zilant_log.enc"
-DECOY_FILE = Path(__file__).parent / "decoy.bin"
+DECOY_FILE = Path(__file__).resolve().parents[2] / "dist" / "decoy_template.bin"
 
 DESTRUCTION_KEY_BUFFER: bytearray = bytearray(b"0123456789ABCDEF0123456789ABCDEF")
 
