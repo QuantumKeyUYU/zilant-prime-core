@@ -12,6 +12,8 @@ dist/
 *.egg-info/
 .eggs/
 *.whl
+*.bin
+*.pyd
 
 # Installer logs
 pip-log.txt

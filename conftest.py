@@ -10,3 +10,8 @@ ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "src"
 if SRC.is_dir():
     sys.path.insert(0, str(SRC))
+
+# Allow tests to run under root by disabling root guard.
+import os
+
+os.environ.setdefault("ZILANT_ALLOW_ROOT", "1")

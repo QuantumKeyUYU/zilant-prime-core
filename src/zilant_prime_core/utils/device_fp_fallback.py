@@ -23,4 +23,7 @@ def device_fp_fallback(cpuinfo_path: str = "/proc/cpuinfo") -> str:
         data = _read_cpuinfo(cpuinfo_path)
     except Exception:
         data = str(time.monotonic_ns()).encode()  # pragma: no cover
-    return hash_sha3(data).hex()
+    digest = hash_sha3(data)
+    if isinstance(digest, bytes):
+        return digest.hex()
+    return digest

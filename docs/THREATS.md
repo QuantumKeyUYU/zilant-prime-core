@@ -39,3 +39,5 @@ graph LR
   A -->|перехват| F[Журналы]
   F -->|шифруются| G[SecureLogger]
 ```
+
+![Threat Diagram](threats_diagram.mmd)
