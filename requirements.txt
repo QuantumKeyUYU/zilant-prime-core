@@ -1,5 +1,7 @@
 argon2-cffi
 cryptography
+flask
+prometheus-client
 pytest
 pytest-timeout
 hypothesis

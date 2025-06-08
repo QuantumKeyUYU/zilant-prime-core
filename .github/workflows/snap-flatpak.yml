@@ -34,4 +34,3 @@ jobs:
         with:
           name: zilant.flatpak
           path: org.zilant.Zilant.flatpak
-

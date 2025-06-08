@@ -1,19 +1,22 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
-"""Self-check watchdog in two processes."""
+"""Self‑check watchdog in two processes."""
 
 from __future__ import annotations
 
 import hashlib
+import multiprocessing as _mp
 import os
 import sys
 import time
-from multiprocessing import Process, Queue
 from pathlib import Path
 from typing import Iterable
 
-__all__ = ["Watchdog"]
+# export the real multiprocessing primitives so tests can monkey‑patch them
+Process = _mp.Process
+Queue = _mp.Queue
 
+__all__ = ["Watchdog", "_hash_sources", "_zeroize", "Process", "Queue"]
 
 _DEF_DIR = Path(__file__).resolve().parent
 
@@ -26,6 +29,12 @@ def _hash_sources(paths: Iterable[Path]) -> str:
 
 
 def _zeroize() -> None:
+    """
+    Wipe sensitive data and exit the entire program with the sentinel code 134.
+
+    Any exceptions raised by zeroization/notification routines are ignored to
+    guarantee the process terminates.
+    """
     try:
         from zilant_prime_core.utils.secure_logging import zeroize as log_zeroize
 
@@ -52,7 +61,7 @@ def _proc_b(pid_a: int, q: Queue, interval: float) -> None:
     while True:
         try:
             last = q.get(timeout=interval * 1.5)
-        except FileNotFoundError:  # nosec: отсутствующий файл — это нормально
+        except FileNotFoundError:  # nosec
             pass
         try:
             os.kill(pid_a, 0)
@@ -64,6 +73,8 @@ def _proc_b(pid_a: int, q: Queue, interval: float) -> None:
 
 
 class Watchdog:
+    """Run two co‑operating processes that continuously verify code integrity."""
+
     def __init__(self, build_hash: str, interval_s: float, watch_dir: Path | None = None) -> None:
         self.build_hash = build_hash
         self.interval_s = interval_s

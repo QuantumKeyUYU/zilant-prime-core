@@ -18,5 +18,3 @@ documentation for details.
 
    api/autogen
    THREATS
-
-
