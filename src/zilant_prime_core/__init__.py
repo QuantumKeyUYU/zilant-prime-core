@@ -2,5 +2,10 @@
 # SPDX-License-Identifier: MIT
 
 __version__ = "0.3.0"
+
+from .utils import root_guard
+
+root_guard.assert_safe_or_die()
+
 # Hello, Zilant!
 # ZILANT PRIME TEST 12345

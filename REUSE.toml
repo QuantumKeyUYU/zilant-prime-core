@@ -18,7 +18,6 @@ path = [
   "sbom.json",
   "grype-report.json",
   "hdr",
-  "nonce.bin",
   "scripts/reprod.sh",
   "start_zilant.ps1",
   "tests/test_cli_full_coverage.py",

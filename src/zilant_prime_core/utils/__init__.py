@@ -34,6 +34,7 @@ from .shard_secret import recover_secret, split_secret
 
 # ───────────────────────── Vault integration ────────────────────────
 from .vault_client import VaultClient
+from .root_guard import assert_safe_or_die, is_device_rooted
 
 __all__: list[str] = [
     # constants.py
@@ -69,4 +70,6 @@ __all__: list[str] = [
     "increment_counter",
     # anti snapshot
     "detect_snapshot",
+    "assert_safe_or_die",
+    "is_device_rooted",
 ]

@@ -79,3 +79,16 @@ zilctl pack secret.txt --vault-path secret/data/zilant/password
 
 # Расшифровка:
 zilctl unpack secret.zil --output-dir ./out
+
+## Root Baseline
+
+Zilant Prime Core aborts execution when root or debugging indicators are found.
+The following checks are performed at import time:
+
+- UID or GID equals zero
+- Typical ``su``/Magisk paths exist
+- Root filesystem is mounted writable
+- SELinux enforcement disabled
+- Active tracer via ``/proc/self/status``
+
+If triggered, the process terminates with exit code ``99``.
