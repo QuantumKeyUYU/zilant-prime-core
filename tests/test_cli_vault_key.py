@@ -1,15 +1,17 @@
 import binascii
+import os
 import sys
 
 import pytest
 
+os.environ.setdefault("ZILANT_ALLOW_ROOT", "1")
 from zilant_prime_core import cli as cli_mod
 from zilant_prime_core.cli import VaultClient
 
 
 class DummyClient(VaultClient):
-    def __init__(self, key, *a, **k):
-        super().__init__(key, *a, **k)
+    def __init__(self, key=None, *a, **k):
+        self.key = key
         DummyClient._got_key = key
 
     def get_secret(self, path: str, key: str) -> str:
