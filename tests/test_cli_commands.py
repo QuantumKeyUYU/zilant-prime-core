@@ -14,11 +14,12 @@ from zilant_prime_core.crypto_core import derive_key_argon2id
 
 def test_derive_key_cmd(tmp_path):
     salt = tmp_path / "salt.bin"
-    salt.write_bytes(b"abcdefgh")
+    salt_bytes = b"abcdefghABCDEFGH"  # 16 байт для KDF
+    salt.write_bytes(salt_bytes)
     runner = CliRunner()
     result = runner.invoke(derive_key_cmd, ["--mem", "8", "--time", "1", "pw", str(salt)])
     assert result.exit_code == 0
-    expected = base64.b64encode(derive_key_argon2id(b"pw", b"abcdefgh", 8, 1)).decode()
+    expected = base64.b64encode(derive_key_argon2id(b"pw", salt_bytes, 8, 1)).decode()
     assert result.output.strip() == expected
 
 

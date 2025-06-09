@@ -103,7 +103,11 @@ def cli(ctx: click.Context, serve_metrics: int | None, vault_key: bytes | None) 
 )
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
 @click.option("--vault-path", metavar="VAULT_PATH", help="Путь до секрета в HashiCorp Vault")
-@click.option("--pq-pub", type=click.Path(exists=True, dir_okay=False, path_type=Path), help="Kyber768 public key")
+@click.option(
+    "--pq-pub",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Kyber768 public key",
+)
 @click.option("--overwrite/--no-overwrite", default=False, show_default=True)
 @click.pass_context
 def cmd_pack(
@@ -171,9 +175,18 @@ def cmd_pack(
 
 @cli.command("unpack")
 @click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-@click.option("-d", "--dest", metavar="DIR", type=click.Path(file_okay=False, path_type=Path))
+@click.option(
+    "-d",
+    "--dest",
+    metavar="DIR",
+    type=click.Path(file_okay=False, path_type=Path),
+)
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
-@click.option("--pq-sk", type=click.Path(exists=True, dir_okay=False, path_type=Path), help="Kyber768 private key")
+@click.option(
+    "--pq-sk",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Kyber768 private key",
+)
 def cmd_unpack(container: Path, dest: Path | None, password: str | None, pq_sk: Path | None) -> None:
     from zilant_prime_core.metrics import metrics
 

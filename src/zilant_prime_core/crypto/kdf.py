@@ -37,7 +37,6 @@ def derive_key(password: str | bytes, salt: bytes, key_length: int = DEFAULT_KEY
         raise ValueError("Salt must be bytes.")
     if not isinstance(key_length, int) or key_length <= 0:
         raise ValueError("Key length must be a positive integer.")
-
     return cast(
         bytes,
         a2.hash_secret_raw(

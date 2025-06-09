@@ -69,7 +69,7 @@ class Kyber768KEM(KEM):
         return ct, ss  # pragma: no cover - heavy
 
     def decapsulate(self, private_key: bytes, ciphertext: bytes) -> bytes:
-        return cast(bytes, kyber768.decapsulate(ciphertext, private_key))  # pragma: no cover
+        return kyber768.decapsulate(ciphertext, private_key)  # type: ignore[no-any-return]
 
     @staticmethod
     def ciphertext_length() -> int:
@@ -92,11 +92,11 @@ class Dilithium2Signature(SignatureScheme):
         return pk, sk  # pragma: no cover - heavy
 
     def sign(self, private_key: bytes, message: bytes) -> bytes:
-        return cast(bytes, dilithium2.sign(message, private_key))  # pragma: no cover
+        return dilithium2.sign(message, private_key)  # type: ignore[no-any-return]
 
     def verify(self, public_key: bytes, message: bytes, signature: bytes) -> bool:
         try:  # pragma: no cover - verification
-            return cast(bool, dilithium2.verify(message, signature, public_key))  # pragma: no cover
+            return dilithium2.verify(message, signature, public_key)  # type: ignore[no-any-return]
         except Exception:  # pragma: no cover - invalid sig
             return False
 
@@ -110,16 +110,16 @@ class OQSKyberKEM(KEM):
         self._kem = oqs.KeyEncapsulation("Kyber768")  # pragma: no cover
 
     def generate_keypair(self) -> Tuple[bytes, bytes]:
-        return cast(Tuple[bytes, bytes], self._kem.generate_keypair())  # pragma: no cover
+        return self._kem.generate_keypair()  # type: ignore[no-any-return]
 
     def encapsulate(self, public_key: bytes) -> Tuple[bytes, bytes]:
-        return cast(Tuple[bytes, bytes], self._kem.encapsulate(public_key))  # pragma: no cover
+        return self._kem.encapsulate(public_key)  # type: ignore[no-any-return]
 
     def decapsulate(self, private_key: bytes, ciphertext: bytes) -> bytes:
-        return cast(bytes, self._kem.decapsulate(ciphertext, private_key))  # pragma: no cover
+        return self._kem.decapsulate(ciphertext, private_key)  # type: ignore[no-any-return]
 
     def ciphertext_length(self) -> int:
-        return cast(int, self._kem.details.length_ciphertext)  # pragma: no cover
+        return self._kem.details.length_ciphertext  # type: ignore[no-any-return]
 
 
 def derive_key_pq(shared_secret: bytes, length: int = 32) -> bytes:
@@ -128,8 +128,8 @@ def derive_key_pq(shared_secret: bytes, length: int = 32) -> bytes:
     if not isinstance(shared_secret, (bytes, bytearray)):
         raise TypeError("shared_secret must be bytes or bytearray")
 
-    key = derive_key(bytes(shared_secret), b"pq_salt!")
-    return cast(bytes, key[:length])
+    key: bytes = derive_key(bytes(shared_secret), b"pq_salt!")
+    return key[:length]
 
 
 # -----------------------------------------------------------------------------
