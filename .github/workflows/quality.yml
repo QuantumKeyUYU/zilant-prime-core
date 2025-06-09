@@ -50,6 +50,10 @@ jobs:
         with:
           name: pq-wheels
           path: whl/*.whl
+      - name: Install Pandoc & LaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc texlive-latex-base
       - name: Generate Whitepaper
         run: python tools/gen_whitepaper.py
       - uses: actions/upload-artifact@v4
