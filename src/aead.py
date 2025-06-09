@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 import os
-from typing import Tuple
+from typing import Tuple, cast
 
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
@@ -55,7 +55,7 @@ def decrypt_chacha20_poly1305(key: bytes, nonce: bytes, ciphertext: bytes, tag: 
 
     ch = ChaCha20Poly1305(key)
     try:
-        return ch.decrypt(nonce, ciphertext + tag, aad)
+        return cast(bytes, ch.decrypt(nonce, ciphertext + tag, aad))
     except InvalidTag:
         raise AEADInvalidTagError("Invalid authentication tag.")
     except Exception as e:
@@ -93,7 +93,7 @@ def decrypt(key: bytes, nonce: bytes, ciphertext: bytes, aad: bytes = b"") -> by
         raise TypeError("aad must be bytes")
 
     ch = ChaCha20Poly1305(key)
-    return ch.decrypt(nonce, ciphertext, aad)
+    return cast(bytes, ch.decrypt(nonce, ciphertext, aad))
 
 
 class PQAEAD:
@@ -116,7 +116,7 @@ class PQAEAD:
         nonce = os.urandom(PQAEAD._NONCE_LEN)
         ch = ChaCha20Poly1305(key)
         ct = ch.encrypt(nonce, plaintext, aad)
-        return ct_kem + nonce + ct
+        return cast(bytes, ct_kem + nonce + ct)
 
     @staticmethod
     def decrypt(private_key: bytes, payload: bytes, aad: bytes = b"") -> bytes:
@@ -137,4 +137,4 @@ class PQAEAD:
         shared = kem.decapsulate(private_key, kem_ct)
         key = derive_key_pq(shared)
         ch = ChaCha20Poly1305(key)
-        return ch.decrypt(nonce, ct, aad)
+        return cast(bytes, ch.decrypt(nonce, ct, aad))

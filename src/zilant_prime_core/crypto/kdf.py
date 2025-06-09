@@ -12,13 +12,13 @@ __all__ = [
 ]
 
 import os
+from typing import cast
 
 import argon2.low_level as a2
 
 from zilant_prime_core.crypto.g_new import G_new
 from zilant_prime_core.utils.constants import DEFAULT_KEY_LENGTH, DEFAULT_SALT_LENGTH
 
-# минимальное и максимальное значение памяти (KiB) для динамики
 DEFAULT_MEMORY_MIN = 2**15  # 32 MiB
 DEFAULT_MEMORY_MAX = 2**17  # 128 MiB
 DEFAULT_TIME_MAX = 5  # до 5 итераций
@@ -37,15 +37,17 @@ def derive_key(password: str | bytes, salt: bytes, key_length: int = DEFAULT_KEY
         raise ValueError("Salt must be bytes.")
     if not isinstance(key_length, int) or key_length <= 0:
         raise ValueError("Key length must be a positive integer.")
-
-    return a2.hash_secret_raw(
-        secret=password,
-        salt=salt,
-        time_cost=2,
-        memory_cost=DEFAULT_MEMORY_MIN,
-        parallelism=1,
-        hash_len=key_length,
-        type=a2.Type.ID,
+    return cast(
+        bytes,
+        a2.hash_secret_raw(
+            secret=password,
+            salt=salt,
+            time_cost=2,
+            memory_cost=DEFAULT_MEMORY_MIN,
+            parallelism=1,
+            hash_len=key_length,
+            type=a2.Type.ID,
+        ),
     )
 
 
@@ -84,12 +86,15 @@ def derive_key_dynamic(
     if isinstance(password, str):
         password = password.encode("utf-8")
 
-    return a2.hash_secret_raw(
-        secret=password,
-        salt=salt,
-        time_cost=time_cost,
-        memory_cost=memory_cost,
-        parallelism=1,
-        hash_len=key_length,
-        type=a2.Type.ID,
+    return cast(
+        bytes,
+        a2.hash_secret_raw(
+            secret=password,
+            salt=salt,
+            time_cost=time_cost,
+            memory_cost=memory_cost,
+            parallelism=1,
+            hash_len=key_length,
+            type=a2.Type.ID,
+        ),
     )

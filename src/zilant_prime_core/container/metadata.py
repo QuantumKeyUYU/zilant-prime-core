@@ -8,7 +8,7 @@ import json
 from collections.abc import MutableMapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 __all__ = [
     "Metadata",
@@ -108,6 +108,6 @@ def serialize_metadata(meta: Metadata | dict[str, Any]) -> bytes:
 
 def deserialize_metadata(raw: bytes | bytearray | memoryview) -> dict[str, Any]:
     try:
-        return json.loads(bytes(raw).decode("utf-8"))
+        return cast(dict[str, Any], json.loads(bytes(raw).decode("utf-8")))
     except Exception as exc:
         raise MetadataError(str(exc)) from exc

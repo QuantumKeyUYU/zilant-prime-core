@@ -37,6 +37,8 @@ repos:
         name: Ensure file ends with newline
       - id: trailing-whitespace
         name: Remove trailing whitespace
+      - id: check-added-large-files
+        name: Check for large files
 
   # Mypy – статическая проверка типов (только для кода внутри пакета, не затрагиваем скрипты)
   - repo: https://github.com/pre-commit/mirrors-mypy

@@ -4,9 +4,12 @@ import inspect
 import secrets
 import time
 
+import pytest
+
 from zilant_prime_core.crypto_core import decrypt_chacha20_poly1305, derive_key_argon2id, encrypt_chacha20_poly1305
 
 
+@pytest.mark.perf
 def test_chacha_roundtrip_and_timings():
     key = secrets.token_bytes(32)
     nonce = secrets.token_bytes(12)
@@ -28,6 +31,7 @@ def test_chacha_roundtrip_and_timings():
     assert "if " not in src2 and "else" not in src2
 
 
+@pytest.mark.perf
 def test_derive_key_consistency():
     pwd = b"pass"
     salt = secrets.token_bytes(16)

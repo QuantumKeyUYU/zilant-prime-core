@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from typing import cast
 
 from crypto_core import hash_sha3
 
@@ -23,4 +24,4 @@ def device_fp_fallback(cpuinfo_path: str = "/proc/cpuinfo") -> str:
         data = _read_cpuinfo(cpuinfo_path)
     except Exception:
         data = str(time.monotonic_ns()).encode()  # pragma: no cover
-    return hash_sha3(data).hex()
+    return cast(str, hash_sha3(data, hex_output=True))

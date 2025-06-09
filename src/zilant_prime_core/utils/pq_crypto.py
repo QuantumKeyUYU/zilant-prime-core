@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import abc
-from typing import Tuple
+from typing import Tuple, cast
 
 try:
     import oqs
@@ -61,15 +61,15 @@ class Kyber768KEM(KEM):
             raise RuntimeError("pqclean.kyber768 not installed")
 
     def generate_keypair(self) -> Tuple[bytes, bytes]:
-        pk, sk = kyber768.generate_keypair()  # pragma: no cover - heavy
+        pk, sk = cast(Tuple[bytes, bytes], kyber768.generate_keypair())  # pragma: no cover - heavy
         return pk, sk  # pragma: no cover - heavy
 
     def encapsulate(self, public_key: bytes) -> Tuple[bytes, bytes]:
-        ct, ss = kyber768.encapsulate(public_key)  # pragma: no cover - heavy
+        ct, ss = cast(Tuple[bytes, bytes], kyber768.encapsulate(public_key))  # pragma: no cover - heavy
         return ct, ss  # pragma: no cover - heavy
 
     def decapsulate(self, private_key: bytes, ciphertext: bytes) -> bytes:
-        return kyber768.decapsulate(ciphertext, private_key)  # pragma: no cover
+        return kyber768.decapsulate(ciphertext, private_key)  # type: ignore[no-any-return]
 
     @staticmethod
     def ciphertext_length() -> int:
@@ -88,15 +88,15 @@ class Dilithium2Signature(SignatureScheme):
             raise RuntimeError("pqclean.dilithium2 not installed")  # pragma: no cover
 
     def generate_keypair(self) -> Tuple[bytes, bytes]:
-        pk, sk = dilithium2.generate_keypair()  # pragma: no cover - heavy
+        pk, sk = cast(Tuple[bytes, bytes], dilithium2.generate_keypair())  # pragma: no cover - heavy
         return pk, sk  # pragma: no cover - heavy
 
     def sign(self, private_key: bytes, message: bytes) -> bytes:
-        return dilithium2.sign(message, private_key)  # pragma: no cover
+        return dilithium2.sign(message, private_key)  # type: ignore[no-any-return]
 
     def verify(self, public_key: bytes, message: bytes, signature: bytes) -> bool:
         try:  # pragma: no cover - verification
-            return dilithium2.verify(message, signature, public_key)  # pragma: no cover
+            return dilithium2.verify(message, signature, public_key)  # type: ignore[no-any-return]
         except Exception:  # pragma: no cover - invalid sig
             return False
 
@@ -110,16 +110,16 @@ class OQSKyberKEM(KEM):
         self._kem = oqs.KeyEncapsulation("Kyber768")  # pragma: no cover
 
     def generate_keypair(self) -> Tuple[bytes, bytes]:
-        return self._kem.generate_keypair()  # pragma: no cover
+        return self._kem.generate_keypair()  # type: ignore[no-any-return]
 
     def encapsulate(self, public_key: bytes) -> Tuple[bytes, bytes]:
-        return self._kem.encapsulate(public_key)  # pragma: no cover
+        return self._kem.encapsulate(public_key)  # type: ignore[no-any-return]
 
     def decapsulate(self, private_key: bytes, ciphertext: bytes) -> bytes:
-        return self._kem.decapsulate(ciphertext, private_key)  # pragma: no cover
+        return self._kem.decapsulate(ciphertext, private_key)  # type: ignore[no-any-return]
 
     def ciphertext_length(self) -> int:
-        return self._kem.details.length_ciphertext  # pragma: no cover
+        return self._kem.details.length_ciphertext  # type: ignore[no-any-return]
 
 
 def derive_key_pq(shared_secret: bytes, length: int = 32) -> bytes:
@@ -128,7 +128,7 @@ def derive_key_pq(shared_secret: bytes, length: int = 32) -> bytes:
     if not isinstance(shared_secret, (bytes, bytearray)):
         raise TypeError("shared_secret must be bytes or bytearray")
 
-    key = derive_key(bytes(shared_secret), b"pq_salt!")
+    key: bytes = derive_key(bytes(shared_secret), b"pq_salt!")
     return key[:length]
 
 

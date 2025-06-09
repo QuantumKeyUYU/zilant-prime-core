@@ -4,10 +4,11 @@
 
 from __future__ import annotations
 
+import binascii
 import os
 import sys
 from pathlib import Path
-from typing import NoReturn
+from typing import NoReturn, cast
 
 import click
 
@@ -19,6 +20,7 @@ from zilant_prime_core.utils.counter import increment_counter, read_counter
 from zilant_prime_core.utils.device_fp import SALT_CONST, collect_hw_factors, compute_fp
 from zilant_prime_core.utils.pq_crypto import Dilithium2Signature, Kyber768KEM
 from zilant_prime_core.utils.recovery import DESTRUCTION_KEY_BUFFER, self_destruct
+from zilant_prime_core.utils.screen_guard import ScreenGuardError, guard
 
 
 def _abort(msg: str, code: int = 1) -> NoReturn:
@@ -28,7 +30,7 @@ def _abort(msg: str, code: int = 1) -> NoReturn:
 
 
 def _ask_pwd(*, confirm: bool = False) -> str:
-    pwd = click.prompt("Password", hide_input=True, confirmation_prompt=confirm)
+    pwd = cast(str, click.prompt("Password", hide_input=True, confirmation_prompt=confirm))
     if not pwd:
         _abort("Missing password")
     return pwd
@@ -68,15 +70,26 @@ def _cleanup_old_file(container: Path) -> None:
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option("--serve-metrics", type=int, metavar="PORT", help="Expose metrics on PORT")
+@click.option(
+    "--vault-key",
+    type=binascii.unhexlify,
+    metavar="HEX",
+    help="AES-key for vault",
+)
 @click.pass_context
-def cli(ctx: click.Context, serve_metrics: int | None) -> None:
+def cli(ctx: click.Context, serve_metrics: int | None, vault_key: bytes | None) -> None:
     """Zilant Prime CLI."""
+    try:
+        guard.assert_secure()
+    except ScreenGuardError as exc:
+        click.echo(f"Security check failed: {exc}", err=True)
+        raise SystemExit(90)
     if serve_metrics:
         from zilant_prime_core.health import start_server
 
         start_server(serve_metrics)
     # Initialization hooks are disabled in test mode
-    pass
+    ctx.obj = {"vault_key": vault_key}
 
 
 @cli.command("pack")
@@ -90,9 +103,15 @@ def cli(ctx: click.Context, serve_metrics: int | None) -> None:
 )
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
 @click.option("--vault-path", metavar="VAULT_PATH", help="Путь до секрета в HashiCorp Vault")
-@click.option("--pq-pub", type=click.Path(exists=True, dir_okay=False, path_type=Path), help="Kyber768 public key")
+@click.option(
+    "--pq-pub",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Kyber768 public key",
+)
 @click.option("--overwrite/--no-overwrite", default=False, show_default=True)
+@click.pass_context
 def cmd_pack(
+    ctx: click.Context,
     source: Path,
     output: Path | None,
     password: str | None,
@@ -115,7 +134,7 @@ def cmd_pack(
             pwd = _ask_pwd(confirm=True)
     elif vault_path is not None:
         try:
-            vault_client = VaultClient()
+            vault_client = VaultClient(key=ctx.obj.get("vault_key") if ctx.obj else None)
             pwd = vault_client.get_secret(vault_path, key="password")
         except Exception as exc:
             click.echo(f"Vault error: {exc}", err=True)
@@ -156,9 +175,18 @@ def cmd_pack(
 
 @cli.command("unpack")
 @click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-@click.option("-d", "--dest", metavar="DIR", type=click.Path(file_okay=False, path_type=Path))
+@click.option(
+    "-d",
+    "--dest",
+    metavar="DIR",
+    type=click.Path(file_okay=False, path_type=Path),
+)
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
-@click.option("--pq-sk", type=click.Path(exists=True, dir_okay=False, path_type=Path), help="Kyber768 private key")
+@click.option(
+    "--pq-sk",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Kyber768 private key",
+)
 def cmd_unpack(container: Path, dest: Path | None, password: str | None, pq_sk: Path | None) -> None:
     from zilant_prime_core.metrics import metrics
 

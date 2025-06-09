@@ -10,3 +10,14 @@ ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "src"
 if SRC.is_dir():
     sys.path.insert(0, str(SRC))
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _disable_screen_guard(monkeypatch):
+    """Skip screen guard checks during tests."""
+    from zilant_prime_core.utils import screen_guard
+
+    monkeypatch.setattr(screen_guard.guard, "assert_secure", lambda: None)
+    yield

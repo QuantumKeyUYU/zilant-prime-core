@@ -26,15 +26,18 @@ from .device_fp_fallback import device_fp_fallback
 
 # ───────────────────────── Encode / decode ──────────────────────────
 from .formats import from_b64, from_hex, to_b64, to_hex
+from .hash_challenge import generate_daily_challenge
+from .honeyfile import HoneyfileError, check_tmp_for_honeyfiles
 
 # ───────────────────────────── Logging ──────────────────────────────
 from .logging import get_file_logger, get_logger
+from .root_guard import assert_safe_or_die, is_device_rooted
+from .screen_guard import ScreenGuard, ScreenGuardError, guard
 from .secure_logging import SecureLogger, get_secure_logger
 from .shard_secret import recover_secret, split_secret
 
 # ───────────────────────── Vault integration ────────────────────────
 from .vault_client import VaultClient
-from .root_guard import assert_safe_or_die, is_device_rooted
 
 __all__: list[str] = [
     # constants.py
@@ -72,4 +75,10 @@ __all__: list[str] = [
     "detect_snapshot",
     "assert_safe_or_die",
     "is_device_rooted",
+    "ScreenGuard",
+    "ScreenGuardError",
+    "guard",
+    "HoneyfileError",
+    "check_tmp_for_honeyfiles",
+    "generate_daily_challenge",
 ]

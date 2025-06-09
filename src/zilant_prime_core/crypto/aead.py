@@ -11,10 +11,8 @@ __all__ = [
     "generate_nonce",
 ]
 
-# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
-# SPDX-License-Identifier: MIT
-
 import os
+from typing import cast
 
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
@@ -43,7 +41,7 @@ def encrypt_aead(key: bytes, nonce: bytes, data: bytes, aad: bytes = b"") -> byt
     if not isinstance(nonce, (bytes, bytearray)) or len(nonce) != DEFAULT_NONCE_LENGTH:
         raise ValueError(f"Nonce must be {DEFAULT_NONCE_LENGTH} bytes long.")
     ch = ChaCha20Poly1305(key)
-    return ch.encrypt(nonce, data, aad)
+    return cast(bytes, ch.encrypt(nonce, data, aad))
 
 
 def decrypt_aead(key: bytes, nonce: bytes, ct_tag: bytes, aad: bytes = b"") -> bytes:
@@ -55,7 +53,7 @@ def decrypt_aead(key: bytes, nonce: bytes, ct_tag: bytes, aad: bytes = b"") -> b
         raise ValueError("Ciphertext is too short to contain the authentication tag.")
     ch = ChaCha20Poly1305(key)
     try:
-        return ch.decrypt(nonce, ct_tag, aad)
+        return cast(bytes, ch.decrypt(nonce, ct_tag, aad))
     except InvalidTag:
         raise AEADInvalidTagError("Invalid authentication tag.")
     except Exception as e:

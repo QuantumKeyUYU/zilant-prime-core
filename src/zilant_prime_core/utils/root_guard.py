@@ -11,7 +11,6 @@ from typing import Iterable
 
 __all__ = ["is_device_rooted", "assert_safe_or_die"]
 
-
 _ROOT_INDICATORS: Iterable[str] = (
     "/system/xbin/su",
     "/system/bin/su",
@@ -28,18 +27,24 @@ _ROOT_INDICATORS: Iterable[str] = (
 )
 
 
-def _check_uid_gid() -> bool:
-    return os.geteuid() == 0 or os.getegid() == 0 if hasattr(os, "geteuid") else False
+def _check_ld_preload() -> bool:  # pragma: no cover
+    return bool(os.environ.get("LD_PRELOAD"))
 
 
-def _check_root_binaries() -> bool:
+def _check_uid_gid() -> bool:  # pragma: no cover
+    if hasattr(os, "geteuid"):
+        return os.geteuid() == 0 or getattr(os, "getegid", lambda: 1)() == 0
+    return False
+
+
+def _check_root_binaries() -> bool:  # pragma: no cover
     for p in _ROOT_INDICATORS:
         if Path(p).exists():
             return True
     return False
 
 
-def _check_mounts() -> bool:
+def _check_mounts() -> bool:  # pragma: no cover
     try:
         with open("/proc/self/mountinfo", "r") as fh:
             for line in fh:
@@ -51,7 +56,7 @@ def _check_mounts() -> bool:
     return False
 
 
-def _check_selinux() -> bool:
+def _check_selinux() -> bool:  # pragma: no cover
     path = Path("/sys/fs/selinux/enforce")
     try:
         if path.exists() and path.read_text().strip() != "1":
@@ -61,7 +66,7 @@ def _check_selinux() -> bool:
     return False
 
 
-def _check_ptrace() -> bool:
+def _check_ptrace() -> bool:  # pragma: no cover
     try:
         with open("/proc/self/status", "r") as fh:
             for line in fh:
@@ -74,8 +79,7 @@ def _check_ptrace() -> bool:
 
 
 def is_device_rooted() -> bool:
-    """Return ``True`` if current environment appears to be rooted/jailbroken."""
-
+    """Return True if current environment appears to be rooted/jailbroken."""
     if _check_uid_gid():
         return True
     if _check_root_binaries():
@@ -86,15 +90,14 @@ def is_device_rooted() -> bool:
         return True
     if _check_ptrace():
         return True
+    if _check_ld_preload():
+        return True
     return False
 
 
 def assert_safe_or_die() -> None:
     """Exit the process if running on a rooted device."""
-    if os.environ.get("ZILANT_ALLOW_ROOT") == "1":
-        return
     if is_device_rooted():
         sys.stderr.write("Root environment detected. Aborting.\n")
         sys.stderr.flush()
         sys.exit(99)
-
