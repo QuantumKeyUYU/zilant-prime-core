@@ -1,6 +1,12 @@
 import os
+import shutil
 import subprocess
+import sys
 from pathlib import Path
+
+if not shutil.which("pandoc"):
+    print("Error: pandoc is not installed", file=sys.stderr)
+    sys.exit(1)
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC_MD = ["docs/ARCH.md", "docs/THREATS.md"]
