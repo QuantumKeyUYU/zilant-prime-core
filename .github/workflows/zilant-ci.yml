@@ -1,76 +1,119 @@
 name: zilant-ci
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+      - ci-check-ready
+  pull_request:
+    branches:
+      - main
+      - ci-check-ready
 
 jobs:
   quality:
+    name: quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-      - run: pip install -e .[dev]
-      - run: pre-commit run --all-files
-      - run: ruff check .
-      - run: black --check .
-      - run: isort --check-only .
-      - run: bandit -r src -ll
-      - run: semgrep ci
-      - run: mypy --strict src
-      - run: pytest -q
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dev dependencies
+        run: pip install -e .[dev]
+
+      - name: Pre-commit hooks
+        run: pre-commit run --all-files
+
+      - name: Ruff
+        run: ruff check .
+
+      - name: Black
+        run: black --check .
+
+      - name: isort
+        run: isort --check-only .
+
+      - name: Bandit
+        run: bandit -r src -ll
+
+      - name: Semgrep CI
+        run: semgrep ci
+
+      - name: Mypy
+        run: mypy --config-file mypy.ini src
+
+      - name: Pytest
+        run: pytest -q
 
   perf:
-    needs: quality
+    name: perf
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+        with: { python-version: '3.13' }
       - run: pip install -e .[dev]
-      - name: Run performance benchmarks
-        run: pytest -q -m perf
+      - run: pytest -q --maxfail=1 --disable-warnings -m perf
 
   build:
-    needs: [quality, perf]
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Build PQ wheels
+        run: python tools/build_pq_wheels.py
+
+      - name: Upload PQ wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: pq-wheels
+          path: dist/*.whl
+
+      - name: Install Pandoc & XeLaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc texlive-xetex fonts-dejavu
+
+      - name: Generate Whitepaper
+        run: |
+          pandoc \
+            docs/whitepaper.md \
+            docs/ARCH.md \
+            docs/THREATS.md \
+            --metadata-file docs/whitepaper.yml \
+            -o dist/whitepaper.pdf \
+            --pdf-engine=xelatex \
+            -V mainfont="DejaVu Serif" \
+            -V monofont="DejaVu Sans Mono"
+
+      - name: Upload Whitepaper
+        uses: actions/upload-artifact@v4
+        with:
+          name: whitepaper
+          path: dist/whitepaper.pdf
+
+  sign:
+    name: sign
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+        with: { python-version: '3.13' }
       - run: pip install -e .[dev]
-      - name: Build PQ Wheels
-        run: python tools/build_pq_wheels.py
-      - name: Install Pandoc
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            pandoc \
-            texlive-latex-base \
-            texlive-latex-recommended \
-            texlive-latex-extra \
-            texlive-fonts-recommended \
-            texlive-fonts-extra
-          pandoc --version
-      - name: Generate Whitepaper
-        run: python tools/gen_whitepaper.py
-      - name: Generate ISO27001 SoA
-        run: python tools/iso_soa_generator.py
-      - name: Generate Threat Diagram
-        run: python tools/gen_threat_diagram.py
+      - run: python tools/sign_artifacts.py
       - uses: actions/upload-artifact@v4
         with:
-          name: artifacts
-          path: |
-            whl/*.whl
-            dist/whitepaper.pdf
-            docs/SoA_ISO27001.md
-            docs/threats.svg
-            sbom.json
-
-  sign:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: pip install syft cyclonedx-cli cosign
-      - run: syft . -o cyclonedx-json=sbom.json
-      - run: cosign sign --key ${{ secrets.COSIGN_KEY }} sbom.json
-      - run: cosign sign --key ${{ secrets.COSIGN_KEY }} dist/whitepaper.pdf
-      - run: cosign upload --key ${{ secrets.COSIGN_KEY }} dist/*.whl
+          name: signed-artifacts
+          path: signed/*
