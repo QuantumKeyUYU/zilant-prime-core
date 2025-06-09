@@ -9,6 +9,7 @@ from zilant_prime_core.cli import VaultClient
 
 class DummyClient(VaultClient):
     def __init__(self, key, *a, **k):
+        super().__init__(key, *a, **k)
         DummyClient._got_key = key
 
     def get_secret(self, path: str, key: str) -> str:

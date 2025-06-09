@@ -72,7 +72,7 @@ def _cleanup_old_file(container: Path) -> None:
 @click.option("--serve-metrics", type=int, metavar="PORT", help="Expose metrics on PORT")
 @click.option(
     "--vault-key",
-    type=lambda s: binascii.unhexlify(s),
+    type=binascii.unhexlify,
     metavar="HEX",
     help="AES-key for vault",
 )

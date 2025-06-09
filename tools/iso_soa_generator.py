@@ -2,12 +2,13 @@ import json
 import os
 from pathlib import Path
 
-from jinja2 import Template
+from jinja2 import Environment, select_autoescape
 
 ROOT = Path(__file__).resolve().parent.parent
 tmpl_path = ROOT / "docs" / "SoA_ISO27001.j2"
+env = Environment(autoescape=select_autoescape())
 with open(tmpl_path) as fh:
-    tmpl = Template(fh.read())
+    tmpl = env.from_string(fh.read())
 
 with open(ROOT / "docs" / "iso_soa.json") as fh:
     data = json.load(fh)
