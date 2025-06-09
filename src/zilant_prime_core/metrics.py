@@ -1,7 +1,10 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Iterator
+from typing import Iterator, cast
 
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
 
@@ -27,7 +30,7 @@ class Metrics:
         self.requests_total.labels(name).inc()
 
     def export(self) -> bytes:
-        return generate_latest()
+        return cast(bytes, generate_latest())
 
 
 metrics = Metrics()

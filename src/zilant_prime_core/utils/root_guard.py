@@ -1,4 +1,3 @@
-# root_guard.py
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 """Simple root / jailbreak detection helpers."""
@@ -33,7 +32,9 @@ def _check_ld_preload() -> bool:  # pragma: no cover
 
 
 def _check_uid_gid() -> bool:  # pragma: no cover
-    return os.geteuid() == 0 or os.getegid() == 0 if hasattr(os, "geteuid") else False
+    if hasattr(os, "geteuid"):
+        return os.geteuid() == 0 or getattr(os, "getegid", lambda: 1)() == 0
+    return False
 
 
 def _check_root_binaries() -> bool:  # pragma: no cover

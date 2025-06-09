@@ -8,7 +8,7 @@ import binascii
 import os
 import sys
 from pathlib import Path
-from typing import NoReturn
+from typing import NoReturn, cast
 
 import click
 
@@ -30,7 +30,7 @@ def _abort(msg: str, code: int = 1) -> NoReturn:
 
 
 def _ask_pwd(*, confirm: bool = False) -> str:
-    pwd = click.prompt("Password", hide_input=True, confirmation_prompt=confirm)
+    pwd = cast(str, click.prompt("Password", hide_input=True, confirmation_prompt=confirm))
     if not pwd:
         _abort("Missing password")
     return pwd

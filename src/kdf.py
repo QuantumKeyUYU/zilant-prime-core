@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import argon2.low_level as a2
 
 __all__ = ["derive_key"]
@@ -20,12 +22,15 @@ def derive_key(password: bytes, salt: bytes) -> bytes:
         raise TypeError("password must be bytes")
     if not isinstance(salt, (bytes, bytearray)):
         raise TypeError("salt must be bytes")
-    return a2.hash_secret_raw(
-        secret=password,
-        salt=salt,
-        time_cost=_TIME_COST,
-        memory_cost=_MEMORY_KIB,
-        parallelism=_PARALLELISM,
-        hash_len=_KEY_LENGTH,
-        type=a2.Type.ID,
+    return cast(
+        bytes,
+        a2.hash_secret_raw(
+            secret=password,
+            salt=salt,
+            time_cost=_TIME_COST,
+            memory_cost=_MEMORY_KIB,
+            parallelism=_PARALLELISM,
+            hash_len=_KEY_LENGTH,
+            type=a2.Type.ID,
+        ),
     )

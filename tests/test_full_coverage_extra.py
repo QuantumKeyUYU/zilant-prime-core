@@ -6,14 +6,9 @@ import types
 
 import pytest
 
-from zilant_prime_core.utils import (
-    hash_challenge,
-    honeyfile,
-)
+from zilant_prime_core.utils import hash_challenge, honeyfile
 from zilant_prime_core.utils import root_guard as rg
-from zilant_prime_core.utils import (
-    screen_guard,
-)
+from zilant_prime_core.utils import screen_guard
 
 
 def test_honeyfile_detection():

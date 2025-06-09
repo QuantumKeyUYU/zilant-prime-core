@@ -11,7 +11,7 @@ import json
 import os
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 
 import requests
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -33,12 +33,12 @@ class DistributedCounter:
         aes = AESGCM(self.hmac_key[:32])
         nonce = os.urandom(12)
         ct = aes.encrypt(nonce, data, None)
-        return nonce + ct
+        return cast(bytes, nonce + ct)
 
     def _decrypt(self, data: bytes) -> bytes:
         aes = AESGCM(self.hmac_key[:32])
         nonce, ct = data[:12], data[12:]
-        return aes.decrypt(nonce, ct, None)
+        return cast(bytes, aes.decrypt(nonce, ct, None))
 
     def verify_and_load(self) -> int:
         if not self.path.exists():
