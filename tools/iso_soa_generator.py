@@ -1,21 +1,28 @@
-import json
-import os
+#!/usr/bin/env python3
+"""
+Генерирует SoA ISO 27001 в Markdown на основе простого YAML‑списка контролей.
+YAML по умолчанию лежит в docs/iso_controls.yml (можно переопределить аргументом).
+"""
+
+from __future__ import annotations
+
+import sys
 from pathlib import Path
+from textwrap import indent
 
-from jinja2 import Environment, select_autoescape
+import yaml
 
-ROOT = Path(__file__).resolve().parent.parent
-tmpl_path = ROOT / "docs" / "SoA_ISO27001.j2"
-env = Environment(autoescape=select_autoescape())
-with open(tmpl_path) as fh:
-    tmpl = env.from_string(fh.read())
+SRC = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("docs/iso_controls.yml")
+DST = Path("docs/SoA_ISO27001.md")
 
-with open(ROOT / "docs" / "iso_soa.json") as fh:
-    data = json.load(fh)
+if not SRC.exists():
+    sys.exit(f"❌  source controls file {SRC} not found")
 
-out = tmpl.render(controls=data["controls"])
-output = ROOT / "docs" / "SoA_ISO27001.md"
-os.makedirs(output.parent, exist_ok=True)
-with open(output, "w") as f:
-    f.write(out)
-print("SoA ISO27001 generated")
+controls: list[dict[str, str]] = yaml.safe_load(SRC.read_text())
+lines = ["# Statement of Applicability (ISO 27001:2022)\n"]
+for ctrl in controls:
+    lines.append(f"## {ctrl['id']} — {ctrl['name']}\n")
+    rationale = ctrl.get("rationale", "—")
+    lines.append("**Rationale**\n\n" + indent(rationale, "    ") + "\n")
+DST.write_text("\n".join(lines))
+print("✅  SoA saved →", DST)

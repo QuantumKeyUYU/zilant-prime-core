@@ -1,49 +1,60 @@
-import os
+#!/usr/bin/env python3
+"""
+Сборка PDF‑whitepaper из Markdown‑глав проекта.
+
+▪ docs/OVERVIEW.md   – (необяз.) вводная, будет первой главой
+▪ docs/ARCH.md       – архитектура
+▪ docs/THREATS.md    – модель угроз
+▪ docs/whitepaper.yml – метаданные (title, author, …)
+
+Выход: dist/whitepaper.pdf
+Запуск: python tools/gen_whitepaper.py
+"""
+
+from __future__ import annotations
+
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-# Проверяем, что pandoc установлен
-if not shutil.which("pandoc"):
-    print("Error: pandoc is not installed", file=sys.stderr)
-    sys.exit(1)
-
-# Абсолютные пути
 ROOT = Path(__file__).resolve().parent.parent
-OUT_PDF = ROOT / "dist" / "whitepaper.pdf"
-os.makedirs(OUT_PDF.parent, exist_ok=True)
+DOCS = ROOT / "docs"
+DIST = ROOT / "dist"
+DIST.mkdir(exist_ok=True)
 
-# Список MD-файлов для сборки (ARCH, THREATS, и, если есть, Overview)
-SRC_MD = [
-    str(ROOT / "docs" / "ARCH.md"),
-    str(ROOT / "docs" / "THREATS.md"),
-]
-OVERVIEW = ROOT / "docs" / "Overview.md"
-if OVERVIEW.exists():
-    SRC_MD.insert(0, str(OVERVIEW))
+# --- проваливаемся сразу, если pandoc не найден
+if shutil.which("pandoc") is None:
+    sys.exit("❌  pandoc not installed (apt/yum/winget)")
 
-# Команда Pandoc
+sources: list[str] = []
+overview = DOCS / "OVERVIEW.md"
+if overview.exists():
+    sources.append(str(overview))
+# обязательные главы
+for part in ("ARCH.md", "THREATS.md"):
+    file = DOCS / part
+    if not file.exists():
+        sys.exit(f"❌  missing {file.relative_to(ROOT)}")
+    sources.append(str(file))
+
 cmd = [
     "pandoc",
-    "-o",
-    str(OUT_PDF),
-    "--pdf-engine=pdflatex",
+    *sources,
+    "--pdf-engine=xelatex",  # кириллица без плясок
+    "-V",
+    "mainfont=Noto Sans",
+    "-V",
+    "monofont=Noto Sans Mono",
     "--toc",
+    "-o",
+    str(DIST / "whitepaper.pdf"),
 ]
 
-# Добавляем метаданные, если есть
-META = ROOT / "docs" / "whitepaper.yml"
-if META.exists():
-    cmd += ["--metadata-file", str(META)]
+meta = DOCS / "whitepaper.yml"
+if meta.exists():
+    cmd += ["--metadata-file", str(meta)]
 
-# Последовательное добавление всех исходных MD
-cmd += SRC_MD
-
-# Запускаем сборку
-try:
-    subprocess.run(cmd, check=True)
-    print(f"Whitepaper generated at {OUT_PDF}")
-except subprocess.CalledProcessError as e:
-    print("Error producing PDF.", file=sys.stderr)
-    sys.exit(e.returncode)
+print("🚀  running:", " ".join(cmd))
+subprocess.run(cmd, check=True)
+print("✅  whitepaper.pdf ready →", DIST / "whitepaper.pdf")
