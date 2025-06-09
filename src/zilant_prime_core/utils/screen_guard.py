@@ -1,46 +1,37 @@
-from __future__ import annotations
-
-import sys
-from typing import Iterable
-
-__all__ = ["ScreenGuard", "ScreenGuardError", "guard"]
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 
 class ScreenGuardError(Exception):
-    """Raised when screen recording is detected."""
+    pass
 
 
 class ScreenGuard:
-    def __init__(self) -> None:
+    _BLACKLIST = {"obs", "obs.exe", "ffmpeg", "ffmpeg.exe"}
+
+    def __init__(self):
         try:
             import psutil
 
             self._psutil = psutil
         except ImportError:
             self._psutil = None
-        self._bad_processes: set[str] = {"obs", "obs.exe", "ffmpeg"}
 
-    def _iter_proc_names(self) -> Iterable[str]:
+    def _iter_proc_names(self):
         if not self._psutil:
-            return
+            return []
         for proc in self._psutil.process_iter(attrs=["name"]):
-            name = proc.info.get("name")
+            try:
+                name = (getattr(proc, "info", {}).get("name") or "").lower()
+            except Exception:
+                continue
             if name:
-                yield name.lower()
+                yield name
 
-    def assert_secure(self) -> None:
-        if not self._psutil:
-            return
+    def assert_secure(self):
         for name in self._iter_proc_names():
-            if any(bad in name for bad in self._bad_processes):
-                raise ScreenGuardError(f"Screen recording detected: {name}")
-        if sys.platform.startswith("linux"):
-            for proc in self._psutil.process_iter(attrs=["open_files"]):
-                for f in proc.info.get("open_files") or []:
-                    path = getattr(f, "path", "")
-                    if path.startswith("/dev/video"):
-                        raise ScreenGuardError("Webcam or screen-capture device in use")
+            if name in self._BLACKLIST or any(name.endswith(x) for x in self._BLACKLIST):
+                raise ScreenGuardError(f"Screen capture tool detected: {name}")
 
 
-# global instance
 guard = ScreenGuard()

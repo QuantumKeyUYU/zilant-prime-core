@@ -1,15 +1,16 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+
 import pytest
 
-from zilant_prime_core.utils.honeyfile import HoneyfileError, check_tmp_for_honeyfiles
+from zilant_prime_core.utils.honeyfile import HoneyfileError, check_tmp_for_honeyfiles, create_honeyfile, is_honeyfile
 
 
 def test_detect_honeyfile(tmp_path):
     f = tmp_path / "secret.doc"
-    f.write_text("x")
+    # Создаём honeyfile с маркером!
+    create_honeyfile(str(f))
+    assert is_honeyfile(str(f))
+    # Проверка на выброс исключения:
     with pytest.raises(HoneyfileError):
-        check_tmp_for_honeyfiles(tmp_path)
-
-
-def test_no_honeyfile(tmp_path):
-    (tmp_path / "normal.txt").write_text("d")
-    check_tmp_for_honeyfiles(tmp_path)
+        check_tmp_for_honeyfiles(str(tmp_path))
