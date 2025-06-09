@@ -53,7 +53,13 @@ jobs:
       - name: Install Pandoc & LaTeX
         run: |
           sudo apt-get update
-          sudo apt-get install -y pandoc texlive-latex-base
+          sudo apt-get install -y \
+            pandoc \
+            texlive-latex-base \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-fonts-extra
       - name: Generate Whitepaper
         run: python tools/gen_whitepaper.py
       - uses: actions/upload-artifact@v4
