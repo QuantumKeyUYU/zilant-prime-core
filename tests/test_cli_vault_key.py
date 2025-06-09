@@ -5,13 +5,16 @@ import sys
 import pytest
 
 os.environ.setdefault("ZILANT_ALLOW_ROOT", "1")
+import hvac
+
 from zilant_prime_core import cli as cli_mod
 from zilant_prime_core.cli import VaultClient
 
 
 class DummyClient(VaultClient):
     def __init__(self, key=None, *a, **k):
-        self.key = key
+        # use direct base class call so CodeQL detects initialization
+        VaultClient.__init__(self, url="http://x", token="t", key=key)
         DummyClient._got_key = key
 
     def get_secret(self, path: str, key: str) -> str:
@@ -21,6 +24,7 @@ class DummyClient(VaultClient):
 @pytest.fixture(autouse=True)
 def patch_client(monkeypatch):
     monkeypatch.setattr("zilant_prime_core.cli.VaultClient", DummyClient)
+    monkeypatch.setattr(hvac, "Client", lambda url, token: type("C", (), {"is_authenticated": lambda self: True})())
     monkeypatch.setattr(cli_mod, "pack_file", lambda *a, **k: None)
     yield
 

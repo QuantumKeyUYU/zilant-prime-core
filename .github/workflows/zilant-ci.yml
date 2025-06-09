@@ -43,7 +43,7 @@ jobs:
         run: python tools/iso_soa_generator.py
       - name: Generate Threat Diagram
         run: python tools/gen_threat_diagram.py
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: artifacts
           path: |
