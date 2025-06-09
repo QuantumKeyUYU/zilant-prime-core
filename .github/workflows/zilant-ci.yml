@@ -37,8 +37,8 @@ jobs:
       - run: pip install -e .[dev]
       - run: pytest -q --maxfail=1 --disable-warnings -m perf
 
-  build:
-    name: build
+  build-pq:
+    name: build-pq
     runs-on: ubuntu-latest
     needs: [ quality, perf ]
     steps:
@@ -46,6 +46,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - run: pip install -e .[dev]
 
       - name: Build PQ wheels
         run: python tools/build_pq_wheels.py
@@ -62,16 +63,7 @@ jobs:
           sudo apt-get install -y pandoc texlive-xetex fonts-dejavu
 
       - name: Generate Whitepaper
-        run: |
-          mkdir -p dist
-          pandoc docs/whitepaper.md \
-            docs/ARCH.md \
-            docs/THREATS.md \
-            --metadata-file docs/whitepaper.yml \
-            -o dist/whitepaper.pdf \
-            --pdf-engine=xelatex \
-            -V mainfont="DejaVu Serif" \
-            -V monofont="DejaVu Sans Mono"
+        run: python tools/gen_whitepaper.py
 
       - name: Upload Whitepaper
         uses: actions/upload-artifact@v4
@@ -79,20 +71,20 @@ jobs:
           name: whitepaper
           path: dist/whitepaper.pdf
 
-# Job "sign" отключён — добавьте свой скрипт подписи или удалите entirely
-#  sign:
-#    name: sign
-#    runs-on: ubuntu-latest
-#    needs: build
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: actions/setup-python@v5
-#        with:
-#          python-version: '3.13'
-#      - run: pip install -e .[dev]
-#      - name: Sign artifacts
-#        run: python tools/sign_artifacts.py
-#      - uses: actions/upload-artifact@v4
-#        with:
-#          name: signed-artifacts
-#          path: signed/*
+  # ↓— этот job пока отключён, т.к. нет скрипта tools/sign_artifacts.py
+  # sign:
+  #   name: sign
+  #   runs-on: ubuntu-latest
+  #   needs: build-pq
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.13'
+  #     - run: pip install -e .[dev]
+  #     - name: Sign artifacts
+  #       run: python tools/sign_artifacts.py
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: signed-artifacts
+  #         path: dist/*.sig
