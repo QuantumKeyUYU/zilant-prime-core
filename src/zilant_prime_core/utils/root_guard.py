@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Iterable
 
-__all__ = ["is_device_rooted", "assert_safe_or_die"]
+__all__ = ["is_device_rooted", "assert_safe_or_die", "harden_linux"]
 
 _ROOT_INDICATORS: Iterable[str] = (
     "/system/xbin/su",
@@ -101,3 +101,36 @@ def assert_safe_or_die() -> None:
         sys.stderr.write("Root environment detected. Aborting.\n")
         sys.stderr.flush()
         sys.exit(99)
+
+
+def harden_linux() -> None:
+    """Apply minimal seccomp and capability restrictions (best-effort)."""
+    try:  # pragma: no cover - optional
+        import ctypes
+        import ctypes.util
+
+        libc = ctypes.CDLL(ctypes.util.find_library("c"))
+
+        # drop ptrace and module loading caps if possible
+        PR_CAPBSET_DROP = 24
+        CAP_SYS_PTRACE = 19
+        CAP_SYS_MODULE = 16
+        for cap in (CAP_SYS_PTRACE, CAP_SYS_MODULE):
+            libc.prctl(PR_CAPBSET_DROP, cap, 0, 0, 0)
+
+        # very small seccomp filter: allow read/write/exit only
+        try:
+            import seccomp
+
+            f = seccomp.SyscallFilter(defaction=seccomp.SCMP_ACT_KILL)
+            for sc in ("read", "write", "exit", "exit_group"):
+                try:
+                    f.add_rule(seccomp.SCMP_ACT_ALLOW, sc)
+                except Exception:
+                    pass
+            f.load()
+        except Exception:
+            pass
+    except Exception:
+        pass
+

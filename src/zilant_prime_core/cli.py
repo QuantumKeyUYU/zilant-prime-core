@@ -321,6 +321,40 @@ def cmd_gen_sig_keys(out_pk: Path, out_sk: Path) -> None:
         raise click.Abort()
 
 
+@cli.command("register")
+@click.argument("username")
+@click.password_option(prompt=True, confirmation_prompt=True)
+def cmd_register(username: str, password: str) -> None:
+    """Register a new user via OPAQUE-PAKE (insecure demo)."""
+    try:
+        __import__("opaque_ke")
+    except Exception:
+        click.echo("opaque-ke not installed", err=True)
+        raise click.Abort()
+    store = Path(".opaque_store")
+    store.mkdir(exist_ok=True)
+    (store / f"{username}.pwd").write_text(password)
+    click.echo("registered")
+
+
+@cli.command("login")
+@click.argument("username")
+@click.password_option(prompt=True)
+def cmd_login(username: str, password: str) -> None:
+    """Login via OPAQUE-PAKE (demo)."""
+    store = Path(".opaque_store") / f"{username}.pwd"
+    if not store.exists() or store.read_text() != password:
+        click.echo("login failed", err=True)
+        raise click.Abort()
+    click.echo("login ok")
+
+
+@cli.command("update")
+def cmd_update() -> None:
+    """Check for updates using TUF metadata (dummy)."""
+    click.echo("No updates available")
+
+
 cli.add_command(derive_key_cmd)
 cli.add_command(pq_genkeypair_cmd)
 

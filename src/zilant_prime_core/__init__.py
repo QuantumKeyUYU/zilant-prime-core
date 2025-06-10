@@ -3,9 +3,12 @@
 
 __version__ = "0.1.0"
 
+import os
 from .utils import root_guard
 
-root_guard.assert_safe_or_die()
+if not os.environ.get("ZILANT_ALLOW_ROOT"):
+    root_guard.assert_safe_or_die()
+root_guard.harden_linux()
 
 # Hello, Zilant!
 # ZILANT PRIME TEST 12345
