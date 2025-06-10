@@ -98,6 +98,23 @@ If triggered, the process terminates with exit code ``99``.
 - Root detection now executes on import and can be bypassed via `ZILANT_ALLOW_ROOT`.
 - The PQ-crypto helpers were refactored; import paths may differ.
 
+Example bypass for testing:
+
+```bash
+export ZILANT_ALLOW_ROOT=1
+python -c "import zilant_prime_core"
+```
+
+`harden_linux()` prints nothing on success. You can call it explicitly:
+
+```bash
+python - <<'EOF'
+import zilant_prime_core
+zilant_prime_core.harden_linux()
+print("hardened")
+EOF
+```
+
 ## Migration guide
 
 ````python

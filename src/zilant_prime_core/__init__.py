@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 import os
 

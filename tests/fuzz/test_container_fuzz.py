@@ -1,11 +1,17 @@
+import os
 import sys
 import tempfile
 from pathlib import Path
 
+if os.environ.get("SKIP_FUZZ"):
+    import pytest
+
+    pytest.skip("fuzz skipped", allow_module_level=True)
+
 import atheris
 
 from zilant_prime_core.container.pack import pack
-from zilant_prime_core.container.unpack import UnpackError, unpack
+from zilant_prime_core.container.unpack import unpack
 
 
 def TestOneInput(data: bytes) -> None:
