@@ -2811,3 +2811,245 @@
 2025-06-09 20:42:52,401 [INFO] recovery: Decoy file generated in current directory
 2025-06-09 20:42:52,410 [WARNING] recovery: No log file to encrypt
 2025-06-09 20:42:52,410 [ERROR] recovery: Self-destruct failed: decoy.bin not found
+2025-06-10 09:01:54,951 [INFO] container: Packed 'f.txt' -> 'out.zil', size=212 bytes
+2025-06-10 09:01:54,979 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 09:01:55,012 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 09:01:55,070 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:01:55,107 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:01:55,139 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:01:55,173 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:01:55,214 [INFO] container: Packed 'f.txt' -> 'out.zil', size=215 bytes
+2025-06-10 09:01:55,224 [INFO] container: Packed 'f.txt' -> 'pq.zil', size=193 bytes
+2025-06-10 09:01:55,264 [INFO] container: Packed 'input.bin' -> 'out.zil', size=185 bytes
+2025-06-10 09:01:55,268 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 09:01:55,289 [INFO] container: Packed 'in.bin' -> 'out.zil', size=218 bytes
+2025-06-10 09:01:55,302 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 09:01:55,331 [INFO] container: Packed 'file2.bin' -> 'out2.zil', size=176 bytes
+2025-06-10 09:01:55,348 [INFO] container: Packed 'f3.bin' -> 'out3.zil', size=177 bytes
+2025-06-10 09:01:55,370 [INFO] container: Packed 'in.txt' -> 'out.zil', size=216 bytes
+2025-06-10 09:01:55,385 [INFO] container: Unpacked 'out.zil' -> 'res.txt'
+2025-06-10 09:02:24,415 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 09:02:24,430 [INFO] container: Unpacked 'hello.zil' -> 'restored.txt'
+2025-06-10 09:02:24,459 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 09:02:26,345 [CRITICAL] recovery: Log encrypted to C:\Users\User\AppData\Local\Temp\pytest-of-User\pytest-1608\test_self_destruct_creates_enc0\log.enc
+2025-06-10 09:02:26,361 [INFO] recovery: Decoy file generated in current directory
+2025-06-10 09:02:26,382 [WARNING] recovery: No log file to encrypt
+2025-06-10 09:02:26,387 [INFO] recovery: Decoy file generated in current directory
+2025-06-10 09:02:26,398 [WARNING] recovery: No log file to encrypt
+2025-06-10 09:02:26,398 [ERROR] recovery: Self-destruct failed: decoy.bin not found
+2025-06-10 09:08:12,556 [INFO] container: Packed 'f.txt' -> 'out.zil', size=212 bytes
+2025-06-10 09:08:12,576 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 09:08:12,612 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 09:08:12,658 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:08:12,692 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:08:12,724 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:08:12,756 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:08:12,794 [INFO] container: Packed 'f.txt' -> 'out.zil', size=215 bytes
+2025-06-10 09:08:12,808 [INFO] container: Packed 'f.txt' -> 'pq.zil', size=193 bytes
+2025-06-10 09:08:12,840 [INFO] container: Packed 'input.bin' -> 'out.zil', size=185 bytes
+2025-06-10 09:08:12,844 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 09:08:12,857 [INFO] container: Packed 'in.bin' -> 'out.zil', size=218 bytes
+2025-06-10 09:08:12,872 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 09:08:12,894 [INFO] container: Packed 'file2.bin' -> 'out2.zil', size=176 bytes
+2025-06-10 09:08:12,908 [INFO] container: Packed 'f3.bin' -> 'out3.zil', size=177 bytes
+2025-06-10 09:08:12,922 [INFO] container: Packed 'in.txt' -> 'out.zil', size=216 bytes
+2025-06-10 09:08:12,936 [INFO] container: Unpacked 'out.zil' -> 'res.txt'
+2025-06-10 09:08:40,922 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 09:08:40,943 [INFO] container: Unpacked 'hello.zil' -> 'restored.txt'
+2025-06-10 09:08:40,958 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 09:10:19,763 [INFO] container: Packed 'f.txt' -> 'out.zil', size=212 bytes
+2025-06-10 09:10:19,782 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 09:10:19,822 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 09:10:19,875 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:10:19,905 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:10:19,935 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:10:19,965 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:10:19,999 [INFO] container: Packed 'f.txt' -> 'out.zil', size=215 bytes
+2025-06-10 09:10:20,009 [INFO] container: Packed 'f.txt' -> 'pq.zil', size=193 bytes
+2025-06-10 09:10:20,037 [INFO] container: Packed 'input.bin' -> 'out.zil', size=185 bytes
+2025-06-10 09:10:20,041 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 09:10:20,055 [INFO] container: Packed 'in.bin' -> 'out.zil', size=218 bytes
+2025-06-10 09:10:20,072 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 09:10:20,092 [INFO] container: Packed 'file2.bin' -> 'out2.zil', size=176 bytes
+2025-06-10 09:10:20,106 [INFO] container: Packed 'f3.bin' -> 'out3.zil', size=177 bytes
+2025-06-10 09:10:20,121 [INFO] container: Packed 'in.txt' -> 'out.zil', size=216 bytes
+2025-06-10 09:10:20,137 [INFO] container: Unpacked 'out.zil' -> 'res.txt'
+2025-06-10 09:10:49,127 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 09:10:49,142 [INFO] container: Unpacked 'hello.zil' -> 'restored.txt'
+2025-06-10 09:10:49,159 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 09:13:24,055 [INFO] container: Packed 'f.txt' -> 'out.zil', size=212 bytes
+2025-06-10 09:13:24,075 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 09:13:24,121 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 09:13:24,165 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:13:24,195 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:13:24,234 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:13:24,270 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:13:24,306 [INFO] container: Packed 'f.txt' -> 'out.zil', size=215 bytes
+2025-06-10 09:13:24,316 [INFO] container: Packed 'f.txt' -> 'pq.zil', size=193 bytes
+2025-06-10 09:13:24,346 [INFO] container: Packed 'input.bin' -> 'out.zil', size=185 bytes
+2025-06-10 09:13:24,351 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 09:13:24,366 [INFO] container: Packed 'in.bin' -> 'out.zil', size=218 bytes
+2025-06-10 09:13:24,385 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 09:13:24,410 [INFO] container: Packed 'file2.bin' -> 'out2.zil', size=176 bytes
+2025-06-10 09:13:24,425 [INFO] container: Packed 'f3.bin' -> 'out3.zil', size=177 bytes
+2025-06-10 09:13:24,438 [INFO] container: Packed 'in.txt' -> 'out.zil', size=216 bytes
+2025-06-10 09:13:24,452 [INFO] container: Unpacked 'out.zil' -> 'res.txt'
+2025-06-10 09:13:54,869 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 09:13:54,913 [INFO] container: Unpacked 'hello.zil' -> 'restored.txt'
+2025-06-10 09:13:54,933 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 09:14:38,998 [INFO] container: Packed 'f.txt' -> 'out.zil', size=212 bytes
+2025-06-10 09:14:39,018 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 09:14:39,052 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 09:14:39,086 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:14:39,112 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:14:39,137 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:14:39,161 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 09:14:39,194 [INFO] container: Packed 'f.txt' -> 'out.zil', size=215 bytes
+2025-06-10 09:14:39,202 [INFO] container: Packed 'f.txt' -> 'pq.zil', size=193 bytes
+2025-06-10 09:14:39,231 [INFO] container: Packed 'input.bin' -> 'out.zil', size=185 bytes
+2025-06-10 09:14:39,235 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 09:14:39,254 [INFO] container: Packed 'in.bin' -> 'out.zil', size=218 bytes
+2025-06-10 09:14:39,267 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 09:14:39,292 [INFO] container: Packed 'file2.bin' -> 'out2.zil', size=176 bytes
+2025-06-10 09:14:39,304 [INFO] container: Packed 'f3.bin' -> 'out3.zil', size=177 bytes
+2025-06-10 09:14:39,316 [INFO] container: Packed 'in.txt' -> 'out.zil', size=216 bytes
+2025-06-10 09:14:39,329 [INFO] container: Unpacked 'out.zil' -> 'res.txt'
+2025-06-10 09:15:06,965 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 09:15:06,987 [INFO] container: Unpacked 'hello.zil' -> 'restored.txt'
+2025-06-10 09:15:07,008 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 09:15:08,874 [CRITICAL] recovery: Log encrypted to C:\Users\User\AppData\Local\Temp\pytest-of-User\pytest-1612\test_self_destruct_creates_enc0\log.enc
+2025-06-10 09:15:08,879 [INFO] recovery: Decoy file generated in current directory
+2025-06-10 09:15:08,912 [WARNING] recovery: No log file to encrypt
+2025-06-10 09:15:08,918 [INFO] recovery: Decoy file generated in current directory
+2025-06-10 09:15:08,927 [WARNING] recovery: No log file to encrypt
+2025-06-10 09:15:08,927 [ERROR] recovery: Self-destruct failed: decoy.bin not found
+2025-06-10 11:15:04,000 [INFO] container: Packed 'f.txt' -> 'out.zil', size=212 bytes
+2025-06-10 11:15:04,018 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 11:15:04,057 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 11:15:04,090 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:15:04,122 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:15:04,148 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:15:04,172 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:15:04,204 [INFO] container: Packed 'f.txt' -> 'out.zil', size=215 bytes
+2025-06-10 11:15:04,212 [INFO] container: Packed 'f.txt' -> 'pq.zil', size=193 bytes
+2025-06-10 11:15:04,236 [INFO] container: Packed 'input.bin' -> 'out.zil', size=185 bytes
+2025-06-10 11:15:04,240 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 11:15:04,254 [INFO] container: Packed 'in.bin' -> 'out.zil', size=218 bytes
+2025-06-10 11:15:04,268 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 11:15:04,289 [INFO] container: Packed 'file2.bin' -> 'out2.zil', size=176 bytes
+2025-06-10 11:15:04,300 [INFO] container: Packed 'f3.bin' -> 'out3.zil', size=177 bytes
+2025-06-10 11:15:04,313 [INFO] container: Packed 'in.txt' -> 'out.zil', size=216 bytes
+2025-06-10 11:15:04,323 [INFO] container: Unpacked 'out.zil' -> 'res.txt'
+2025-06-10 11:15:33,041 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 11:15:33,062 [INFO] container: Unpacked 'hello.zil' -> 'restored.txt'
+2025-06-10 11:15:33,085 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 11:15:34,730 [CRITICAL] recovery: Log encrypted to C:\Users\User\AppData\Local\Temp\pytest-of-User\pytest-1613\test_self_destruct_creates_enc0\log.enc
+2025-06-10 11:15:34,735 [INFO] recovery: Decoy file generated in current directory
+2025-06-10 11:15:34,755 [WARNING] recovery: No log file to encrypt
+2025-06-10 11:15:34,759 [INFO] recovery: Decoy file generated in current directory
+2025-06-10 11:15:34,767 [WARNING] recovery: No log file to encrypt
+2025-06-10 11:15:34,767 [ERROR] recovery: Self-destruct failed: decoy.bin not found
+2025-06-10 11:16:55,168 [INFO] container: Packed 'f.txt' -> 'out.zil', size=212 bytes
+2025-06-10 11:16:55,184 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 11:16:55,218 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 11:16:55,257 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:16:55,290 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:16:55,321 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:16:55,351 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:16:55,384 [INFO] container: Packed 'f.txt' -> 'out.zil', size=215 bytes
+2025-06-10 11:16:55,392 [INFO] container: Packed 'f.txt' -> 'pq.zil', size=193 bytes
+2025-06-10 11:16:55,417 [INFO] container: Packed 'input.bin' -> 'out.zil', size=185 bytes
+2025-06-10 11:16:55,422 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 11:16:55,437 [INFO] container: Packed 'in.bin' -> 'out.zil', size=218 bytes
+2025-06-10 11:16:55,451 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 11:16:55,473 [INFO] container: Packed 'file2.bin' -> 'out2.zil', size=176 bytes
+2025-06-10 11:16:55,484 [INFO] container: Packed 'f3.bin' -> 'out3.zil', size=177 bytes
+2025-06-10 11:16:55,497 [INFO] container: Packed 'in.txt' -> 'out.zil', size=216 bytes
+2025-06-10 11:16:55,511 [INFO] container: Unpacked 'out.zil' -> 'res.txt'
+2025-06-10 11:17:23,564 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 11:17:23,578 [INFO] container: Unpacked 'hello.zil' -> 'restored.txt'
+2025-06-10 11:17:23,593 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 11:17:25,309 [CRITICAL] recovery: Log encrypted to C:\Users\User\AppData\Local\Temp\pytest-of-User\pytest-1614\test_self_destruct_creates_enc0\log.enc
+2025-06-10 11:17:25,314 [INFO] recovery: Decoy file generated in current directory
+2025-06-10 11:17:25,348 [WARNING] recovery: No log file to encrypt
+2025-06-10 11:17:25,353 [INFO] recovery: Decoy file generated in current directory
+2025-06-10 11:17:25,362 [WARNING] recovery: No log file to encrypt
+2025-06-10 11:17:25,362 [ERROR] recovery: Self-destruct failed: decoy.bin not found
+2025-06-10 11:19:42,425 [INFO] container: Packed 'f.txt' -> 'out.zil', size=212 bytes
+2025-06-10 11:19:42,445 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 11:19:42,478 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 11:19:42,538 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:19:42,586 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:19:42,631 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:19:42,671 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:19:42,711 [INFO] container: Packed 'f.txt' -> 'out.zil', size=215 bytes
+2025-06-10 11:19:42,721 [INFO] container: Packed 'f.txt' -> 'pq.zil', size=193 bytes
+2025-06-10 11:19:42,749 [INFO] container: Packed 'input.bin' -> 'out.zil', size=185 bytes
+2025-06-10 11:19:42,754 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 11:19:42,769 [INFO] container: Packed 'in.bin' -> 'out.zil', size=218 bytes
+2025-06-10 11:19:42,786 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 11:19:42,806 [INFO] container: Packed 'file2.bin' -> 'out2.zil', size=176 bytes
+2025-06-10 11:19:42,820 [INFO] container: Packed 'f3.bin' -> 'out3.zil', size=177 bytes
+2025-06-10 11:19:42,844 [INFO] container: Packed 'in.txt' -> 'out.zil', size=216 bytes
+2025-06-10 11:19:42,857 [INFO] container: Unpacked 'out.zil' -> 'res.txt'
+2025-06-10 11:20:11,378 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 11:20:11,393 [INFO] container: Unpacked 'hello.zil' -> 'restored.txt'
+2025-06-10 11:20:11,421 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 11:20:13,355 [CRITICAL] recovery: Log encrypted to C:\Users\User\AppData\Local\Temp\pytest-of-User\pytest-1615\test_self_destruct_creates_enc0\log.enc
+2025-06-10 11:20:13,362 [INFO] recovery: Decoy file generated in current directory
+2025-06-10 11:20:13,391 [WARNING] recovery: No log file to encrypt
+2025-06-10 11:20:13,396 [INFO] recovery: Decoy file generated in current directory
+2025-06-10 11:20:13,408 [WARNING] recovery: No log file to encrypt
+2025-06-10 11:20:13,408 [ERROR] recovery: Self-destruct failed: decoy.bin not found
+2025-06-10 11:32:01,978 [INFO] container: Packed 'f.txt' -> 'out.zil', size=212 bytes
+2025-06-10 11:32:01,999 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 11:32:02,056 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 11:32:02,101 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:32:02,133 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:32:02,163 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:32:02,200 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:32:02,237 [INFO] container: Packed 'f.txt' -> 'out.zil', size=215 bytes
+2025-06-10 11:32:02,247 [INFO] container: Packed 'f.txt' -> 'pq.zil', size=193 bytes
+2025-06-10 11:32:02,279 [INFO] container: Packed 'input.bin' -> 'out.zil', size=185 bytes
+2025-06-10 11:32:02,285 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 11:32:02,305 [INFO] container: Packed 'in.bin' -> 'out.zil', size=218 bytes
+2025-06-10 11:32:02,320 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 11:32:02,341 [INFO] container: Packed 'file2.bin' -> 'out2.zil', size=176 bytes
+2025-06-10 11:32:02,354 [INFO] container: Packed 'f3.bin' -> 'out3.zil', size=177 bytes
+2025-06-10 11:32:02,367 [INFO] container: Packed 'in.txt' -> 'out.zil', size=216 bytes
+2025-06-10 11:32:02,381 [INFO] container: Unpacked 'out.zil' -> 'res.txt'
+2025-06-10 11:32:32,140 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 11:32:32,157 [INFO] container: Unpacked 'hello.zil' -> 'restored.txt'
+2025-06-10 11:32:32,172 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 11:32:33,960 [CRITICAL] recovery: Log encrypted to C:\Users\User\AppData\Local\Temp\pytest-of-User\pytest-1616\test_self_destruct_creates_enc0\log.enc
+2025-06-10 11:32:33,967 [INFO] recovery: Decoy file generated in current directory
+2025-06-10 11:32:34,005 [WARNING] recovery: No log file to encrypt
+2025-06-10 11:32:34,010 [INFO] recovery: Decoy file generated in current directory
+2025-06-10 11:32:34,020 [WARNING] recovery: No log file to encrypt
+2025-06-10 11:32:34,020 [ERROR] recovery: Self-destruct failed: decoy.bin not found
+2025-06-10 11:39:18,516 [INFO] container: Packed 'f.txt' -> 'out.zil', size=212 bytes
+2025-06-10 11:39:18,534 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 11:39:18,573 [INFO] container: Packed 'f.txt' -> 'out.zil', size=219 bytes
+2025-06-10 11:39:18,608 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:39:18,641 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:39:18,668 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:39:18,717 [INFO] container: Packed 'data.bin' -> 'good.zil', size=215 bytes
+2025-06-10 11:39:18,762 [INFO] container: Packed 'f.txt' -> 'out.zil', size=215 bytes
+2025-06-10 11:39:18,772 [INFO] container: Packed 'f.txt' -> 'pq.zil', size=193 bytes
+2025-06-10 11:39:18,802 [INFO] container: Packed 'input.bin' -> 'out.zil', size=185 bytes
+2025-06-10 11:39:18,808 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 11:39:18,823 [INFO] container: Packed 'in.bin' -> 'out.zil', size=218 bytes
+2025-06-10 11:39:18,840 [INFO] container: Unpacked 'out.zil' -> 'dest.bin'
+2025-06-10 11:39:18,861 [INFO] container: Packed 'file2.bin' -> 'out2.zil', size=176 bytes
+2025-06-10 11:39:18,876 [INFO] container: Packed 'f3.bin' -> 'out3.zil', size=177 bytes
+2025-06-10 11:39:18,900 [INFO] container: Packed 'in.txt' -> 'out.zil', size=216 bytes
+2025-06-10 11:39:18,914 [INFO] container: Unpacked 'out.zil' -> 'res.txt'
+2025-06-10 11:39:48,042 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 11:39:48,057 [INFO] container: Unpacked 'hello.zil' -> 'restored.txt'
+2025-06-10 11:39:48,072 [INFO] container: Packed 'hello.txt' -> 'hello.zil', size=226 bytes
+2025-06-10 11:39:49,874 [CRITICAL] recovery: Log encrypted to C:\Users\User\AppData\Local\Temp\pytest-of-User\pytest-1617\test_self_destruct_creates_enc0\log.enc
+2025-06-10 11:39:49,878 [INFO] recovery: Decoy file generated in current directory
+2025-06-10 11:39:49,898 [WARNING] recovery: No log file to encrypt
+2025-06-10 11:39:49,903 [INFO] recovery: Decoy file generated in current directory
+2025-06-10 11:39:49,913 [WARNING] recovery: No log file to encrypt
+2025-06-10 11:39:49,913 [ERROR] recovery: Self-destruct failed: decoy.bin not found

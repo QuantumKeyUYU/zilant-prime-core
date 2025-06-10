@@ -1,0 +1,49 @@
+# .github/workflows/codeql-analysis.yml
+name: CodeQL Analysis
+
+on:
+  push:
+    branches:
+      - main
+      - ci-check-ready
+  pull_request:
+    branches:
+      - main
+      - ci-check-ready
+
+permissions:
+  contents: read        # for actions/checkout
+  security-events: write  # to upload CodeQL results
+
+jobs:
+  analyze:
+    name: Analyze code with CodeQL
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          # Upload SARIF so GitHub can display results
+          upload: true
+          # Only run queries in the CodeQL default suite
+          category: "/language:python"
+
+      # [Optional] if you have custom queries:
+      # - name: Checkout custom queries
+      #   run: |
+      #     git clone https://github.com/your-org/your-codeql-queries.git codeql-custom
+      # - name: Run custom queries
+      #   uses: github/codeql-action/analyze@v3
+      #   with:
+      #     queries: codeql-custom/python-queries

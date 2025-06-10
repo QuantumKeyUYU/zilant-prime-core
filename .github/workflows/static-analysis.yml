@@ -1,49 +1,35 @@
 # .github/workflows/static-analysis.yml
-name: Static Analysis — CodeQL & Semgrep
+name: Static Analysis — Semgrep CI
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
+      - ci-check-ready
   pull_request:
-    branches: ["main"]
-
-permissions:
-  contents: read
-  security-events: write
-  id-token: write
+    branches:
+      - main
+      - ci-check-ready
 
 jobs:
-  codeql-and-semgrep:
-    name: CodeQL & Semgrep Analysis
+  semgrep:
+    name: Semgrep SAST
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      # 1. Забираем код
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+      # 2. Устанавливаем Python
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          languages: python
-          queries: security-and-quality
+          python-version: '3.13'
 
-      - name: Autobuild (если есть компиляция, иначе пропустить)
-        run: |
-          echo "No build step needed for pure-Python project"
+      # 3. Устанавливаем dev-dependencies (включая semgrep)
+      - name: Install dev dependencies
+        run: pip install -e .[dev]
 
-      - name: Run CodeQL analysis
-        uses: github/codeql-action/analyze@v3
-
-      - name: Set up Node.js for Semgrep
-        uses: actions/setup-node@v4
-        with:
-          node-version: "16"
-
-      - name: Install Semgrep
-        run: |
-          python -m pip install --upgrade pip
-          pip install semgrep
-
-      - name: Run Semgrep
-        run: |
-          semgrep --config p/ci
+      # 4. Запускаем semgrep в режиме CI
+      - name: Run Semgrep CI
+        run: semgrep ci
