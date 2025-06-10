@@ -257,8 +257,3 @@ def derive_key_pq(shared_secret: bytes, length: int = 32) -> bytes:
     key: bytes = derive_key(bytes(shared_secret), b"pq_salt!")
     return key[:length]
 
-
-# -----------------------------------------------------------------------------
-# Тестовая совместимость: флаги для pytest.skipif в тестах без pqclean
-kyber768 = None
-dilithium2 = None
