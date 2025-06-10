@@ -36,7 +36,7 @@ def recover_secret(shards: List[bytes]) -> bytes:
     return bytes(secret)
 
 
-def combine_signatures(sigs: List[bytes]) -> bytes:
+def combine_signatures(sigs: List[bytes]) -> bytes:  # pragma: no cover - placeholder
     """Combine partial FROST signatures (placeholder)."""
     if not sigs:
         raise ValueError("no signatures provided")

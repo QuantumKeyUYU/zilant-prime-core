@@ -8,7 +8,12 @@ if os.environ.get("SKIP_FUZZ"):
 
     pytest.skip("fuzz skipped", allow_module_level=True)
 
-import atheris
+try:
+    import atheris
+except ImportError:  # pragma: no cover - fuzz optional
+    import pytest
+
+    pytest.skip("Atheris not installed, skipping fuzz tests", allow_module_level=True)
 
 from zilant_prime_core.container.pack import pack
 from zilant_prime_core.container.unpack import unpack

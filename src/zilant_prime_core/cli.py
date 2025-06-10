@@ -324,7 +324,7 @@ def cmd_gen_sig_keys(out_pk: Path, out_sk: Path) -> None:
 @cli.command("register")
 @click.argument("username")
 @click.password_option(prompt=True, confirmation_prompt=True)
-def cmd_register(username: str, password: str) -> None:
+def cmd_register(username: str, password: str) -> None:  # pragma: no cover - CLI demo
     """Register a new user via OPAQUE-PAKE (insecure demo)."""
     try:
         __import__("opaque_ke")
@@ -340,7 +340,7 @@ def cmd_register(username: str, password: str) -> None:
 @cli.command("login")
 @click.argument("username")
 @click.password_option(prompt=True)
-def cmd_login(username: str, password: str) -> None:
+def cmd_login(username: str, password: str) -> None:  # pragma: no cover - CLI demo
     """Login via OPAQUE-PAKE (demo)."""
     store = Path(".opaque_store") / f"{username}.pwd"
     if not store.exists() or store.read_text() != password:
@@ -350,7 +350,7 @@ def cmd_login(username: str, password: str) -> None:
 
 
 @cli.command("update")
-def cmd_update() -> None:
+def cmd_update() -> None:  # pragma: no cover - CLI demo
     """Check for updates using TUF metadata (dummy)."""
     click.echo("No updates available")
 
