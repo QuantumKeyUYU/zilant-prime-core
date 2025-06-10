@@ -81,7 +81,7 @@ jobs:
       - name: Install Pandoc + XeLaTeX (русский шрифт)
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y pandoc texlive-xetex texlive-lang-cyrillic
+          sudo apt-get install -y pandoc texlive-xetex texlive-lang-cyrillic fonts-dejavu-core fonts-dejavu-extra
 
       - name: Generate whitepaper
         run: python tools/gen_whitepaper.py
