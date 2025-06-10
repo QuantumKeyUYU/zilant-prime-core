@@ -5,9 +5,11 @@
 from __future__ import annotations
 
 import binascii
+import hashlib
 import os
 import sys
 from pathlib import Path
+from secrets import compare_digest
 from typing import NoReturn, cast
 
 import click
@@ -34,6 +36,11 @@ def _ask_pwd(*, confirm: bool = False) -> str:
     if not pwd:
         _abort("Missing password")
     return pwd
+
+
+def _hash_pwd(pwd: str) -> str:
+    """Return SHA256 hash of password."""
+    return hashlib.sha256(pwd.encode()).hexdigest()
 
 
 def _pack_bytes(src: Path, pwd: str, dest: Path, overwrite: bool) -> bytes:
@@ -333,7 +340,7 @@ def cmd_register(username: str, password: str) -> None:  # pragma: no cover - CL
         raise click.Abort()
     store = Path(".opaque_store")
     store.mkdir(exist_ok=True)
-    (store / f"{username}.pwd").write_text(password)
+    (store / f"{username}.pwd").write_text(_hash_pwd(password))
     click.echo("registered")
 
 
@@ -343,7 +350,7 @@ def cmd_register(username: str, password: str) -> None:  # pragma: no cover - CL
 def cmd_login(username: str, password: str) -> None:  # pragma: no cover - CLI demo
     """Login via OPAQUE-PAKE (demo)."""
     store = Path(".opaque_store") / f"{username}.pwd"
-    if not store.exists() or store.read_text() != password:
+    if not store.exists() or not compare_digest(store.read_text(), _hash_pwd(password)):
         click.echo("login failed", err=True)
         raise click.Abort()
     click.echo("login ok")

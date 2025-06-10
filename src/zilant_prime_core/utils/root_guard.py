@@ -51,8 +51,9 @@ def _check_mounts() -> bool:  # pragma: no cover
                 if " rw," in line.split()[-1]:
                     if "/" in line.split()[4]:
                         return False
-    except Exception:
-        pass
+    except OSError:
+        # failed to read mountinfo; assume not rooted
+        return False
     return False
 
 
@@ -61,8 +62,9 @@ def _check_selinux() -> bool:  # pragma: no cover
     try:
         if path.exists() and path.read_text().strip() != "1":
             return True
-    except Exception:
-        pass
+    except OSError:
+        # unable to read SELinux status
+        return False
     return False
 
 
@@ -73,8 +75,9 @@ def _check_ptrace() -> bool:  # pragma: no cover
                 if line.startswith("TracerPid:"):
                     pid = int(line.split()[1])
                     return pid != 0
-    except Exception:
-        pass
+    except OSError:
+        # cannot read /proc/self/status
+        return False
     return False
 
 
@@ -86,8 +89,9 @@ def _check_hooking() -> bool:  # pragma: no cover
             for marker in ("frida", "xposed", "substrate"):
                 if marker in content:
                     return True
-    except Exception:
-        pass
+    except OSError:
+        # reading /proc/self/maps failed
+        return False
     return "FRIDA" in os.environ
 
 
@@ -142,9 +146,11 @@ def harden_linux() -> None:
                 try:
                     f.add_rule(seccomp.SCMP_ACT_ALLOW, sc)
                 except Exception:
+                    # rule may not exist on this kernel
                     pass
             f.load()
         except Exception:
+            # seccomp not available; continue without it
             pass
         # landlock restrict filesystem access if library available
         try:
@@ -154,6 +160,8 @@ def harden_linux() -> None:
             ruleset.create()
             ruleset.restrict_self()
         except Exception:
+            # landlock unavailable; ignore
             pass
     except Exception:
+        # hardening failed unexpectedly
         pass
