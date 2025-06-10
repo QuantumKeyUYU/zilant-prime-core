@@ -23,9 +23,4 @@ jobs:
         with:
           config: p/python
           generateSarif: true
-          sarifFile: semgrep.sarif          # ← имя файла задаём явно
-
-      - name: Upload SARIF to CodeQL
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: semgrep.sarif
+          publishSarif: true        # Semgrep сам публикует SARIF в Code Scanning

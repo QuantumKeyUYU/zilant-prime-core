@@ -53,8 +53,9 @@ jobs:
     needs: build-test
     steps:
       - uses: actions/checkout@v4
-      - name: Trivy
-        uses: aquasecurity/trivy-action@v0.20.0   # обновили тег
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@0.20.0   # без префикса «v»
         with:
           scan-type: fs
           ignore-unfixed: true
