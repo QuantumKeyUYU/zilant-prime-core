@@ -1,4 +1,3 @@
-# .github/workflows/ci.yml
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
@@ -55,7 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Trivy
-        uses: aquasecurity/trivy-action@v0.14.0
+        uses: aquasecurity/trivy-action@v0.20.0   # обновили тег
         with:
           scan-type: fs
           ignore-unfixed: true
