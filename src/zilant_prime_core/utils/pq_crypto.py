@@ -13,8 +13,8 @@ except Exception:  # pragma: no cover - optional dependency
     oqs = None
 
 try:
-    from pqclean.branchfree import kyber768 as kyber768
     from pqclean.branchfree import dilithium2 as dilithium2
+    from pqclean.branchfree import kyber768 as kyber768
 except Exception:  # pragma: no cover - optional dependency
     try:
         from pqclean import dilithium2, kyber768
@@ -188,10 +188,9 @@ class HybridKEM(KEM):
     def __init__(self) -> None:
         self._pq = Kyber768KEM()
         try:
+            from cryptography.hazmat.primitives import hashes, serialization
             from cryptography.hazmat.primitives.asymmetric import x25519
-            from cryptography.hazmat.primitives import hashes
             from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-            from cryptography.hazmat.primitives import serialization
         except Exception:  # pragma: no cover - optional dependency
             raise RuntimeError("cryptography not installed")
         self._x25519 = x25519
@@ -199,7 +198,7 @@ class HybridKEM(KEM):
         self._hashes = hashes
         self._serialization = serialization
 
-    def generate_keypair(self) -> Tuple[bytes, bytes, bytes, bytes]:
+    def generate_keypair(self) -> Tuple[bytes, bytes, bytes, bytes]:  # type: ignore[override]
         pk_pq, sk_pq = self._pq.generate_keypair()
         sk_x = self._x25519.X25519PrivateKey.generate()
         pk_x = sk_x.public_key().public_bytes(
@@ -213,7 +212,9 @@ class HybridKEM(KEM):
         )
         return pk_pq, sk_pq, pk_x, sk_x_bytes
 
-    def encapsulate(self, public_key: Tuple[bytes, bytes]) -> Tuple[bytes, bytes, bytes, bytes, bytes]:
+    def encapsulate(  # type: ignore[override]
+        self, public_key: Tuple[bytes, bytes]
+    ) -> Tuple[bytes, bytes, bytes, bytes, bytes]:
         pk_pq, pk_x = public_key
         ct_pq, ss_pq = self._pq.encapsulate(pk_pq)
         ephem_sk = self._x25519.X25519PrivateKey.generate()
@@ -229,10 +230,12 @@ class HybridKEM(KEM):
             salt=None,
             info=b"hybrid",
         )
-        shared = hkdf.derive(ss_pq + ss_x)
+        shared: bytes = hkdf.derive(ss_pq + ss_x)
         return ct_pq, ss_pq, ephem_pk, ss_x, shared
 
-    def decapsulate(self, private_key: Tuple[bytes, bytes], ciphertext: Tuple[bytes, bytes, bytes]) -> bytes:
+    def decapsulate(  # type: ignore[override]
+        self, private_key: Tuple[bytes, bytes], ciphertext: Tuple[bytes, bytes, bytes]
+    ) -> bytes:
         sk_pq, sk_x_bytes = private_key
         ct_pq, ephem_pk, _ = ciphertext
         ss_pq = self._pq.decapsulate(sk_pq, ct_pq)
@@ -245,7 +248,8 @@ class HybridKEM(KEM):
             salt=None,
             info=b"hybrid",
         )
-        return hkdf.derive(ss_pq + ss_x)
+        shared: bytes = hkdf.derive(ss_pq + ss_x)
+        return shared
 
 
 def derive_key_pq(shared_secret: bytes, length: int = 32) -> bytes:
@@ -256,4 +260,3 @@ def derive_key_pq(shared_secret: bytes, length: int = 32) -> bytes:
 
     key: bytes = derive_key(bytes(shared_secret), b"pq_salt!")
     return key[:length]
-

@@ -78,6 +78,19 @@ def _check_ptrace() -> bool:  # pragma: no cover
     return False
 
 
+def _check_hooking() -> bool:  # pragma: no cover
+    """Detect common hooking frameworks like Frida."""
+    try:
+        with open("/proc/self/maps", "r") as fh:
+            content = fh.read().lower()
+            for marker in ("frida", "xposed", "substrate"):
+                if marker in content:
+                    return True
+    except Exception:
+        pass
+    return "FRIDA" in os.environ
+
+
 def is_device_rooted() -> bool:
     """Return True if current environment appears to be rooted/jailbroken."""
     if _check_uid_gid():
@@ -91,6 +104,8 @@ def is_device_rooted() -> bool:
     if _check_ptrace():
         return True
     if _check_ld_preload():
+        return True
+    if _check_hooking():
         return True
     return False
 
@@ -131,6 +146,14 @@ def harden_linux() -> None:
             f.load()
         except Exception:
             pass
+        # landlock restrict filesystem access if library available
+        try:
+            import landlock  # type: ignore
+
+            ruleset = landlock.LandlockRuleset(handled_access_fs=set(landlock.AccessFS))
+            ruleset.create()
+            ruleset.restrict_self()
+        except Exception:
+            pass
     except Exception:
         pass
-

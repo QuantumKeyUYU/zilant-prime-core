@@ -36,3 +36,17 @@ def test_all_root_checks(monkeypatch):
     # Всё False — безопасно
     monkeypatch.setattr(rg, "_check_ld_preload", lambda: False)
     assert rg.is_device_rooted() is False
+
+
+def test_hooking_detection(monkeypatch):
+    def fake_open(path: str, mode: str = "r", *args, **kwargs):
+        if path == "/proc/self/maps":
+            import io
+
+            return io.StringIO("/usr/lib/frida.so")
+        return open(path, mode, *args, **kwargs)
+
+    import builtins
+
+    monkeypatch.setattr(builtins, "open", fake_open)
+    assert rg.is_device_rooted() is True

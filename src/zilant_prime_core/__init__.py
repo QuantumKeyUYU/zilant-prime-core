@@ -4,6 +4,7 @@
 __version__ = "0.1.0"
 
 import os
+
 from .utils import root_guard
 
 if not os.environ.get("ZILANT_ALLOW_ROOT"):
