@@ -43,7 +43,7 @@ jobs:
         run: mypy --config-file mypy.ini src
 
       - name: Pytest
-        run: pytest -q
+        run: ZILANT_ALLOW_ROOT=1 pytest -q
 
 # ──────────────────────────── Perf subset ───────────────────────────
   perf:
@@ -53,8 +53,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.13" }
-      - run: pip install -e .[dev]
+      - run: pip install -e .[dev] atheris
       - run: pytest -q -m perf --disable-warnings --maxfail=1
+      - run: python -m atheris tests/fuzz/test_container_fuzz.py
 
 # ──────────────────────────── Build + artefacts ─────────────────────
   build-pq:
