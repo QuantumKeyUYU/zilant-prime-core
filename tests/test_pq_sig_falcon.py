@@ -1,6 +1,8 @@
 import types
 import sys
 
+import os
+os.environ.setdefault("ZILANT_ALLOW_ROOT", "1")
 import zilant_prime_core.utils.pq_crypto as pq
 
 
