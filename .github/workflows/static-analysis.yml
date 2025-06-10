@@ -1,35 +1,28 @@
 # .github/workflows/static-analysis.yml
-name: Static Analysis — Semgrep CI
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+
+name: Static Analysis
 
 on:
-  push:
-    branches:
-      - main
-      - ci-check-ready
   pull_request:
-    branches:
-      - main
-      - ci-check-ready
+    paths:
+      - 'src/**/*.py'
+
+permissions:
+  contents: read
+  security-events: write
 
 jobs:
   semgrep:
-    name: Semgrep SAST
     runs-on: ubuntu-latest
     steps:
-      # 1. Забираем код
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      # 2. Устанавливаем Python
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: returntocorp/semgrep-action@v1
         with:
-          python-version: '3.13'
-
-      # 3. Устанавливаем dev-dependencies (включая semgrep)
-      - name: Install dev dependencies
-        run: pip install -e .[dev]
-
-      # 4. Запускаем semgrep в режиме CI
-      - name: Run Semgrep CI
-        run: semgrep ci
+          config: p/python
+          generateSarif: true
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif

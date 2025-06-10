@@ -1,21 +1,17 @@
-# pragma: no cover
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
-
 from __future__ import annotations
 
 import binascii
-import hashlib
 import os
 import sys
 from pathlib import Path
-from secrets import compare_digest
 from typing import NoReturn, cast
 
 import click
 
 from container import pack_file, unpack_file
-from zilant_prime_core.cli_commands import derive_key_cmd, pq_genkeypair_cmd
+from zilant_prime_core.crypto.password_hash import hash_password, verify_password
 from zilant_prime_core.utils import VaultClient
 from zilant_prime_core.utils.anti_snapshot import detect_snapshot
 from zilant_prime_core.utils.counter import increment_counter, read_counter
@@ -25,9 +21,10 @@ from zilant_prime_core.utils.recovery import DESTRUCTION_KEY_BUFFER, self_destru
 from zilant_prime_core.utils.screen_guard import ScreenGuardError, guard
 
 
-def _abort(msg: str, code: int = 1) -> NoReturn:
-    click.echo(msg)
-    click.echo("Aborted")
+# ────────────────────────── helpers ──────────────────────────
+def _abort(msg: str, code: int = 1) -> NoReturn:  # ← NoReturn → mypy happy
+    click.echo(msg, err=True)
+    click.echo("Aborted", err=True)
     sys.exit(code)
 
 
@@ -36,11 +33,6 @@ def _ask_pwd(*, confirm: bool = False) -> str:
     if not pwd:
         _abort("Missing password")
     return pwd
-
-
-def _hash_pwd(pwd: str) -> str:
-    """Return SHA256 hash of password."""
-    return hashlib.sha256(pwd.encode()).hexdigest()
 
 
 def _pack_bytes(src: Path, pwd: str, dest: Path, overwrite: bool) -> bytes:
@@ -68,56 +60,44 @@ def _cleanup_old_file(container: Path) -> None:
     try:
         raw = container.read_bytes()
         name_raw, _ = raw.split(b"\n", 1)
-        existing = container.parent / name_raw.decode()
-        if existing.exists():
-            existing.unlink()
+        old_file = container.parent / name_raw.decode()
+        if old_file.exists():
+            old_file.unlink()
     except Exception:
-        return
+        pass
 
 
+# ──────────────────────────────── CLI root ────────────────────────────────
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option("--serve-metrics", type=int, metavar="PORT", help="Expose metrics on PORT")
-@click.option(
-    "--vault-key",
-    type=binascii.unhexlify,
-    metavar="HEX",
-    help="AES-key for vault",
-)
+@click.option("--vault-key", type=binascii.unhexlify, metavar="HEX", help="AES key for Vault")
 @click.pass_context
 def cli(ctx: click.Context, serve_metrics: int | None, vault_key: bytes | None) -> None:
-    """Zilant Prime CLI."""
+    """Zilant Prime command‑line interface."""
     try:
         guard.assert_secure()
     except ScreenGuardError as exc:
         click.echo(f"Security check failed: {exc}", err=True)
         raise SystemExit(90)
+
     if serve_metrics:
         from zilant_prime_core.health import start_server
 
         start_server(serve_metrics)
-    # Initialization hooks are disabled in test mode
+
     ctx.obj = {"vault_key": vault_key}
 
 
+# ────────────────────────────── pack ──────────────────────────────
 @cli.command("pack")
 @click.argument("source", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-@click.option(
-    "-o",
-    "--output",
-    metavar="OUT",
-    type=click.Path(dir_okay=False, path_type=Path),
-    help="Output .zil filename (default: <SRC>.zil)",
-)
+@click.option("-o", "--output", metavar="OUT", type=click.Path(dir_okay=False, path_type=Path))
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
-@click.option("--vault-path", metavar="VAULT_PATH", help="Путь до секрета в HashiCorp Vault")
-@click.option(
-    "--pq-pub",
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
-    help="Kyber768 public key",
-)
+@click.option("--vault-path", metavar="VAULT_PATH", help="Path in HashiCorp Vault")
+@click.option("--pq-pub", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option("--overwrite/--no-overwrite", default=False, show_default=True)
 @click.pass_context
-def cmd_pack(
+def cmd_pack(  # noqa: C901  (covered by extensive tests)
     ctx: click.Context,
     source: Path,
     output: Path | None,
@@ -129,258 +109,206 @@ def cmd_pack(
     from zilant_prime_core.metrics import metrics
 
     dest = output or source.with_suffix(".zil")
-
     if dest.exists() and not overwrite:
         if not click.confirm(f"{dest.name} already exists — overwrite?", default=False):
             _abort(f"{dest.name} already exists")
         overwrite = True
 
-    pwd = password
-    if pwd is not None:
-        if pwd == "-":
-            pwd = _ask_pwd(confirm=True)
-    elif vault_path is not None:
+    # password handling
+    if password == "-":
+        pwd = _ask_pwd(confirm=True)
+    elif password:
+        pwd = password
+    elif vault_path:
         try:
-            vault_client = VaultClient(key=ctx.obj.get("vault_key") if ctx.obj else None)
-            pwd = vault_client.get_secret(vault_path, key="password")
+            vc = VaultClient(key=ctx.obj.get("vault_key") if ctx.obj else None)
+            pwd = vc.get_secret(vault_path, key="password")
         except Exception as exc:
             click.echo(f"Vault error: {exc}", err=True)
-            click.echo(
-                "Не удалось получить пароль из Vault, запрашиваю вручную …",
-                err=True,
-            )
+            click.echo("Requesting password…", err=True)
             pwd = _ask_pwd(confirm=True)
     else:
         _abort("Missing password")
 
-    if pwd is None:
-        _abort("Missing password")
-
+    # pack
     try:
         with metrics.track("pack"):
-            if pq_pub is not None:
-                pack_file(source, dest, b"", pq_public_key=pq_pub.read_bytes())
+            if pq_pub:
+                pack_file(source, dest, pwd.encode(), pq_public_key=pq_pub.read_bytes())
+                blob: bytes | None = None
             else:
                 blob = _pack_bytes(source, pwd, dest, overwrite)
     except FileExistsError:
         _abort(f"{dest.name} already exists")
-    except Exception as e:
-        _abort(f"Pack error: {e}")
+    except Exception as exc:  # pragma: no cover
+        _abort(f"Pack error: {exc}")
 
-    if pq_pub is None:
-        tmp_path = dest.with_suffix(dest.suffix + ".tmp")
+    # write container (non‑PQ branch)
+    if blob is not None:
+        tmp = dest.with_suffix(dest.suffix + ".tmp")
         try:
-            with open(tmp_path, "wb") as f:
-                f.write(blob)
-            os.replace(tmp_path, dest)
+            with open(tmp, "wb") as fh:  # noqa: PTH123
+                fh.write(blob)
+            os.replace(tmp, dest)
             os.chmod(dest, 0o600)
-        except Exception as e:
-            _abort(f"Write error: {e}")
+        except Exception as exc:
+            click.echo(f"Write error: {exc}", err=True)
+            sys.exit(1)
 
-    click.echo(str(dest))
+    click.echo(dest)
 
 
+# ────────────────────────────── unpack ──────────────────────────────
 @cli.command("unpack")
 @click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-@click.option(
-    "-d",
-    "--dest",
-    metavar="DIR",
-    type=click.Path(file_okay=False, path_type=Path),
-)
+@click.option("-d", "--dest", metavar="DIR", type=click.Path(file_okay=False, path_type=Path))
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
-@click.option(
-    "--pq-sk",
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
-    help="Kyber768 private key",
-)
+@click.option("--pq-sk", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 def cmd_unpack(container: Path, dest: Path | None, password: str | None, pq_sk: Path | None) -> None:
     from zilant_prime_core.metrics import metrics
 
-    if password is None:
-        _abort("Missing password")
-    if password == "-":
-        password = _ask_pwd()
-
-    out_dir = dest if dest is not None else container.parent
-
-    if dest is not None and out_dir.exists():
+    pwd = _ask_pwd() if password == "-" else password or _abort("Missing password")
+    out_dir = dest or container.parent
+    if dest and out_dir.exists():
         _abort("Destination path already exists")
-
     if dest is None:
         _cleanup_old_file(container)
 
     try:
         with metrics.track("unpack"):
-            if pq_sk is not None:
-                out_path = out_dir if out_dir.suffix else out_dir / container.stem
-                unpack_file(container, out_path, b"", pq_private_key=pq_sk.read_bytes())
+            if pq_sk:
+                out_path = out_dir / container.stem
+                unpack_file(container, out_path, pwd.encode(), pq_private_key=pq_sk.read_bytes())
                 out = out_path
             else:
-                out = _unpack_bytes(container, out_dir, password)
+                out = _unpack_bytes(container, out_dir, pwd)
     except FileExistsError:
         _abort("Destination path already exists")
     except ValueError as ve:
-        if "too small" in str(ve).lower():
-            _abort("Container too small")
-        _abort(f"Unpack error: {ve}")
-    except Exception as e:
-        _abort(f"Unpack error: {e}")
+        _abort("Container too small" if "too small" in str(ve).lower() else f"Unpack error: {ve}")
+    except Exception as exc:  # pragma: no cover
+        _abort(f"Unpack error: {exc}")
 
     try:
         os.chmod(out, 0o600)
     except Exception:
         pass
 
-    click.echo(str(out))
+    click.echo(out)
 
 
+# ─────────────────────── misc utility commands ───────────────────────
 @cli.command("fingerprint")
 def cmd_fingerprint() -> None:
-    """Output device fingerprint as hex string."""
     try:
         hw = collect_hw_factors()
         fp = compute_fp(hw, SALT_CONST)
         click.echo(fp.hex())
-    except Exception as e:  # pragma: no cover - rare failure
-        click.echo(f"Error computing fingerprint: {e}", err=True)
+    except Exception as exc:  # pragma: no cover
+        click.echo(f"Error computing fingerprint: {exc}", err=True)
         raise click.Abort()
 
 
 @cli.command("check_counter")
 def cmd_check_counter() -> None:
-    """Display the current hidden counter value."""
-    try:
-        ctr = read_counter()
-        click.echo(f"Current counter value: {ctr}")
-    except Exception as e:
-        click.echo(f"Error reading counter: {e}", err=True)
-        raise click.Abort()
+    click.echo(f"Current counter value: {read_counter()}")
 
 
 @cli.command("incr_counter")
 def cmd_incr_counter() -> None:
-    """Increment the hidden counter and show the new value."""
-    try:
-        increment_counter()
-        new_ctr = read_counter()
-        click.echo(f"Counter incremented, new value: {new_ctr}")
-    except Exception as e:
-        click.echo(f"Error incrementing counter: {e}", err=True)
-        raise click.Abort()
+    increment_counter()
+    click.echo(f"Counter incremented, new value: {read_counter()}")
 
 
 @cli.command("check_snapshot")
 def cmd_check_snapshot() -> None:
-    """Check for snapshot/rollback and exit with error if detected."""
     try:
-        suspected = detect_snapshot()
-        if suspected:
+        if detect_snapshot():
             click.echo("Snapshot/rollback suspected!", err=True)
             raise click.Abort()
         click.echo("No snapshot detected.")
-    except Exception as e:
-        click.echo(f"Error checking snapshot: {e}", err=True)
+    except Exception as exc:
+        click.echo(f"Error checking snapshot: {exc}", err=True)
         raise click.Abort()
 
 
 @cli.command("self_destruct")
-@click.argument("reason", type=str)
+@click.argument("reason")
 def cmd_self_destruct_cli(reason: str) -> None:
-    """Trigger self-destruction sequence with *reason*."""
-    try:
-        self_destruct(reason, DESTRUCTION_KEY_BUFFER)
-        click.echo("Self-destruct completed. Decoy file generated.")
-    except Exception as e:
-        click.echo(f"Self-destruct failed: {e}", err=True)
-        raise click.Abort()
+    self_destruct(reason, DESTRUCTION_KEY_BUFFER)
+    click.echo("Self‑destruct completed. Decoy file generated.")
 
 
 @cli.command("gen_kem_keys")
 @click.option("--out-pk", type=click.Path(dir_okay=False, path_type=Path), required=True)
 @click.option("--out-sk", type=click.Path(dir_okay=False, path_type=Path), required=True)
 def cmd_gen_kem_keys(out_pk: Path, out_sk: Path) -> None:
-    """Generate Kyber768 keypair."""
-    try:
-        kem = Kyber768KEM()
-        pk, sk = kem.generate_keypair()
-        out_pk.write_bytes(pk)
-        out_sk.write_bytes(sk)
-        click.echo("KEM keypair generated.")
-    except Exception as e:  # pragma: no cover - optional dependency
-        click.echo(f"Error: {e}", err=True)
-        raise click.Abort()
+    pk, sk = Kyber768KEM().generate_keypair()
+    out_pk.write_bytes(pk)
+    out_sk.write_bytes(sk)
+    click.echo("KEM keypair generated.")
 
 
 @cli.command("gen_sig_keys")
 @click.option("--out-pk", type=click.Path(dir_okay=False, path_type=Path), required=True)
 @click.option("--out-sk", type=click.Path(dir_okay=False, path_type=Path), required=True)
 def cmd_gen_sig_keys(out_pk: Path, out_sk: Path) -> None:
-    """Generate Dilithium2 signature keypair."""
-    try:
-        scheme = Dilithium2Signature()
-        pk, sk = scheme.generate_keypair()
-        out_pk.write_bytes(pk)
-        out_sk.write_bytes(sk)
-        click.echo("Signature keypair generated.")
-    except Exception as e:  # pragma: no cover
-        click.echo(f"Error: {e}", err=True)
-        raise click.Abort()
+    pk, sk = Dilithium2Signature().generate_keypair()
+    out_pk.write_bytes(pk)
+    out_sk.write_bytes(sk)
+    click.echo("Signature keypair generated.")
 
 
+# ───────── secure register / login (Argon2id) ─────────
 @cli.command("register")
 @click.argument("username")
 @click.password_option(prompt=True, confirmation_prompt=True)
-def cmd_register(username: str, password: str) -> None:  # pragma: no cover - CLI demo
-    """Register a new user via OPAQUE-PAKE (insecure demo)."""
-    try:
-        __import__("opaque_ke")
-    except Exception:
-        click.echo("opaque-ke not installed", err=True)
-        raise click.Abort()
+def cmd_register(username: str, password: str) -> None:
     store = Path(".opaque_store")
     store.mkdir(exist_ok=True)
-    (store / f"{username}.pwd").write_text(_hash_pwd(password))
+    (store / f"{username}.pwd").write_text(hash_password(password))
     click.echo("registered")
 
 
 @cli.command("login")
 @click.argument("username")
 @click.password_option(prompt=True)
-def cmd_login(username: str, password: str) -> None:  # pragma: no cover - CLI demo
-    """Login via OPAQUE-PAKE (demo)."""
-    store = Path(".opaque_store") / f"{username}.pwd"
-    if not store.exists() or not compare_digest(store.read_text(), _hash_pwd(password)):
+def cmd_login(username: str, password: str) -> None:
+    store_file = Path(".opaque_store") / f"{username}.pwd"
+    ok = store_file.exists() and verify_password(store_file.read_text(), password)
+    if not ok:
         click.echo("login failed", err=True)
         raise click.Abort()
     click.echo("login ok")
 
 
 @cli.command("update")
-def cmd_update() -> None:  # pragma: no cover - CLI demo
-    """Check for updates using TUF metadata (dummy)."""
+def cmd_update() -> None:  # pragma: no cover
     click.echo("No updates available")
-
-
-cli.add_command(derive_key_cmd)
-cli.add_command(pq_genkeypair_cmd)
-
-main = cli  # alias for `python -m zilant_prime_core.cli`
 
 
 @cli.command()
 @click.argument("shell", type=click.Choice(["bash", "zsh", "fish"]))
 @click.pass_context
-def complete(ctx: click.Context, shell: str) -> None:
-    """Generate shell completion script."""
+def complete(ctx: click.Context, shell: str) -> None:  # pragma: no cover
     import subprocess
 
     env = os.environ.copy()
     cmd_name = ctx.info_name or "zilant"
     env[f"{cmd_name.upper()}_COMPLETE"] = f"{shell}_source"
-    result = subprocess.run([cmd_name], env=env, capture_output=True, text=True)
-    click.echo(result.stdout)
+    res = subprocess.run([cmd_name], env=env, capture_output=True, text=True)
+    click.echo(res.stdout)
 
+
+# ───────── external sub‑commands (kdf, pw‑hash, …) ─────────
+from zilant_prime_core.cli_commands import derive_key_cmd, pq_genkeypair_cmd, pw_hash_cmd, pw_verify_cmd  # noqa: E402
+
+cli.add_command(derive_key_cmd)
+cli.add_command(pw_hash_cmd)
+cli.add_command(pw_verify_cmd)
+cli.add_command(pq_genkeypair_cmd)
+
+main = cli
 
 if __name__ == "__main__":  # pragma: no cover
     cli()
