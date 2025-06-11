@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
-name: Static Analysis
+name: Static Analysis
 
 on:
   pull_request:
@@ -18,9 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Semgrep
+      - name: Run Semgrep
         uses: returntocorp/semgrep-action@v1
         with:
           config: p/python
           generateSarif: true
-          publishSarif: true        # Semgrep сам публикует SARIF в Code Scanning
+          publishSarif: true
