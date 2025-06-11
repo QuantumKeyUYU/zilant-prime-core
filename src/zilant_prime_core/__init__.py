@@ -3,7 +3,14 @@
 
 __version__ = "0.1.1"
 
+__all__ = ["__version__"]
+
 import os
+
+from .cli import _abort  # NoReturn
+
+if os.environ.get("ZILANT_CI_IMPORT_HOOK"):
+    _abort("Unsafe import before guard!", code=99)  # pragma: no cover
 
 from .utils import root_guard
 

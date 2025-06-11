@@ -104,9 +104,14 @@ profile           = "black"
 line_length       = 120
 known_first_party = ["zilant_prime_core"]
 
+
+
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "C90", "B"]
+ignore = ["E402", "B904", "C901"]
+
 [tool.ruff]
-select      = ["E", "F", "W", "C90", "B"]
-ignore      = ["E402", "B904", "C901"]
 line-length = 120
 
 [tool.ruff.mccabe]
