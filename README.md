@@ -92,3 +92,49 @@ The following checks are performed at import time:
 - Active tracer via ``/proc/self/status``
 
 If triggered, the process terminates with exit code ``99``.
+
+## Breaking changes
+
+- Root detection now executes on import and can be bypassed via `ZILANT_ALLOW_ROOT`.
+- The PQ-crypto helpers were refactored; import paths may differ.
+
+Example bypass for testing:
+
+```bash
+export ZILANT_ALLOW_ROOT=1
+python -c "import zilant_prime_core"
+```
+
+`harden_linux()` prints nothing on success. You can call it explicitly:
+
+```bash
+python - <<'EOF'
+import zilant_prime_core
+zilant_prime_core.harden_linux()
+print("hardened")
+EOF
+```
+
+## Migration guide
+
+````python
+from zilant_prime_core.utils import pq_crypto
+
+kem = pq_crypto.HybridKEM()
+pk_pq, sk_pq, pk_x, sk_x = kem.generate_keypair()
+ct_pq, _ss_pq, epk, _ss_x, shared = kem.encapsulate((pk_pq, pk_x))
+ss = kem.decapsulate((sk_pq, sk_x), (ct_pq, epk, b""))
+````
+
+CLI registration and login via OPAQUE:
+
+```bash
+zilctl register --server https://auth.example --username alice
+zilctl login --server https://auth.example --username alice
+```
+
+## TODO Stage III
+
+- GUI demonstration (PyQt/Web)
+- Bug bounty policy updates and SECURITY.md
+- Docker image with `ENTRYPOINT=python -c "import zilant_prime_core; zilant_prime_core.harden_linux()"`

@@ -6,7 +6,7 @@ from __future__ import annotations
 import os
 from typing import List
 
-__all__ = ["split_secret", "recover_secret"]
+__all__ = ["split_secret", "recover_secret", "combine_signatures"]
 
 
 def split_secret(secret: bytes, *, parts: int = 1) -> List[bytes]:
@@ -34,3 +34,10 @@ def recover_secret(shards: List[bytes]) -> bytes:
     for shard in shards[1:]:
         secret = bytearray(a ^ b for a, b in zip(secret, shard, strict=True))
     return bytes(secret)
+
+
+def combine_signatures(sigs: List[bytes]) -> bytes:  # pragma: no cover - placeholder
+    """Combine partial FROST signatures (placeholder)."""
+    if not sigs:
+        raise ValueError("no signatures provided")
+    return sigs[0]

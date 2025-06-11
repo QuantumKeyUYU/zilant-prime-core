@@ -39,6 +39,10 @@ cmd = [
     "pandoc",
     *sources,
     "--pdf-engine=xelatex",  # работает с кириллицей
+    "-V",
+    "mainfont=DejaVu Serif",
+    "-V",
+    "monofont=DejaVu Sans Mono",
     "--toc",
     "-o",
     str(DIST / "whitepaper.pdf"),

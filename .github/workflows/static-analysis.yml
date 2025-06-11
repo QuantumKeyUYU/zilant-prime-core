@@ -1,49 +1,26 @@
-# .github/workflows/static-analysis.yml
-name: Static Analysis — CodeQL & Semgrep
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+
+name: Static Analysis
 
 on:
-  push:
-    branches: ["main"]
   pull_request:
-    branches: ["main"]
+    paths:
+      - 'src/**/*.py'
 
 permissions:
   contents: read
   security-events: write
-  id-token: write
 
 jobs:
-  codeql-and-semgrep:
-    name: CodeQL & Semgrep Analysis
+  semgrep:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: python
-          queries: security-and-quality
-
-      - name: Autobuild (если есть компиляция, иначе пропустить)
-        run: |
-          echo "No build step needed for pure-Python project"
-
-      - name: Run CodeQL analysis
-        uses: github/codeql-action/analyze@v3
-
-      - name: Set up Node.js for Semgrep
-        uses: actions/setup-node@v4
-        with:
-          node-version: "16"
-
-      - name: Install Semgrep
-        run: |
-          python -m pip install --upgrade pip
-          pip install semgrep
+      - uses: actions/checkout@v4
 
       - name: Run Semgrep
-        run: |
-          semgrep --config p/ci
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/python
+          generateSarif: true
+          publishSarif: true

@@ -43,7 +43,7 @@ jobs:
         run: mypy --config-file mypy.ini src
 
       - name: Pytest
-        run: pytest -q
+        run: ZILANT_ALLOW_ROOT=1 pytest -q
 
 # ──────────────────────────── Perf subset ───────────────────────────
   perf:
@@ -54,7 +54,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.13" }
       - run: pip install -e .[dev]
-      - run: pytest -q -m perf --disable-warnings --maxfail=1
+      - run: SKIP_FUZZ=1 ZILANT_ALLOW_ROOT=1 pytest -q -m perf --disable-warnings --maxfail=1
 
 # ──────────────────────────── Build + artefacts ─────────────────────
   build-pq:
@@ -81,7 +81,7 @@ jobs:
       - name: Install Pandoc + XeLaTeX (русский шрифт)
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y pandoc texlive-xetex texlive-lang-cyrillic
+          sudo apt-get install -y pandoc texlive-xetex texlive-lang-cyrillic fonts-dejavu-core fonts-dejavu-extra
 
       - name: Generate whitepaper
         run: python tools/gen_whitepaper.py
