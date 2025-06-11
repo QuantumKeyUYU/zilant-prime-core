@@ -65,7 +65,7 @@ class Window(QWidget):
                 self._run(["zilant", "unpack", str(self._file), "-d", out])
 
     def gen_sbom(self) -> None:
-        self._run(["syft", str(self._file or '.')])
+        self._run(["syft", str(self._file or ".")])
 
 
 def main() -> int:

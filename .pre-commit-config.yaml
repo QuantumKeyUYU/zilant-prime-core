@@ -10,8 +10,8 @@ repos:
         language_version: python3
 
   # Ruff – линтинг (pre-commit поддерживается через отдельный репо)
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.285
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
     hooks:
       - id: ruff
         name: Ruff (lint)

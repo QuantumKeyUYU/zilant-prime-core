@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import atheris
 import sys
 
+try:
+    import atheris
+except Exception:  # pragma: no cover - optional fuzz dep
+    print("Atheris not installed; skipping fuzz")
+    raise SystemExit(0)
+
 from zilant_prime_core.crypto import aead
-from zilant_prime_core.vdf import phase_vdf
 from zilant_prime_core.utils import self_watchdog
+from zilant_prime_core.vdf import phase_vdf
 
 
 def test_one_input(data: bytes) -> None:

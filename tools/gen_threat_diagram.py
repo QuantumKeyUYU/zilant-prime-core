@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -26,4 +25,3 @@ for line in SRC.read_text(encoding="utf-8").splitlines():
 
 DST.write_text("\n".join(lines), encoding="utf-8")
 print(f"Diagram written to {DST}")
-

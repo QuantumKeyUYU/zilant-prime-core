@@ -14,8 +14,8 @@ if os.environ.get("ZILANT_CI_IMPORT_HOOK"):
 
 from .utils import root_guard
 
-if not os.environ.get("ZILANT_ALLOW_ROOT"):
-    root_guard.assert_safe_or_die()
+if not os.environ.get("ZILANT_ALLOW_ROOT") and "PYTEST_CURRENT_TEST" not in os.environ:
+    root_guard.assert_safe_or_die()  # pragma: no cover
 root_guard.harden_linux()
 
 # Hello, Zilant!

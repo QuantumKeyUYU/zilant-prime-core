@@ -23,8 +23,8 @@ from zilant_prime_core.utils.screen_guard import ScreenGuardError, guard
 
 # ────────────────────────── helpers ──────────────────────────
 def _abort(msg: str, code: int = 1) -> NoReturn:  # ← NoReturn → mypy happy
-    click.echo(msg, err=True)
-    click.echo("Aborted", err=True)
+    click.echo(msg)
+    click.echo("Aborted")
     sys.exit(code)
 
 
