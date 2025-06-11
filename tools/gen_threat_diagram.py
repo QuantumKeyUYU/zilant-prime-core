@@ -23,5 +23,8 @@ for line in SRC.read_text(encoding="utf-8").splitlines():
     if inside:
         lines.append(line)
 
-DST.write_text("\n".join(lines), encoding="utf-8")
+if not lines:
+    raise SystemExit("Mermaid block not found in THREATS.md")
+
+DST.write_text("\n".join(lines) + "\n", encoding="utf-8")
 print(f"Diagram written to {DST}")
