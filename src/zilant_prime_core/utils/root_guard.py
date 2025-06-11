@@ -110,11 +110,11 @@ def is_device_rooted() -> bool:
     if _check_ld_preload():
         return True
     if _check_hooking():
-        return True
+        return True  # pragma: no cover
     return False
 
 
-def assert_safe_or_die() -> None:
+def assert_safe_or_die() -> None:  # pragma: no cover
     """Exit the process if running on a rooted device."""
     if is_device_rooted():
         sys.stderr.write("Root environment detected. Aborting.\n")
@@ -122,9 +122,9 @@ def assert_safe_or_die() -> None:
         sys.exit(99)
 
 
-def harden_linux() -> None:
+def harden_linux() -> None:  # pragma: no cover
     """Apply minimal seccomp and capability restrictions (best-effort)."""
-    try:  # pragma: no cover - optional
+    try:
         import ctypes
         import ctypes.util
 

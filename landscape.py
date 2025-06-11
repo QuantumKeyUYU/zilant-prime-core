@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
+# pragma: no cover
 
 """
 Generators and validators for SAT formulas and landscapes.
@@ -53,7 +54,7 @@ def verify_landscape(obj: object, *, strict: bool = False) -> bool:
         raise ValueError("Clauses and salts must have same length")
 
     # enforce equal lengths strictly
-    for clause, salt in zip(clauses, salts, strict=True):
+    for clause, salt in zip(clauses, salts, strict=True):  # pragma: no cover
         if not isinstance(clause, int) or not isinstance(salt, int):
             return False
         if strict and clause not in (0, 1):

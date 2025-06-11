@@ -118,6 +118,18 @@ print("hardened")
 EOF
 ```
 
+To run the full test suite and checks locally:
+
+```bash
+export ZILANT_ALLOW_ROOT=1
+pytest &&
+mypy src &&
+ruff check src tests &&
+black --check src tests &&
+coverage run -m pytest &&
+coverage report --fail-under=100
+```
+
 ## Migration guide
 
 ````python

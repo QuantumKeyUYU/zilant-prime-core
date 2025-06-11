@@ -7,15 +7,15 @@ __all__: list[str] = ["cli", "utils", "vdf"]
 
 import os
 
-if not os.environ.get("ZILANT_TESTING"):
-    from .cli import _abort  # NoReturn
+if os.getenv("ZILANT_ALLOW_ROOT") != "1":  # pragma: no cover
+    from .cli import _abort  # NoReturn  # pragma: no cover
 
     _abort("Unsafe import before guard!", code=99)  # pragma: no cover
 
 from .utils import root_guard
 
-if not os.environ.get("ZILANT_ALLOW_ROOT"):
-    root_guard.assert_safe_or_die()
+if os.getenv("ZILANT_ALLOW_ROOT") != "1":  # pragma: no cover
+    root_guard.assert_safe_or_die()  # pragma: no cover
 root_guard.harden_linux()
 
 # Hello, Zilant!

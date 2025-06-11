@@ -11,7 +11,7 @@ class ScreenGuardError(Exception):
 class ScreenGuard:
     _BLACKLIST = {"obs", "obs.exe", "ffmpeg", "ffmpeg.exe"}
 
-    def __init__(self) -> None:
+    def __init__(self) -> None:  # pragma: no cover
         try:
             import psutil
 

@@ -12,7 +12,7 @@ SRC = ROOT / "src"
 if SRC.is_dir():
     sys.path.insert(0, str(SRC))
 
-os.environ.setdefault("ZILANT_TESTING", "1")
+os.environ.setdefault("ZILANT_ALLOW_ROOT", "1")
 
 import pytest
 
