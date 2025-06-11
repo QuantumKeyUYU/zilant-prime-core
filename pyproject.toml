@@ -99,17 +99,17 @@ ext-modules = [
 line-length    = 120
 target-version = ["py310", "py311"]
 
-[tool.isort]
+[tool.lint.isort]
 profile           = "black"
 line_length       = 120
 known_first_party = ["zilant_prime_core"]
 
-[tool.ruff]
+[tool.lint.ruff]
 select      = ["E", "F", "W", "C90", "B"]
 ignore      = ["E402", "B904", "C901"]
 line-length = 120
 
-[tool.ruff.mccabe]
+[tool.lint.ruff.mccabe]
 max-complexity = 12
 
 [tool.mypy]

@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
 
+import os
 import sys
 from pathlib import Path
 
@@ -10,6 +11,8 @@ ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "src"
 if SRC.is_dir():
     sys.path.insert(0, str(SRC))
+
+os.environ.setdefault("ZILANT_TESTING", "1")
 
 import pytest
 

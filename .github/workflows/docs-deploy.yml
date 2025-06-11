@@ -7,13 +7,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Python
         uses: actions/setup-python@v4
         with: {python-version: '3.x'}
       - name: Install dependencies
         run: |
           pip install sphinx sphinx-rtd-theme
+      - name: Generate threat diagram
+        run: python tools/gen_threat_diagram.py
+      - name: Mermaid render
+        run: make mermaid -C docs
       - name: Build docs
         run: |
           cd docs

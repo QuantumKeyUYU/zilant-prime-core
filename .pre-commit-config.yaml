@@ -49,3 +49,13 @@ repos:
         additional_dependencies: ["types-requests"]
         language_version: python3
         files: ^src/zilant_prime_core/(?!scripts/).*\.py$
+
+  - repo: local
+    hooks:
+      - id: fuzz-local
+        name: Run Atheris fuzz (CI mode)
+        entry: python -m atheris --ci crypto/aead.py && \
+               python -m atheris --ci vdf/phase_vdf.py && \
+               python -m atheris --ci utils/self_watchdog.py
+        language: system
+        stages: [commit]

@@ -3,7 +3,14 @@
 
 __version__ = "0.1.1"
 
+__all__: list[str] = ["cli", "utils", "vdf"]
+
 import os
+
+if not os.environ.get("ZILANT_TESTING"):
+    from .cli import _abort  # NoReturn
+
+    _abort("Unsafe import before guard!", code=99)  # pragma: no cover
 
 from .utils import root_guard
 

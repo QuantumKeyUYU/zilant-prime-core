@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PQ_DIR = ROOT / "third_party" / "pqclean"
-OUT = ROOT / "whl"
+OUT = ROOT / "dist"
 OUT.mkdir(exist_ok=True)
 
 for setup_py in glob.glob(str(PQ_DIR / "**" / "setup.py"), recursive=True):

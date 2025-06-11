@@ -7,7 +7,7 @@ jobs:
   snap:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Snapcraft
         run: sudo snap install snapcraft --classic
       - name: Build Snap
@@ -20,7 +20,7 @@ jobs:
   flatpak:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup Flatpak
         run: |
           sudo apt-get update

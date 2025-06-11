@@ -1,0 +1,16 @@
+name: 🐛 Bug Bounty Report
+description: Report security vulnerabilities
+labels: ['security', 'bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Description of the vulnerability**
+  - type: input
+    id: severity
+    attributes:
+      label: Severity (P1/P2/P3)
+  - type: input
+    id: steps
+    attributes:
+      label: Reproduction steps

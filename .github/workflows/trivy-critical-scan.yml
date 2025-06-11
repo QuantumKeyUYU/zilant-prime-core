@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Set up job
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Генерируем SBOM и загружаем его как артефакт
       - name: Install Syft CLI
