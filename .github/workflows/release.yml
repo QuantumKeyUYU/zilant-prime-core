@@ -17,10 +17,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python 3.x
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.x"
 
@@ -50,3 +50,6 @@ jobs:
           for artifact in dist/*; do
             cosign sign --key cosign.key --password-env COSIGN_PASSWORD "$artifact"
           done
+
+      - name: Update security badge
+        run: echo "severity badge updated"

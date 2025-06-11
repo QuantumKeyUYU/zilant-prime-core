@@ -24,7 +24,11 @@ if not SRC.exists():
     print(f"⚠  {SRC.relative_to(ROOT)} not found — skip SoA generation")
     sys.exit(0)
 
-controls: list[dict[str, str]] = yaml.safe_load(SRC.read_text(encoding="utf-8"))
+data = yaml.safe_load(SRC.read_text(encoding="utf-8")) or {}
+if isinstance(data, dict) and "controls" in data:
+    controls: list[dict[str, str]] = data["controls"]
+else:
+    controls = data if isinstance(data, list) else []
 
 lines = ["# Statement of Applicability (ISO 27001:2022)\n"]
 for ctrl in controls:

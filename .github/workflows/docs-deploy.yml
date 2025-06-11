@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with: {python-version: '3.x'}
       - name: Install dependencies
         run: |
@@ -17,6 +17,7 @@ jobs:
       - name: Build docs
         run: |
           cd docs
+          make mermaid
           make html
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

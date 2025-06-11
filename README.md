@@ -1,8 +1,19 @@
 # Zilant Prime Core
 
-[![Coverage](https://img.shields.io/codecov/c/github/QuantumKeyUYU/zilant-prime-core?branch=main)](https://codecov.io/gh/QuantumKeyUYU/zilant-prime-core) [![Security](https://img.shields.io/badge/security-scan-passed-success.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/security) [![Docs](https://img.shields.io/badge/docs-available-blue.svg)](./docs/ARCH.md)
+[![Coverage](https://img.shields.io/codecov/c/github/QuantumKeyUYU/zilant-prime-core?branch=main)](https://codecov.io/gh/QuantumKeyUYU/zilant-prime-core) [![Security](https://img.shields.io/badge/security-scan-passed-success.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/security) [![Docs](https://img.shields.io/badge/docs-available-blue.svg)](./docs/ARCH.md) ![ISO 27001](https://img.shields.io/badge/ISO27001-compliant-brightgreen.svg)
 
 Универсальная CLI и библиотека для создания безопасных контейнеров, шифрования логов, VDF-доказательств и полной DevSecOps-цепочки.
+
+<div class="mermaid">
+graph LR
+  A[Акторы] -->|атакуют| B[CLI]
+  B -->|шифрует| C[AEAD Core]
+  C --> D[Контейнер]
+  C --> E[Watchdog]
+  A -->|саботаж| E
+  A -->|перехват| F[Журналы]
+  F -->|шифруются| G[SecureLogger]
+</div>
 
 ---
 

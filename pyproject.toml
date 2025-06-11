@@ -65,6 +65,7 @@ dev = [
   "filelock>=3.13,<4.0",
   "build",
   "twine",
+  "atheris>=2.1; python_version < '3.12'",
 ]
 pq = [
   "pqclean[kyber768]",
@@ -104,12 +105,22 @@ profile           = "black"
 line_length       = 120
 known_first_party = ["zilant_prime_core"]
 
+
+
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "C90", "B"]
+ignore = ["E402", "B904", "C901"]
+
+
+
 [tool.ruff]
-select      = ["E", "F", "W", "C90", "B"]
-ignore      = ["E402", "B904", "C901"]
 line-length = 120
 
-[tool.ruff.mccabe]
+[tool.lint]
+line-length = 120
+
+[tool.lint.mccabe]
 max-complexity = 12
 
 [tool.mypy]
