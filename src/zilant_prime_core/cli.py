@@ -394,6 +394,21 @@ def cmd_audit_verify(output_format: str | None = None) -> None:
     _emit({"valid": True}, output_format)
 
 
+@cli.group()
+def attest() -> None:
+    """TPM attestation helpers."""
+
+
+@attest.command("simulate")
+@click.option("--in-file", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+def cmd_attest_simulate(in_file: Path) -> None:
+    """Simulate TPM attestation of IN_FILE."""
+    from attestation import simulate_tpm_attestation
+
+    info = simulate_tpm_attestation(in_file.read_bytes())
+    _emit(info, "json")
+
+
 @cli.command()
 @click.argument("shell", type=click.Choice(["bash", "zsh", "fish"]))
 @click.pass_context
