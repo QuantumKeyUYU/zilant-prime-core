@@ -1,13 +1,12 @@
 # Security Policy
 
 ## Reporting a Vulnerability
-Please email [security@zilant.example.com](mailto:security@zilant.example.com) (PGP: `ABCD1234`).
-We respond within **48 hours**.
+If you believe you have found a security issue, please email
+[security@zilant.example.com](mailto:security@zilant.example.com)
+(PGP key fingerprint `ABCD1234`). Include steps to reproduce when possible.
 
-## Severity Levels
-- **P1** – remote code execution or key compromise.
-- **P2** – privilege escalation or data tampering.
-- **P3** – information disclosure or denial of service.
+We acknowledge reports within **48 hours** and will work with you on a
+coordinated disclosure timeline.
 
 ## Supported Versions
-- main branch
+Only the `main` branch is currently supported.
