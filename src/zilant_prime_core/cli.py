@@ -395,6 +395,51 @@ def cmd_audit_verify(output_format: str | None = None) -> None:
 
 
 @cli.group()
+def timelock() -> None:
+    """Time‑lock encryption helpers."""
+
+
+@timelock.command("lock")
+@click.option("--delay", type=int, required=True, metavar="SECONDS")
+@click.option("--in-file", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option("--out-file", type=click.Path(dir_okay=False, path_type=Path), required=True)
+def cmd_timelock_lock(delay: int, in_file: Path, out_file: Path) -> None:
+    """Lock IN_FILE for the given DELAY."""
+    from timelock import lock_file
+
+    lock_file(str(in_file), str(out_file), delay)
+    click.echo(str(out_file))
+
+
+@timelock.command("unlock")
+@click.option("--in-file", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option("--out-file", type=click.Path(dir_okay=False, path_type=Path), required=True)
+def cmd_timelock_unlock(in_file: Path, out_file: Path) -> None:
+    """Unlock IN_FILE previously locked via :func:`lock`."""
+    from timelock import unlock_file
+
+    unlock_file(str(in_file), str(out_file))
+    click.echo(str(out_file))
+
+
+@cli.group()
+def ledger() -> None:
+    """Audit ledger commands."""
+
+
+@ledger.command("show")
+@click.option("--last", "last_n", type=int, default=10, show_default=True, metavar="N")
+def cmd_ledger_show(last_n: int) -> None:
+    """Display last N ledger entries."""
+    path = Path("audit-ledger.jsonl")
+    if not path.exists():
+        return
+    lines = path.read_text(encoding="utf-8").splitlines()[-last_n:]
+    for line in lines:
+        click.echo(line)
+
+
+@cli.group()
 def attest() -> None:
     """TPM attestation helpers."""
 
