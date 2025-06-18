@@ -1,4 +1,5 @@
 """Key lifecycle utilities and audit log."""
+
 from __future__ import annotations
 
 import hashlib

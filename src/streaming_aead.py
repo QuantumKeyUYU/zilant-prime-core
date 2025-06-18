@@ -1,4 +1,5 @@
 """Streaming AEAD using XChaCha20-Poly1305 with PyNaCl fallback."""
+
 from __future__ import annotations
 
 try:  # pragma: no cover - executed at import time
