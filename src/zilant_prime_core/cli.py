@@ -88,6 +88,24 @@ def cli(ctx: click.Context, serve_metrics: int | None, vault_key: bytes | None) 
     ctx.obj = {"vault_key": vault_key}
 
 
+@cli.group()
+def key() -> None:
+    """Key management commands."""
+
+
+@key.command("rotate")
+@click.option("--days", type=int, required=True, metavar="DAYS", help="Rotation interval in days")
+@click.option("--in-key", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option("--out-key", type=click.Path(dir_okay=False, path_type=Path), required=True)
+def cmd_key_rotate(days: int, in_key: Path, out_key: Path) -> None:
+    """Rotate master key and save the result."""
+    from key_lifecycle import KeyLifecycle
+
+    new_key = KeyLifecycle.rotate_master_key(in_key.read_bytes(), days)
+    out_key.write_bytes(new_key)
+    click.echo(out_key)
+
+
 # ────────────────────────────── pack ──────────────────────────────
 @cli.command("pack")
 @click.argument("source", type=click.Path(exists=True, dir_okay=False, path_type=Path))
@@ -285,6 +303,24 @@ def cmd_login(username: str, password: str) -> None:
 @cli.command("update")
 def cmd_update() -> None:  # pragma: no cover
     click.echo("No updates available")
+
+
+@cli.group()
+def audit() -> None:
+    """Audit log commands."""
+
+
+@audit.command("verify")
+def cmd_audit_verify() -> None:
+    """Verify the integrity of the audit log."""
+    from key_lifecycle import AuditLog
+
+    log = AuditLog()
+    if log.verify_log():
+        click.echo("Audit log OK")
+    else:
+        click.echo("Audit log corrupted", err=True)
+        raise click.Abort()
 
 
 @cli.command()

@@ -30,6 +30,7 @@ dependencies = [
   "hvac>=2.3,<3.0",
   "flask>=2.2,<3.0",
   "prometheus-client>=0.16.0,<1.0",
+  "shamir>=0.1",
 ]
 
 [project.scripts]
