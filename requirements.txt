@@ -1,6 +1,7 @@
 argon2-cffi
-cryptography
+cryptography>=38.0.4
 flask
+pynacl>=1.5.0
 prometheus-client
 pytest
 pytest-timeout
