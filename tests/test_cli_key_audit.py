@@ -14,11 +14,23 @@ def test_cli_key_rotate(tmp_path):
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["key", "rotate", "--days", "2", "--in-key", str(in_key), "--out-key", str(out_key)],
+        [
+            "key",
+            "rotate",
+            "--days",
+            "2",
+            "--in-key",
+            str(in_key),
+            "--out-key",
+            str(out_key),
+            "--output-format",
+            "json",
+        ],
     )
     assert result.exit_code == 0
     expected = hashlib.blake2s((2).to_bytes(4, "big"), key=old).digest()
     assert out_key.read_bytes() == expected
+    assert out_key.name in result.output
 
 
 def test_cli_audit_verify(tmp_path, monkeypatch):
@@ -26,8 +38,9 @@ def test_cli_audit_verify(tmp_path, monkeypatch):
     log.append_event("E1")
     monkeypatch.chdir(tmp_path)
     runner = CliRunner()
-    res_ok = runner.invoke(cli, ["audit", "verify"])
+    res_ok = runner.invoke(cli, ["audit", "verify", "--output-format", "json"])
     assert res_ok.exit_code == 0
+    assert "valid" in res_ok.output
     (tmp_path / "audit.log").write_text("corrupt\n")
-    res_bad = runner.invoke(cli, ["audit", "verify"])
+    res_bad = runner.invoke(cli, ["audit", "verify", "--output-format", "json"])
     assert res_bad.exit_code != 0

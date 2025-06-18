@@ -33,6 +33,7 @@ dependencies = [
   "shamir>=0.1",
   "pynacl>=1.5,<2.0",
   "PyQt5>=5.15,<6.0",
+  "PyYAML>=6.0,<7.0",
 ]
 
 [project.scripts]
@@ -70,6 +71,8 @@ dev = [
   "twine",
   "atheris>=2.1; python_version < '3.12'",
   "pyinstaller>=6.0",
+  "types-PyYAML>=6.0",
+  "PyYAML>=6.0,<7.0",
 ]
 pq = [
   "pqclean[kyber768]",

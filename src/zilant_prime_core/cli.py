@@ -3,18 +3,51 @@
 from __future__ import annotations
 
 import binascii
+import json
 import os
 import sys
+import time
 from pathlib import Path
-from typing import NoReturn, cast
+from typing import Any, NoReturn, cast
 
 import click
+import yaml  # type: ignore
 
 from container import pack_file, unpack_file
 from zilant_prime_core.crypto.password_hash import hash_password, verify_password
 from zilant_prime_core.utils import VaultClient
 from zilant_prime_core.utils.anti_snapshot import detect_snapshot
 from zilant_prime_core.utils.counter import increment_counter, read_counter
+
+
+def add_complete_flag() -> None:
+    """Attach ``--install-completion`` option that prints the shell script."""
+
+    def _callback(ctx: click.Context, param: click.Parameter, value: bool) -> None:
+        if not value or ctx.resilient_parsing:
+            return
+        import subprocess
+
+        shell = os.environ.get("SHELL", "bash").split("/")[-1]
+        env = os.environ.copy()
+        cmd_name = ctx.info_name or "zilant"
+        env[f"{cmd_name.upper()}_COMPLETE"] = f"{shell}_source"
+        out = subprocess.run([cmd_name], env=env, capture_output=True, text=True)
+        click.echo(out.stdout)
+        ctx.exit()
+
+    cli.params.append(
+        click.Option(
+            ["--install-completion"],
+            is_flag=True,
+            expose_value=False,
+            is_eager=True,
+            help="Output shell completion script and exit",
+            callback=_callback,
+        )
+    )
+
+
 from zilant_prime_core.utils.device_fp import SALT_CONST, collect_hw_factors, compute_fp
 from zilant_prime_core.utils.pq_crypto import Dilithium2Signature, Kyber768KEM
 from zilant_prime_core.utils.recovery import DESTRUCTION_KEY_BUFFER, self_destruct
@@ -26,6 +59,16 @@ def _abort(msg: str, code: int = 1) -> NoReturn:  # ← NoReturn → mypy happy
     click.echo(msg)
     click.echo("Aborted")
     sys.exit(code)
+
+
+def _emit(data: dict[str, Any], fmt: str | None) -> None:
+    """Print ``data`` using given format."""
+    if fmt == "json":
+        click.echo(json.dumps(data))
+    elif fmt == "yaml":
+        click.echo(yaml.safe_dump(data))
+    else:
+        click.echo(next(iter(data.values())))
 
 
 def _ask_pwd(*, confirm: bool = False) -> str:
@@ -69,10 +112,10 @@ def _cleanup_old_file(container: Path) -> None:
 
 # ──────────────────────────────── CLI root ────────────────────────────────
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
-@click.option("--serve-metrics", type=int, metavar="PORT", help="Expose metrics on PORT")
+@click.option("--metrics-port", type=int, metavar="PORT", help="Expose metrics on PORT")
 @click.option("--vault-key", type=binascii.unhexlify, metavar="HEX", help="AES key for Vault")
 @click.pass_context
-def cli(ctx: click.Context, serve_metrics: int | None, vault_key: bytes | None) -> None:
+def cli(ctx: click.Context, metrics_port: int | None, vault_key: bytes | None) -> None:
     """Zilant Prime command‑line interface."""
     try:
         guard.assert_secure()
@@ -80,10 +123,10 @@ def cli(ctx: click.Context, serve_metrics: int | None, vault_key: bytes | None) 
         click.echo(f"Security check failed: {exc}", err=True)
         raise SystemExit(90)
 
-    if serve_metrics:
+    if metrics_port:
         from zilant_prime_core.health import start_server
 
-        start_server(serve_metrics)
+        start_server(metrics_port)
 
     ctx.obj = {"vault_key": vault_key}
 
@@ -97,13 +140,14 @@ def key() -> None:
 @click.option("--days", type=int, required=True, metavar="DAYS", help="Rotation interval in days")
 @click.option("--in-key", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
 @click.option("--out-key", type=click.Path(dir_okay=False, path_type=Path), required=True)
-def cmd_key_rotate(days: int, in_key: Path, out_key: Path) -> None:
+@click.option("--output-format", type=click.Choice(["json", "yaml"]), help="Format CLI output")
+def cmd_key_rotate(days: int, in_key: Path, out_key: Path, output_format: str | None) -> None:
     """Rotate master key and save the result."""
     from key_lifecycle import KeyLifecycle
 
     new_key = KeyLifecycle.rotate_master_key(in_key.read_bytes(), days)
     out_key.write_bytes(new_key)
-    click.echo(out_key)
+    _emit({"path": str(out_key)}, output_format)
 
 
 # ────────────────────────────── pack ──────────────────────────────
@@ -114,6 +158,7 @@ def cmd_key_rotate(days: int, in_key: Path, out_key: Path) -> None:
 @click.option("--vault-path", metavar="VAULT_PATH", help="Path in HashiCorp Vault")
 @click.option("--pq-pub", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option("--overwrite/--no-overwrite", default=False, show_default=True)
+@click.option("--output-format", type=click.Choice(["json", "yaml"]), help="Format CLI output")
 @click.pass_context
 def cmd_pack(  # noqa: C901  (covered by extensive tests)
     ctx: click.Context,
@@ -123,6 +168,7 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
     vault_path: str | None,
     pq_pub: Path | None,
     overwrite: bool,
+    output_format: str | None,
 ) -> None:
     from zilant_prime_core.metrics import metrics
 
@@ -150,12 +196,14 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
 
     # pack
     try:
+        start = time.perf_counter()
         with metrics.track("pack"):
             if pq_pub:
                 pack_file(source, dest, pwd.encode(), pq_public_key=pq_pub.read_bytes())
                 blob: bytes | None = None
             else:
                 blob = _pack_bytes(source, pwd, dest, overwrite)
+        metrics.encryption_duration_seconds.observe(time.perf_counter() - start)
     except FileExistsError:
         _abort(f"{dest.name} already exists")
     except Exception as exc:  # pragma: no cover
@@ -173,7 +221,8 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
             click.echo(f"Write error: {exc}", err=True)
             sys.exit(1)
 
-    click.echo(dest)
+    metrics.files_processed_total.inc()
+    _emit({"path": str(dest)}, output_format)
 
 
 # ────────────────────────────── unpack ──────────────────────────────
@@ -182,7 +231,10 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
 @click.option("-d", "--dest", metavar="DIR", type=click.Path(file_okay=False, path_type=Path))
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
 @click.option("--pq-sk", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-def cmd_unpack(container: Path, dest: Path | None, password: str | None, pq_sk: Path | None) -> None:
+@click.option("--output-format", type=click.Choice(["json", "yaml"]), help="Format CLI output")
+def cmd_unpack(
+    container: Path, dest: Path | None, password: str | None, pq_sk: Path | None, output_format: str | None
+) -> None:
     from zilant_prime_core.metrics import metrics
 
     pwd = _ask_pwd() if password == "-" else password or _abort("Missing password")
@@ -193,6 +245,7 @@ def cmd_unpack(container: Path, dest: Path | None, password: str | None, pq_sk: 
         _cleanup_old_file(container)
 
     try:
+        start = time.perf_counter()
         with metrics.track("unpack"):
             if pq_sk:
                 out_path = out_dir / container.stem
@@ -200,6 +253,7 @@ def cmd_unpack(container: Path, dest: Path | None, password: str | None, pq_sk: 
                 out = out_path
             else:
                 out = _unpack_bytes(container, out_dir, pwd)
+        metrics.encryption_duration_seconds.observe(time.perf_counter() - start)
     except FileExistsError:
         _abort("Destination path already exists")
     except ValueError as ve:
@@ -212,7 +266,8 @@ def cmd_unpack(container: Path, dest: Path | None, password: str | None, pq_sk: 
     except Exception:
         pass
 
-    click.echo(out)
+    metrics.files_processed_total.inc()
+    _emit({"path": str(out)}, output_format)
 
 
 # ─────────────────────── misc utility commands ───────────────────────
@@ -241,12 +296,13 @@ def cmd_incr_counter() -> None:
 @cli.command("sbom")
 @click.option("--output", type=click.Path(dir_okay=False, path_type=Path), default="sbom.json")
 @click.argument("target", type=click.Path(exists=True, path_type=Path), default=".")
-def cmd_sbom(output: Path, target: Path) -> None:
+@click.option("--output-format", type=click.Choice(["json", "yaml"]), help="Format CLI output")
+def cmd_sbom(output: Path, target: Path, output_format: str | None) -> None:
     """Generate SBOM for TARGET into OUTPUT."""
     import subprocess
 
     subprocess.run(["syft", "packages", str(target), "-o", f"cyclonedx-json={output}"], check=True)
-    click.echo(output)
+    _emit({"sbom": str(output)}, output_format)
 
 
 @cli.command("check_snapshot")
@@ -322,16 +378,20 @@ def audit() -> None:
 
 
 @audit.command("verify")
-def cmd_audit_verify() -> None:
+@click.option("--output-format", type=click.Choice(["json", "yaml"]), help="Format CLI output")
+def cmd_audit_verify(output_format: str | None = None) -> None:
     """Verify the integrity of the audit log."""
     from key_lifecycle import AuditLog
 
     log = AuditLog()
-    if log.verify_log():
-        click.echo("Audit log OK")
-    else:
-        click.echo("Audit log corrupted", err=True)
+    ok = log.verify_log()
+    if not ok:
+        if output_format:
+            _emit({"valid": False}, output_format)
+        else:
+            click.echo("Audit log corrupted", err=True)
         raise click.Abort()
+    _emit({"valid": True}, output_format)
 
 
 @cli.command()
@@ -354,6 +414,8 @@ cli.add_command(derive_key_cmd)
 cli.add_command(pw_hash_cmd)
 cli.add_command(pw_verify_cmd)
 cli.add_command(pq_genkeypair_cmd)
+
+add_complete_flag()
 
 main = cli
 

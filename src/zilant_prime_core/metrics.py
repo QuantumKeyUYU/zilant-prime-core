@@ -19,6 +19,14 @@ class Metrics:
             "Request duration in seconds",
             ["name"],
         )
+        self.files_processed_total: Counter = Counter(
+            "files_processed_total",
+            "Number of files processed",
+        )
+        self.encryption_duration_seconds: Histogram = Histogram(
+            "encryption_duration_seconds",
+            "Time spent encrypting/decrypting",
+        )
         self.inflight_requests: Gauge = Gauge("inflight_requests", "In-flight requests", ["name"])
 
     @contextmanager

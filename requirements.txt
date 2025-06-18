@@ -7,3 +7,4 @@ pytest
 pytest-timeout
 hypothesis
 PyQt5>=5.15
+PyYAML>=6.0

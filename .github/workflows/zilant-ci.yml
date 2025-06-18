@@ -16,6 +16,15 @@ jobs:
         with:
           python-version: '3.13'
       - run: pip install -e .[dev]
+      - name: Prometheus scrape test
+        run: |
+          python - <<'PY'
+          import urllib.request, time
+          from zilant_prime_core.health import start_server
+          start_server(8000)
+          time.sleep(0.2)
+          assert urllib.request.urlopen('http://localhost:8000/metrics').status == 200
+          PY
       - run: pre-commit run --all-files
       - run: ruff check .
       - run: black --check .
