@@ -2,10 +2,9 @@ from __future__ import annotations
 
 """Project configuration options."""
 
+import tomllib
 from pathlib import Path
 from typing import Any
-
-import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -13,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def _load_option(name: str, default: str) -> str:
     try:
         data = tomllib.loads((ROOT / "pyproject.toml").read_text())
-        return data.get("tool", {}).get("zilant", {}).get(name, default)
+        return str(data.get("tool", {}).get("zilant", {}).get(name, default))
     except Exception:
         return default
 

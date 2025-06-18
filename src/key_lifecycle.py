@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import secrets
 from pathlib import Path
-from typing import List
+from typing import List, cast
 
 import shamir
 
@@ -25,7 +25,7 @@ class KeyLifecycle:
             Derived session key bytes.
         """
         h = hashlib.blake2s(context.encode("utf-8"), key=master_key)
-        return h.digest()
+        return cast(bytes, h.digest())
 
     @staticmethod
     def rotate_master_key(old_key: bytes, days: int) -> bytes:
@@ -39,7 +39,7 @@ class KeyLifecycle:
             New master key bytes.
         """
         data = days.to_bytes(4, "big", signed=False)
-        return hashlib.blake2s(data, key=old_key).digest()
+        return cast(bytes, hashlib.blake2s(data, key=old_key).digest())
 
 
 def shard_secret(secret: bytes, n: int, t: int) -> List[bytes]:
@@ -67,7 +67,7 @@ def shard_secret(secret: bytes, n: int, t: int) -> List[bytes]:
         return accum
 
     shares = [i.to_bytes(1, "big") + eval_at(i).to_bytes(16, "big") for i in range(1, n + 1)]
-    return shares
+    return cast(List[bytes], shares)
 
 
 def recover_secret(shards: List[bytes]) -> bytes:
@@ -80,7 +80,7 @@ def recover_secret(shards: List[bytes]) -> bytes:
         Reconstructed secret bytes.
     """
     if len(shards) < 1:
-        return b""
+        return cast(bytes, b"")
     points = []
     for sh in shards:
         if len(sh) < 17:
@@ -90,7 +90,7 @@ def recover_secret(shards: List[bytes]) -> bytes:
         points.append((x, y))
     secret_int = shamir.recover_secret(points)
     length = (secret_int.bit_length() + 7) // 8
-    return secret_int.to_bytes(length, "big")
+    return cast(bytes, secret_int.to_bytes(length, "big"))
 
 
 class AuditLog:
@@ -108,10 +108,10 @@ class AuditLog:
 
     def _last_digest(self) -> bytes:
         if not self.path.exists():
-            return b""
+            return cast(bytes, b"")
         *_, last = self.path.read_bytes().splitlines()
         hex_digest = last.split(b" ", 1)[0]
-        return bytes.fromhex(hex_digest.decode())
+        return cast(bytes, bytes.fromhex(hex_digest.decode()))
 
     def verify_log(self) -> bool:
         """Verify integrity of the log."""

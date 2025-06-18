@@ -3,7 +3,7 @@ from __future__ import annotations
 """Post-quantum and hybrid cryptography helpers."""
 
 import os
-from typing import Tuple
+from typing import Tuple, cast
 
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
@@ -38,7 +38,7 @@ def hybrid_decrypt(
     epk = enc[ct_len : ct_len + 32]
     nonce = enc[ct_len + 32 :]
     shared = kem.decapsulate(private_key, (ct_pq, epk, b""))
-    return ChaCha20Poly1305(shared).decrypt(nonce, ciphertext, aad)
+    return cast(bytes, ChaCha20Poly1305(shared).decrypt(nonce, ciphertext, aad))
 
 
 try:  # pragma: no cover - optional dependency
@@ -55,8 +55,8 @@ def dual_sign(message: bytes, ed25519_sk: bytes, dilithium3_sk: bytes) -> bytes:
     ed_sig = ed25519.Ed25519PrivateKey.from_private_bytes(ed25519_sk).sign(message)
     if dilithium3 is None:
         raise RuntimeError("Dilithium3 not installed")
-    pq_sig = dilithium3.sign(message, dilithium3_sk)  # type: ignore[no-any-return]
-    return ed_sig + pq_sig
+    pq_sig = cast(bytes, dilithium3.sign(message, dilithium3_sk))  # type: ignore[no-any-return]
+    return cast(bytes, ed_sig + pq_sig)
 
 
 def dual_verify(

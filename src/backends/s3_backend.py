@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import cast
 
 import boto3
 
@@ -23,4 +24,4 @@ def retrieve(uri: str) -> bytes:
     key = uri[len(prefix) :]
     client = boto3.client("s3")
     obj = client.get_object(Bucket=BUCKET, Key=key)
-    return obj["Body"].read()
+    return cast(bytes, obj["Body"].read())
