@@ -238,6 +238,17 @@ def cmd_incr_counter() -> None:
     click.echo(f"Counter incremented, new value: {read_counter()}")
 
 
+@cli.command("sbom")
+@click.option("--output", type=click.Path(dir_okay=False, path_type=Path), default="sbom.json")
+@click.argument("target", type=click.Path(exists=True, path_type=Path), default=".")
+def cmd_sbom(output: Path, target: Path) -> None:
+    """Generate SBOM for TARGET into OUTPUT."""
+    import subprocess
+
+    subprocess.run(["syft", "packages", str(target), "-o", f"cyclonedx-json={output}"], check=True)
+    click.echo(output)
+
+
 @cli.command("check_snapshot")
 def cmd_check_snapshot() -> None:
     try:

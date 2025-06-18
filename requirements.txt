@@ -6,3 +6,4 @@ prometheus-client
 pytest
 pytest-timeout
 hypothesis
+PyQt5>=5.15

@@ -32,3 +32,4 @@ atheris>=2.1.0; python_version < "3.12"
 # Метрики и веб-сервер
 flask>=2.2.0
 prometheus-client>=0.16.0
+pyinstaller>=6.0
