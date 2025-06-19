@@ -1,5 +1,4 @@
 import hashlib
-
 from click.testing import CliRunner
 
 from key_lifecycle import AuditLog

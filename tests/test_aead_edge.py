@@ -2,11 +2,10 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 import os
-import sys
-from types import ModuleType
-
 import pytest
+import sys
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+from types import ModuleType
 
 from src.aead import PQAEAD, AEADInvalidTagError, decrypt_chacha20_poly1305
 

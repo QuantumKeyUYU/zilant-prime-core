@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 import json
-
 import pytest
 
 import container

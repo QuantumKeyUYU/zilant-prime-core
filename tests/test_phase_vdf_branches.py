@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: MIT
 
 import hashlib
-
 import pytest
 
 from zilant_prime_core.vdf.phase_vdf import (

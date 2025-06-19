@@ -1,5 +1,4 @@
 import os
-
 import pytest
 
 pytest.importorskip("PyQt5.QtWidgets")

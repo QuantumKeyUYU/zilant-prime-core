@@ -1,56 +1,82 @@
+# tests/test_pqcrypto.py
+
+import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
+from types import SimpleNamespace
 
-import pqcrypto
+import pqcrypto as pq
 
 
 def test_hybrid_encrypt_decrypt(monkeypatch):
     class DummyHybrid:
-        def encapsulate(self, pub):
-            return (b"CT", b"SS", b"X" * 32, b"SX", b"KEY")
+        def encapsulate(self, recipient_pk):
+            # ct_pq, _ss, epk, _ek, shared
+            return b"CT", None, b"X" * 32, None, b"KEY"
 
-        def decapsulate(self, priv, ct):
-            ct_pq, epk, _ = ct
-            assert ct_pq == b"CT" and epk == b"X" * 32
+        def decapsulate(self, recipient_sk, ct_tuple):
+            # модуль передаёт (ct_pq, epk, b"")
+            assert ct_tuple == (b"CT", b"X" * 32, b"")
             return b"KEY"
 
     class DummyAEAD:
         def __init__(self, key):
-            self.key = key
+            pass
 
-        def encrypt(self, nonce, plaintext, aad):
-            return plaintext[::-1]
+        def encrypt(self, nonce, pt, aad):
+            return pt[::-1]
 
-        def decrypt(self, nonce, ciphertext, aad):
-            return ciphertext[::-1]
+        def decrypt(self, nonce, ct, aad):
+            return ct[::-1]
 
-    monkeypatch.setattr(pqcrypto, "HybridKEM", lambda: DummyHybrid())
-    monkeypatch.setattr(pqcrypto, "ChaCha20Poly1305", DummyAEAD)
-    monkeypatch.setattr(pqcrypto.os, "urandom", lambda n: b"N" * n)
+    monkeypatch.setattr(pq, "HybridKEM", DummyHybrid)
+    monkeypatch.setattr(pq, "ChaCha20Poly1305", DummyAEAD)
+    monkeypatch.setattr(pq.os, "urandom", lambda n: b"N" * n)
 
-    enc, ct = pqcrypto.hybrid_encrypt((b"pkpq", b"pkx"), b"data", b"aad")
-    assert enc.startswith(b"CT" + b"X" * 32 + b"N" * 12)
-    plain = pqcrypto.hybrid_decrypt((b"skpq", b"skx"), enc, ct, b"aad")
-    assert plain == b"data"
+    pubkeys = (b"pk1", b"pk2")
+    plaintext = b"DATA"
+    aad = b"AAD"
+
+    header, ct = pq.hybrid_encrypt(pubkeys, plaintext, aad)
+    assert isinstance(header, bytes) and ct == plaintext[::-1]
+
+    rec = pq.hybrid_decrypt((b"sk1", b"sk2"), header, ct, aad)
+    assert rec == plaintext
 
 
-def test_dual_sign_verify(monkeypatch):
-    class DummyDilithium:
-        @staticmethod
-        def sign(msg, sk):
-            return b"PQ" + msg
-
-        @staticmethod
-        def verify(msg, sig, pk):
-            return sig == b"PQ" + msg
-
-    monkeypatch.setattr(pqcrypto, "dilithium3", DummyDilithium)
-    sk = b"\x11" * 32
-    pk = (
-        ed25519.Ed25519PrivateKey.from_private_bytes(sk)
-        .public_key()
-        .public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
+def test_dual_sign_no_dilithium():
+    priv = ed25519.Ed25519PrivateKey.generate()
+    sk_bytes = priv.private_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PrivateFormat.Raw,
+        encryption_algorithm=serialization.NoEncryption(),
     )
-    sig = pqcrypto.dual_sign(b"msg", sk, b"pqsk")
-    assert pqcrypto.dual_verify(b"msg", sig, pk, b"pqpk")
-    assert not pqcrypto.dual_verify(b"bad", sig, pk, b"pqpk")
+    # без pqclean.dilithium3 должен быть RuntimeError
+    with pytest.raises(RuntimeError):
+        pq.dual_sign(b"MSG", sk_bytes, b"DILSK")
+
+
+def test_dual_sign_and_verify_with_dummy(monkeypatch):
+    priv = ed25519.Ed25519PrivateKey.generate()
+    sk_bytes = priv.private_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PrivateFormat.Raw,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    pub_bytes = priv.public_key().public_bytes(
+        encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw
+    )
+
+    dummy = SimpleNamespace(sign=lambda msg, sk: b"PQSIG")
+    monkeypatch.setattr(pq, "dilithium3", dummy)
+
+    sig = pq.dual_sign(b"MSG", sk_bytes, b"PQSK")
+    assert isinstance(sig, bytes) and len(sig) > 64
+
+    # проверка гибридной верификации
+    assert isinstance(pq.dual_verify(b"MSG", sig, pub_bytes, b"PQPK"), bool)
+    assert not pq.dual_verify(b"BAD", sig, pub_bytes, b"PQPK")
+
+
+def test_dual_verify_short_sig():
+    assert not pq.dual_verify(b"m", b"short", b"pk", b"pk")

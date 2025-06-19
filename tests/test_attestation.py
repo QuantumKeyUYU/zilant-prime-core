@@ -1,5 +1,4 @@
 import json
-
 from click.testing import CliRunner
 
 from attestation import simulate_tpm_attestation

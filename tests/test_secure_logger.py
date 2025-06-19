@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
 import base64
 import secrets
-
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from zilant_prime_core.utils.secure_logging import SecureLogger

@@ -4,7 +4,6 @@
 # tests/test_metadata_extra.py
 
 import json
-
 import pytest
 
 from zilant_prime_core.container.metadata import (

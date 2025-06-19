@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
-import os
-
 import hvac
+import os
 import pytest
 
 from zilant_prime_core.utils.vault_client import VaultClient

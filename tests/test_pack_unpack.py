@@ -1,8 +1,7 @@
 import os
-from pathlib import Path
-
 import pytest
 from cryptography.exceptions import InvalidTag
+from pathlib import Path
 
 from container import pack_file, unpack_file
 from zilant_prime_core.utils import pq_crypto

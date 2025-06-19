@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: MIT
 
 import os
-
 import pytest
 
 from zilant_prime_core.crypto.aead import (

@@ -1,6 +1,5 @@
-import time
-
 import pytest
+import time
 
 from kdf import derive_key
 

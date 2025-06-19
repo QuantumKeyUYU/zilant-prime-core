@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MIT
 
 import json
-
 import pytest
 
 from zilant_prime_core.container.metadata import MetadataError, deserialize_metadata, serialize_metadata

@@ -2,9 +2,8 @@
 # SPDX-License-Identifier: MIT
 
 import os
-from pathlib import Path
-
 from click.testing import CliRunner
+from pathlib import Path
 
 from zilant_prime_core.cli import cli
 

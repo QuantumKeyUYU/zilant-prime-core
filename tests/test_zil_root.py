@@ -4,7 +4,6 @@
 # tests/test_zil_root.py
 
 import json
-
 import pytest
 
 from zil import SelfDestructError, pack_zil, unpack_zil

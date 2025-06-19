@@ -3,7 +3,6 @@
 
 # tests/test_phase_vdf_additional.py
 import hashlib
-
 import pytest
 
 from zilant_prime_core.vdf.phase_vdf import (  # :contentReference[oaicite:2]{index=2}

@@ -1,7 +1,6 @@
+import pytest
 import subprocess
 from pathlib import Path
-
-import pytest
 
 
 @pytest.mark.skipif(not Path("ui/dist/zilant-ui").exists(), reason="ui not built")
