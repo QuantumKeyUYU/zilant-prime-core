@@ -4,9 +4,8 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Iterator, cast
-
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
+from typing import Iterator, cast
 
 __all__ = ["metrics", "Metrics"]
 
@@ -18,6 +17,14 @@ class Metrics:
             "request_duration_seconds",
             "Request duration in seconds",
             ["name"],
+        )
+        self.files_processed_total: Counter = Counter(
+            "files_processed_total",
+            "Number of files processed",
+        )
+        self.encryption_duration_seconds: Histogram = Histogram(
+            "encryption_duration_seconds",
+            "Time spent encrypting/decrypting",
         )
         self.inflight_requests: Gauge = Gauge("inflight_requests", "In-flight requests", ["name"])
 

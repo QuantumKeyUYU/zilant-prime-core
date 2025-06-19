@@ -2,9 +2,8 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 import os
-import time
-
 import pytest
+import time
 
 from utils.entropy import get_random_bytes
 

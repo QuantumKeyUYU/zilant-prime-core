@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
-from types import SimpleNamespace
-
 import pytest
+from types import SimpleNamespace
 
 import zilant_prime_core.utils.pq_crypto as pq
 

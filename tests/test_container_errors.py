@@ -1,7 +1,6 @@
 import json
-from pathlib import Path
-
 import pytest
+from pathlib import Path
 
 from container import pack_file, unpack_file
 

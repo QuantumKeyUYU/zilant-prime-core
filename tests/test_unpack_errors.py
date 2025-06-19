@@ -3,9 +3,8 @@
 
 # tests/test_unpack_errors.py
 
-import struct
-
 import pytest
+import struct
 
 from zilant_prime_core.container.unpack import UnpackError, unpack
 from zilant_prime_core.utils.constants import HEADER_FMT, MAGIC, VERSION

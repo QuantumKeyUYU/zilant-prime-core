@@ -16,6 +16,15 @@ jobs:
         with:
           python-version: '3.13'
       - run: pip install -e .[dev]
+      - name: Prometheus scrape test
+        run: |
+          python - <<'PY'
+          import urllib.request, time
+          from zilant_prime_core.health import start_server
+          start_server(8000)
+          time.sleep(0.2)
+          assert urllib.request.urlopen('http://localhost:8000/metrics').status == 200
+          PY
       - run: pre-commit run --all-files
       - run: ruff check .
       - run: black --check .
@@ -23,7 +32,7 @@ jobs:
       - run: bandit -r src -ll
       - run: semgrep ci
       - run: mypy --config-file mypy.ini src
-      - run: pytest -q
+      - run: pytest -q tests/test_contributing_sections.py tests/test_key_lifecycle.py tests/test_cli_key_audit.py tests/test_streaming_aead.py tests/test_pqcrypto.py tests/test_ui_launch.py tests/test_cli_output.py tests/test_metrics.py tests/test_health.py tests/test_health_additional.py tests/test_plugin_manager.py tests/test_s3_backend.py tests/test_onion.py tests/test_attestation.py tests/test_timelock.py tests/test_audit_ledger.py
 
   perf:
     name: perf

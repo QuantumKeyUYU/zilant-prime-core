@@ -3,10 +3,9 @@
 
 import base64
 import sys
+from click.testing import CliRunner
 from pathlib import Path
 from types import SimpleNamespace
-
-from click.testing import CliRunner
 
 from zilant_prime_core.cli_commands import derive_key_cmd, pq_genkeypair_cmd
 from zilant_prime_core.crypto_core import derive_key_argon2id

@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 import hashlib
-
 import pytest
 
 from crypto_core import hash_sha3

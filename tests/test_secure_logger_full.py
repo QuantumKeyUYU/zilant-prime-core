@@ -2,9 +2,8 @@
 # SPDX-License-Identifier: MIT
 
 import os
-import secrets
-
 import pytest
+import secrets
 
 import zilant_prime_core.utils.secure_logging as secure_logging
 

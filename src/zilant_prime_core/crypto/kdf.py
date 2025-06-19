@@ -11,10 +11,9 @@ __all__ = [
     "generate_salt",
 ]
 
+import argon2.low_level as a2
 import os
 from typing import cast
-
-import argon2.low_level as a2
 
 from zilant_prime_core.crypto.g_new import G_new
 from zilant_prime_core.utils.constants import DEFAULT_KEY_LENGTH, DEFAULT_SALT_LENGTH

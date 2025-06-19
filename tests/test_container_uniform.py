@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
 import json
-import secrets
-
 import pytest
+import secrets
 
 from zilant_prime_core import uniform_container as container
 

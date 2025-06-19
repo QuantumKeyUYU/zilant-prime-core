@@ -4,7 +4,6 @@
 # tests/test_g_new.py
 
 import math
-
 import pytest
 
 from zilant_prime_core.crypto.g_new import G_new, GNewError

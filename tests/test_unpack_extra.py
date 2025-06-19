@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MIT
 
 import importlib
-
 import pytest
 
 # Загружаем сам модуль unpack, чтобы патчить его переменные

@@ -3,7 +3,6 @@
 
 import json
 import os
-
 import pytest
 
 from zilant_prime_core.container.metadata import (

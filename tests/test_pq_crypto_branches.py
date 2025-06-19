@@ -4,9 +4,8 @@
 # tests/test_pq_crypto_branches.py
 
 import importlib
-import sys
-
 import pytest
+import sys
 
 # Импортируем как отдельный модуль — путь подстрой под себя
 import zilant_prime_core.utils.pq_crypto as pq

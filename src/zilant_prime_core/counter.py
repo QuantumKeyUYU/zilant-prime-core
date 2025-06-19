@@ -9,12 +9,11 @@ import hashlib
 import hmac
 import json
 import os
+import requests
 import time
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from pathlib import Path
 from typing import Optional, cast
-
-import requests
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 
 class SecurityError(Exception):

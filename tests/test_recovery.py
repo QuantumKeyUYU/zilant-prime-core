@@ -1,6 +1,5 @@
-from pathlib import Path
-
 import pytest
+from pathlib import Path
 
 from zilant_prime_core.utils.recovery import DECOY_FILE, DESTRUCTION_KEY_BUFFER, LOG_ENC_FILE, LOG_FILE, self_destruct
 

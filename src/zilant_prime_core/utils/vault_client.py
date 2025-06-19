@@ -3,10 +3,9 @@
 
 from __future__ import annotations
 
+import hvac
 import os
 from typing import Any
-
-import hvac
 
 __all__ = ["VaultClient"]
 

@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
-import secrets
-
 import pytest
+import secrets
 
 from src.container import pack, pack_file, unpack, unpack_file
 

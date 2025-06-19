@@ -4,9 +4,8 @@
 
 from __future__ import annotations
 
-from types import SimpleNamespace
-
 import pytest
+from types import SimpleNamespace
 
 from landscape import verify_landscape
 

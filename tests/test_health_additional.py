@@ -8,14 +8,16 @@ def test_health_endpoints(monkeypatch):
     monkeypatch.setattr(health.time, "sleep", lambda n: None)
     with health.app.test_client() as c:
         assert c.get("/healthz").data == b"ok"
-        assert c.get("/metrics").status_code == 200
+        metrics_resp = c.get("/metrics")
+        assert metrics_resp.status_code == 200
+        assert b"files_processed_total" in metrics_resp.data
         assert c.get("/pprof?duration=0").status_code == 200
 
 
 def test_start_server(monkeypatch):
     called = {}
 
-    def fake_run(port):
+    def fake_run(port, **kwargs):
         called["port"] = port
 
     monkeypatch.setattr(health.app, "run", fake_run)

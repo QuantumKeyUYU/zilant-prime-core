@@ -3,8 +3,9 @@
 
 import threading
 import time
-
 from flask import Flask, Response
+
+from .metrics import metrics
 
 app = Flask(__name__)
 
@@ -16,7 +17,7 @@ def healthz() -> Response:
 
 @app.route("/metrics")
 def metrics_endpoint() -> Response:
-    return Response("metric 1 1\n", mimetype="text/plain")
+    return Response(metrics.export(), mimetype="text/plain")
 
 
 @app.route("/pprof")
@@ -26,7 +27,7 @@ def pprof() -> Response:
 
 
 def start_server(port: int) -> threading.Thread:
-    thread = threading.Thread(target=app.run, kwargs={"port": port})
+    thread = threading.Thread(target=app.run, kwargs={"port": port, "use_reloader": False})
     thread.daemon = True
     thread.start()
     return thread

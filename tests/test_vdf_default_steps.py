@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MIT
 
 import hashlib
-
 import pytest
 
 from zilant_prime_core.vdf.vdf import generate_posw_sha256, verify_posw_sha256

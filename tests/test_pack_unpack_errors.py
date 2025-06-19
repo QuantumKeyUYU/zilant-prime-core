@@ -5,9 +5,8 @@ import importlib
 
 # tests/test_pack_unpack_errors.py
 import json
-from pathlib import Path
-
 import pytest
+from pathlib import Path
 
 from zilant_prime_core.container.pack import pack
 from zilant_prime_core.container.unpack import UnpackError, unpack

@@ -1,0 +1,24 @@
+name: lint docs
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      - run: npm install -g @mermaid-js/mermaid-cli
+      - run: pip install -e .[docs]
+      - name: Build docs
+        run: make docs
+      - name: Verify docs files
+        run: |
+          test -f SECURITY.md
+          test -f .github/ISSUE_TEMPLATE/security_report.yml

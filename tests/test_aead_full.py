@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 import os
-
 import pytest
 
 from src.aead import decrypt, decrypt_chacha20_poly1305, encrypt, encrypt_chacha20_poly1305

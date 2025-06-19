@@ -21,3 +21,5 @@ help:
 
 mermaid:
 	python ../tools/gen_threat_diagram.py
+	mkdir -p _static
+	python ../tools/render_mermaid.py architecture/key_lifecycle.mmd _static/key_lifecycle.png

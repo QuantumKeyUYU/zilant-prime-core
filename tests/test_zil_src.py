@@ -4,9 +4,8 @@
 # tests/test_zil_src.py
 
 import json
-import struct
-
 import pytest
+import struct
 
 from src.zil import SelfDestructError, pack_zill
 from src.zil import unpack_zil as unpack_src

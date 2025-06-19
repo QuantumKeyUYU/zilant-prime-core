@@ -1,5 +1,4 @@
 import binascii
-
 import pytest
 
 import zilant_prime_core.cli as cli_mod

@@ -3,7 +3,6 @@
 
 import base64
 import json
-
 import pytest
 
 from zilant_prime_core.counter import DistributedCounter, SecurityError

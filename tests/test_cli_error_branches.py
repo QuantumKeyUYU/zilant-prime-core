@@ -4,7 +4,6 @@
 
 import builtins
 import os
-
 from click.testing import CliRunner
 
 from zilant_prime_core.cli import cli

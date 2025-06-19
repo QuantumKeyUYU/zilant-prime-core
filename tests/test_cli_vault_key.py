@@ -1,8 +1,7 @@
 import binascii
 import os
-import sys
-
 import pytest
+import sys
 
 os.environ.setdefault("ZILANT_ALLOW_ROOT", "1")
 import hvac

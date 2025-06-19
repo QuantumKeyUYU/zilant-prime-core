@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 import os
-
 import pytest
 
 import zilant_prime_core.utils.self_watchdog as wd

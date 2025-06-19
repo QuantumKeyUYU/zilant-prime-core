@@ -2,9 +2,8 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 import json
-import secrets
-
 import pytest
+import secrets
 
 from src import container
 
