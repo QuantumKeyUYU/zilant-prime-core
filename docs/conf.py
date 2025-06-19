@@ -29,8 +29,11 @@ extensions = [
     "sphinxcontrib.mermaid",
 ]
 
+mermaid_cmd = "npx -y @mermaid-js/mermaid-cli"
+mermaid_output_format = "png"
+
 templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "THREATS.md"]
 
 
 # -- Options for HTML output -------------------------------------------------

@@ -6,7 +6,7 @@ Adversaries
 
 - **A1 – Insider developer**: contributor with repository access who may inject malicious code.
 - **A2 – Compromised CI/CD**: attacker gaining control over the automation pipeline.
-- **A3 – Stolen credentials**: leaked Vault or cosign keys used outside the organisation.
+- **A3 – Stolen cosign keys**: leaked signing material or Vault tokens used outside the organisation.
 - **A4 – Malicious dependency**: third‑party package or tool shipping vulnerable code.
 - **A5 – Tampering user**: someone modifying artefacts or logs after build.
 
@@ -14,8 +14,8 @@ Security objectives
 -------------------
 
 - **C1 – Code integrity**: prevent unauthorised changes to the source.
-- **C2 – Confidentiality of secrets**: keep Vault tokens and keys encrypted.
-- **C3 – Traceability**: preserve audit logs of every build step.
+- **C2 – Traceable logs via audit.log Merkle proofs**: detect tampering after release.
+- **C3 – Confidentiality of secrets**: keep Vault tokens and cosign keys encrypted.
 - **C4 – Reproducibility**: anyone can rebuild identical artefacts from the same tag.
 - **C5 – Vulnerability free**: ship images that pass SBOM scanning.
 
@@ -42,15 +42,20 @@ Asset / Threat / Control
      - reproducible build, cosign signatures
    * - Logs
      - A5
-     - AES-GCM secure logger
+     - C2: Merkle-chained ``audit.log`` with AES-GCM SecureLogger
+
+Controls
+--------
 
 .. mermaid::
 
-   graph LR
-     A[Акторы] -->|атакуют| B[CLI]
-     B -->|шифрует| C[AEAD Core]
-     C --> D[Контейнер]
-     C --> E[Watchdog]
-     A -->|саботаж| E
-     A -->|перехват| F[Журналы]
-     F -->|шифруются| G[SecureLogger]
+   flowchart TD
+       Root --> Container
+       Container --> Session
+       Session --> Destroy
+
+To export a PNG fallback of the diagram, run::
+
+   npx mmdc -i docs/architecture/key_lifecycle.mmd -o docs/_static/key_lifecycle.png
+
+Then add ``docs/_static/key_lifecycle.png`` to version control if required.

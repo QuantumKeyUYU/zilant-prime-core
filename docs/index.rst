@@ -17,5 +17,5 @@ documentation for details.
 
 
    api/autogen
-   THREATS
+   THREATS.rst
    architecture/index
