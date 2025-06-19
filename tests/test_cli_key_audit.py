@@ -14,6 +14,8 @@ def test_cli_key_rotate(tmp_path):
     result = runner.invoke(
         cli,
         [
+            "--output",
+            "json",
             "key",
             "rotate",
             "--days",
@@ -22,8 +24,6 @@ def test_cli_key_rotate(tmp_path):
             str(in_key),
             "--out-key",
             str(out_key),
-            "--output-format",
-            "json",
         ],
     )
     assert result.exit_code == 0
@@ -37,9 +37,9 @@ def test_cli_audit_verify(tmp_path, monkeypatch):
     log.append_event("E1")
     monkeypatch.chdir(tmp_path)
     runner = CliRunner()
-    res_ok = runner.invoke(cli, ["audit", "verify", "--output-format", "json"])
+    res_ok = runner.invoke(cli, ["--output", "json", "audit", "verify"])
     assert res_ok.exit_code == 0
     assert "valid" in res_ok.output
     (tmp_path / "audit.log").write_text("corrupt\n")
-    res_bad = runner.invoke(cli, ["audit", "verify", "--output-format", "json"])
+    res_bad = runner.invoke(cli, ["--output", "json", "audit", "verify"])
     assert res_bad.exit_code != 0

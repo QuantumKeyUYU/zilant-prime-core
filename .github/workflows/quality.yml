@@ -69,6 +69,16 @@ jobs:
       - run: pip install -e .[dev]
       - run: pytest -q tests/test_stream_large.py
 
+  cli-polish:
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - run: pip install -e .[dev]
+      - run: pytest -q tests/test_cli_observability.py
+
 # ──────────────────────────── Build + artefacts ─────────────────────
   build-pq:
     needs: [ quality, perf ]

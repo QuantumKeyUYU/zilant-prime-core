@@ -14,6 +14,7 @@ from typing import Final
 from key_lifecycle import recover_secret, shard_secret
 from zilant_prime_core.crypto.kdf import derive_key_dynamic
 from zilant_prime_core.crypto.password_hash import hash_password, verify_password
+from zilant_prime_core.metrics import metrics
 
 __all__: Final = [
     "derive_key_cmd",
@@ -25,10 +26,11 @@ __all__: Final = [
 ]
 
 
-def _emit(data: dict[str, str | list[str]], fmt: str | None) -> None:
-    """Print ``data`` using optional format."""
+def _emit(ctx: click.Context, data: dict[str, str | list[str]], fmt: str | None = None) -> None:
+    """Print ``data`` using optional or global format."""
+    fmt = fmt or (ctx.obj.get("output") if ctx.obj else "text")
     if fmt == "json":
-        click.echo(json.dumps(data))
+        click.echo(json.dumps(data, indent=2))
     elif fmt == "yaml":
         click.echo(yaml.safe_dump(data))
     else:
@@ -99,13 +101,14 @@ def shard_cmd() -> None:
 @click.option("--threshold", type=int, required=True, metavar="N", help="Minimum shares needed to recover")
 @click.option("--shares", type=int, required=True, metavar="M", help="Total number of shares")
 @click.option("--output-dir", type=click.Path(file_okay=False, path_type=Path), required=True)
-@click.option("--output-format", type=click.Choice(["json", "yaml"]))
+@click.pass_context
+@metrics.record_cli("shard_export")
 def shard_export_cmd(
+    ctx: click.Context,
     master_key: Path | None,
     threshold: int,
     shares: int,
     output_dir: Path,
-    output_format: str | None,
 ) -> None:
     """Write HEX shares as OUTPUT-DIR/share#.hex and meta.json."""
     if shares < threshold or threshold < 2:
@@ -125,14 +128,15 @@ def shard_export_cmd(
     }
     meta_path = output_dir / "meta.json"
     meta_path.write_text(json.dumps(meta))
-    _emit({"shares": share_paths, "meta": str(meta_path)}, output_format)
+    _emit(ctx, {"shares": share_paths, "meta": str(meta_path)})
 
 
 @shard_cmd.command("import")
 @click.option("--input-dir", type=click.Path(exists=True, file_okay=False, path_type=Path), required=True)
 @click.option("--output-file", type=click.Path(dir_okay=False, path_type=Path), required=True)
-@click.option("--output-format", type=click.Choice(["json", "yaml"]))
-def shard_import_cmd(input_dir: Path, output_file: Path, output_format: str | None) -> None:
+@click.pass_context
+@metrics.record_cli("shard_import")
+def shard_import_cmd(ctx: click.Context, input_dir: Path, output_file: Path) -> None:
     """Recover secret from INPUT-DIR and write to OUTPUT-FILE."""
     meta_path = input_dir / "meta.json"
     if not meta_path.exists():
@@ -155,7 +159,7 @@ def shard_import_cmd(input_dir: Path, output_file: Path, output_format: str | No
     if hashlib.sha256(secret).hexdigest() != meta.get("checksum"):
         raise click.ClickException("checksum mismatch")
     output_file.write_bytes(secret)
-    _emit({"path": str(output_file)}, output_format)
+    _emit(ctx, {"path": str(output_file)})
 
 
 # ────────────────────────── stream ──────────────────────────
@@ -170,12 +174,14 @@ def stream_cmd() -> None:
 @click.option("--key", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
 @click.option("--threads", type=int, default=0, show_default=True)
 @click.option("--progress/--no-progress", default=False, show_default=True)
-def stream_pack_cmd(src: Path, dst: Path, key: Path, threads: int, progress: bool) -> None:
+@click.pass_context
+@metrics.record_cli("stream_pack")
+def stream_pack_cmd(ctx: click.Context, src: Path, dst: Path, key: Path, threads: int, progress: bool) -> None:
     """Pack SRC into DST using streaming AEAD."""
     from streaming_aead import pack_stream
 
     pack_stream(src, dst, key.read_bytes(), threads=threads, progress=progress)
-    _emit({"path": str(dst)}, None)
+    _emit(ctx, {"path": str(dst)})
 
 
 @stream_cmd.command("unpack")
@@ -185,11 +191,15 @@ def stream_pack_cmd(src: Path, dst: Path, key: Path, threads: int, progress: boo
 @click.option("--threads", type=int, default=0, show_default=True)
 @click.option("--progress/--no-progress", default=False, show_default=True)
 @click.option("--verify-only", is_flag=True, default=False)
-def stream_unpack_cmd(src: Path, out_dir: Path, key: Path, threads: int, progress: bool, verify_only: bool) -> None:
+@click.pass_context
+@metrics.record_cli("stream_unpack")
+def stream_unpack_cmd(
+    ctx: click.Context, src: Path, out_dir: Path, key: Path, threads: int, progress: bool, verify_only: bool
+) -> None:
     """Unpack SRC into OUT-DIR."""
     from streaming_aead import unpack_stream
 
     out = out_dir / Path(src).stem
     unpack_stream(src, out, key.read_bytes(), verify_only=verify_only, progress=progress)
     if not verify_only:
-        _emit({"path": str(out)}, None)
+        _emit(ctx, {"path": str(out)})

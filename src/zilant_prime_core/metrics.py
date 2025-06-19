@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from functools import wraps
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
-from typing import Iterator, cast
+from typing import Any, Callable, Iterator, cast
 
 __all__ = ["metrics", "Metrics"]
 
@@ -17,6 +18,12 @@ class Metrics:
             "request_duration_seconds",
             "Request duration in seconds",
             ["name"],
+        )
+        self.command_duration_seconds: Histogram = Histogram(
+            "command_duration_seconds",
+            "CLI command duration in seconds",
+            ["name"],
+            buckets=[0.1, 0.5, 1, 5, 10],
         )
         self.files_processed_total: Counter = Counter(
             "files_processed_total",
@@ -35,6 +42,19 @@ class Metrics:
             yield
         self.inflight_requests.labels(name).dec()
         self.requests_total.labels(name).inc()
+
+    def record_cli(self, name: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        """Decorator to time CLI command execution."""
+
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+            @wraps(func)
+            def wrapper(*args: Any, **kwargs: Any) -> Any:
+                with self.command_duration_seconds.labels(name).time():
+                    return func(*args, **kwargs)
+
+            return wrapper
+
+        return decorator
 
     def export(self) -> bytes:
         return cast(bytes, generate_latest())
