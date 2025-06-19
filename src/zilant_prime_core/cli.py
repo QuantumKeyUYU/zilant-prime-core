@@ -467,12 +467,13 @@ def complete(ctx: click.Context, shell: str) -> None:  # pragma: no cover
 
 
 # ───────── external sub‑commands (kdf, pw‑hash, …) ─────────
-from zilant_prime_core.cli_commands import derive_key_cmd, pq_genkeypair_cmd, pw_hash_cmd, pw_verify_cmd  # noqa: E402
+from zilant_prime_core.cli_commands import derive_key_cmd, pq_genkeypair_cmd, pw_hash_cmd, pw_verify_cmd, shard_cmd
 
 cli.add_command(derive_key_cmd)
 cli.add_command(pw_hash_cmd)
 cli.add_command(pw_verify_cmd)
 cli.add_command(pq_genkeypair_cmd)
+key.add_command(shard_cmd)
 
 add_complete_flag()
 
