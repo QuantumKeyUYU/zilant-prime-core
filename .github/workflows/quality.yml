@@ -56,6 +56,19 @@ jobs:
       - run: pip install -e .[dev]
       - run: SKIP_FUZZ=1 ZILANT_ALLOW_ROOT=1 pytest -q -m perf --disable-warnings --maxfail=1
 
+  large-file-test:
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    labels:
+      needs-large-runner: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - run: pip install -e .[dev]
+      - run: pytest -q tests/test_stream_large.py
+
 # ──────────────────────────── Build + artefacts ─────────────────────
   build-pq:
     needs: [ quality, perf ]

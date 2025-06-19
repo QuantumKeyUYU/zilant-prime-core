@@ -7,7 +7,7 @@ import click
 import hashlib
 import json
 import sys
-import yaml
+import yaml  # type: ignore
 from pathlib import Path
 from typing import Final
 
@@ -21,6 +21,7 @@ __all__: Final = [
     "pw_verify_cmd",
     "pq_genkeypair_cmd",
     "shard_cmd",
+    "stream_cmd",
 ]
 
 
@@ -155,3 +156,40 @@ def shard_import_cmd(input_dir: Path, output_file: Path, output_format: str | No
         raise click.ClickException("checksum mismatch")
     output_file.write_bytes(secret)
     _emit({"path": str(output_file)}, output_format)
+
+
+# ────────────────────────── stream ──────────────────────────
+@click.group("stream")
+def stream_cmd() -> None:
+    """Stream-based container operations."""
+
+
+@stream_cmd.command("pack")
+@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument("dst", type=click.Path(dir_okay=False, path_type=Path))
+@click.option("--key", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option("--threads", type=int, default=0, show_default=True)
+@click.option("--progress/--no-progress", default=False, show_default=True)
+def stream_pack_cmd(src: Path, dst: Path, key: Path, threads: int, progress: bool) -> None:
+    """Pack SRC into DST using streaming AEAD."""
+    from streaming_aead import pack_stream
+
+    pack_stream(src, dst, key.read_bytes(), threads=threads, progress=progress)
+    _emit({"path": str(dst)}, None)
+
+
+@stream_cmd.command("unpack")
+@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--out-dir", type=click.Path(file_okay=False, path_type=Path), default=".")
+@click.option("--key", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option("--threads", type=int, default=0, show_default=True)
+@click.option("--progress/--no-progress", default=False, show_default=True)
+@click.option("--verify-only", is_flag=True, default=False)
+def stream_unpack_cmd(src: Path, out_dir: Path, key: Path, threads: int, progress: bool, verify_only: bool) -> None:
+    """Unpack SRC into OUT-DIR."""
+    from streaming_aead import unpack_stream
+
+    out = out_dir / Path(src).stem
+    unpack_stream(src, out, key.read_bytes(), verify_only=verify_only, progress=progress)
+    if not verify_only:
+        _emit({"path": str(out)}, None)
