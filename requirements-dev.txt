@@ -6,6 +6,7 @@ pytest>=8.0.0
 pytest-cov>=5.0.0
 pytest-timeout>=2.3.0
 hypothesis>=6.0.0
+click>=8.1.0
 
 # Линтеры и форматтеры:
 ruff>=0.2.0

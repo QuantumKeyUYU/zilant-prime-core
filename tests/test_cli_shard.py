@@ -3,102 +3,102 @@ from pathlib import Path
 
 from zilant_prime_core.cli import cli
 
-KEY = b"K" * 16
+KEY = b"\x01" * 16
 
 
-def test_cli_shard_roundtrip(tmp_path: Path) -> None:
-    key_file = tmp_path / "master.key"
-    key_file.write_bytes(KEY)
-    shares_dir = tmp_path / "shares"
+def _export(runner: CliRunner, key_file: Path, n: int, t: int, out: Path) -> None:
+    args = [
+        "key",
+        "shard",
+        "export",
+        "--master-key",
+        str(key_file),
+        "--n",
+        str(n),
+        "--t",
+        str(t),
+        "--out-dir",
+        str(out),
+    ]
+    res = runner.invoke(cli, args)
+    assert res.exit_code == 0, res.output
+
+
+def _import(runner: CliRunner, shares: list[Path], out_file: Path) -> CliRunner:
+    args = ["key", "shard", "import", "--out", str(out_file)]
+    for s in shares:
+        args.extend(["--shares", str(s)])
+    return runner.invoke(cli, args)
+
+
+def test_roundtrip_corrupt_share(tmp_path: Path) -> None:
     runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "key",
-            "shard",
-            "export",
-            "--threshold",
-            "2",
-            "--shares",
-            "3",
-            "--output-dir",
-            str(shares_dir),
-            "--in-key",
-            str(key_file),
-        ],
-    )
-    assert result.exit_code == 0, result.output
-    files = sorted(shares_dir.glob("share_*.bin"))
+    key_file = tmp_path / "master.bin"
+    key_file.write_bytes(KEY)
+    out_dir = tmp_path / "shares"
+    _export(runner, key_file, 3, 2, out_dir)
+
+    files = sorted(out_dir.glob("share*.hex"))
     assert len(files) == 3
-    files[0].write_bytes(b"x" + files[0].read_bytes()[1:])
-    files[0].unlink()  # drop corrupted share
-    out_file = tmp_path / "recovered.bin"
-    result = runner.invoke(
-        cli,
-        [
-            "key",
-            "shard",
-            "import",
-            "--inputs",
-            str(shares_dir),
-            "--output",
-            str(out_file),
-        ],
-    )
+    files[0].write_text("zz")  # corrupt one
+    result = _import(runner, files[1:], tmp_path / "recovered.bin")
     assert result.exit_code == 0, result.output
-    assert out_file.read_bytes() == KEY
+    assert (tmp_path / "recovered.bin").read_bytes() == KEY
 
 
-def test_cli_shard_stdin_stdout(tmp_path: Path) -> None:
-    shares_dir = tmp_path / "shares"
+def test_invalid_threshold(tmp_path: Path) -> None:
     runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "key",
-            "shard",
-            "export",
-            "--threshold",
-            "2",
-            "--shares",
-            "2",
-            "--output-dir",
-            str(shares_dir),
-        ],
-        input=KEY,
-    )
-    assert result.exit_code == 0
-    result = runner.invoke(
-        cli,
-        [
-            "key",
-            "shard",
-            "import",
-            "--inputs",
-            str(shares_dir),
-        ],
-    )
-    assert result.exit_code == 0
-    assert result.stdout.encode() == KEY
-
-
-def test_cli_shard_invalid(tmp_path: Path) -> None:
-    key_file = tmp_path / "m.key"
+    key_file = tmp_path / "k"
     key_file.write_bytes(KEY)
-    result = CliRunner().invoke(
+    res = runner.invoke(
         cli,
         [
             "key",
             "shard",
             "export",
-            "--threshold",
-            "5",
-            "--shares",
-            "3",
-            "--output-dir",
-            str(tmp_path / "d"),
-            "--in-key",
+            "--master-key",
             str(key_file),
+            "--n",
+            "3",
+            "--t",
+            "5",
+            "--out-dir",
+            str(tmp_path / "d"),
         ],
     )
+    assert res.exit_code != 0
+
+
+def test_import_too_few(tmp_path: Path) -> None:
+    runner = CliRunner()
+    key_file = tmp_path / "key.bin"
+    key_file.write_bytes(KEY)
+    out_dir = tmp_path / "out"
+    _export(runner, key_file, 3, 2, out_dir)
+    files = sorted(out_dir.glob("share*.hex"))
+    result = _import(runner, [files[0]], tmp_path / "bad.bin")
+    assert result.exit_code != 0
+
+
+def test_import_bad_length(tmp_path: Path) -> None:
+    runner = CliRunner()
+    key_file = tmp_path / "key.bin"
+    key_file.write_bytes(KEY)
+    out_dir = tmp_path / "shares"
+    _export(runner, key_file, 2, 2, out_dir)
+    files = sorted(out_dir.glob("share*.hex"))
+    files[1].write_text("00")  # too short
+    result = _import(runner, files, tmp_path / "rec.bin")
+    assert result.exit_code != 0
+
+
+def test_import_non_hex(tmp_path: Path) -> None:
+    runner = CliRunner()
+    key_file = tmp_path / "k.bin"
+    key_file.write_bytes(KEY)
+    out_dir = tmp_path / "sh"
+    _export(runner, key_file, 2, 2, out_dir)
+    files = sorted(out_dir.glob("share*.hex"))
+    files[0].write_text("zz")  # not hex
+    result = _import(runner, files, tmp_path / "r.bin")
     assert result.exit_code != 0

@@ -80,26 +80,42 @@ def shard_cmd() -> None:
 
 
 @shard_cmd.command("export")
-@click.option("--threshold", type=int, required=True, metavar="T", help="Minimum shares needed to recover")
-@click.option("--shares", type=int, required=True, metavar="N", help="Total number of shares")
-@click.option("--output-dir", type=click.Path(file_okay=False, path_type=Path), required=True, metavar="DIR")
-@click.option("--in-key", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-def shard_export_cmd(threshold: int, shares: int, output_dir: Path, in_key: Path | None) -> None:
-    """Write shares to OUTPUT-DIR/share_*.bin."""
-    output_dir.mkdir(parents=True, exist_ok=True)
-    secret = Path(in_key).read_bytes() if in_key else sys.stdin.buffer.read()
-    for i, sh in enumerate(shard_secret(secret, shares, threshold), 1):
-        (output_dir / f"share_{i}.bin").write_bytes(sh)
+@click.option("--master-key", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--n", type=int, required=True, metavar="INT", help="Total number of shares")
+@click.option("--t", type=int, required=True, metavar="INT", help="Minimum shares needed to recover")
+@click.option("--out-dir", type=click.Path(file_okay=False, path_type=Path), required=True)
+def shard_export_cmd(master_key: Path | None, n: int, t: int, out_dir: Path) -> None:
+    """Write HEX shares as OUT-DIR/share#.hex."""
+    if not 1 <= t <= n:
+        raise click.UsageError("threshold must be between 1 and n")
+    secret = Path(master_key).read_bytes() if master_key else sys.stdin.buffer.read()
+    shares = shard_secret(secret, n, t)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for i, sh in enumerate(shares, 1):
+        (out_dir / f"share{i}.hex").write_text(sh.hex())
 
 
 @shard_cmd.command("import")
-@click.option("--inputs", type=click.Path(file_okay=False, exists=True, path_type=Path), required=True, metavar="DIR")
-@click.option("--output", type=click.Path(dir_okay=False, path_type=Path))
-def shard_import_cmd(inputs: Path, output: Path | None) -> None:
-    """Recover secret from shares in INPUTS directory."""
-    shards = [p.read_bytes() for p in sorted(Path(inputs).glob("share_*.bin"))]
+@click.option(
+    "--shares",
+    "share_files",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    multiple=True,
+    required=True,
+)
+@click.option("--out", "out_file", type=click.Path(dir_okay=False, path_type=Path), required=True)
+def shard_import_cmd(share_files: tuple[Path, ...], out_file: Path) -> None:
+    """Recover secret from share files."""
+    if len(share_files) < 2:
+        raise click.UsageError("at least two shares required")
+    shards = []
+    for path in share_files:
+        try:
+            data = bytes.fromhex(path.read_text().strip())
+        except Exception as exc:
+            raise click.UsageError(f"malformed share file: {path}") from exc
+        if len(data) < 17:
+            raise click.UsageError(f"malformed share file: {path}")
+        shards.append(data)
     secret = recover_secret(shards)
-    if output:
-        output.write_bytes(secret)
-    else:
-        sys.stdout.buffer.write(secret)
+    out_file.write_bytes(secret)
