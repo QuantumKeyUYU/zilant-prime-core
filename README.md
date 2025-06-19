@@ -144,6 +144,12 @@ zilctl register --server https://auth.example --username alice
 zilctl login --server https://auth.example --username alice
 ```
 
+## Development
+
+### Code Owners & Static Analysis
+
+Source and tests are maintained by @QuantumKeyUYU, while documentation also lists @DocMaintainers. CI workflows fall under @DevSecOpsTeam. Pull requests run Semgrep with custom rules in `.semgrep.yml` to prevent hardcoded keys and insecure random usage.
+
 ## TODO Stage III
 
 - GUI demonstration (PyQt/Web)

@@ -84,6 +84,8 @@ docs = [
   "sphinx>=7.2,<8.0",
   "furo>=2023.9",
   "sphinx-autodoc-typehints>=1.25,<2.0",
+  "m2r2",
+  "sphinxcontrib-mermaid",
 ]
 metrics = [
   "prometheus-client>=0.16.0,<1.0",

@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Final
 
+from key_lifecycle import recover_secret, shard_secret
 from zilant_prime_core.crypto.kdf import derive_key_dynamic
 from zilant_prime_core.crypto.password_hash import hash_password, verify_password
 
@@ -16,6 +17,7 @@ __all__: Final = [
     "pw_hash_cmd",
     "pw_verify_cmd",
     "pq_genkeypair_cmd",
+    "shard_cmd",
 ]
 
 
@@ -69,3 +71,51 @@ def pq_genkeypair_cmd(kem: str) -> None:  # pragma: no cover
     pk_path.write_bytes(b"p")  # pragma: no cover
     sk_path.write_bytes(b"s")  # pragma: no cover
     click.echo(f"Generated PQ keypair: {pk_path}, {sk_path}")  # pragma: no cover
+
+
+# ────────────────────────── key shard ──────────────────────────
+@click.group("shard")
+def shard_cmd() -> None:
+    """Split and recover master keys."""
+
+
+@shard_cmd.command("export")
+@click.option("--master-key", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--n", type=int, required=True, metavar="INT", help="Total number of shares")
+@click.option("--t", type=int, required=True, metavar="INT", help="Minimum shares needed to recover")
+@click.option("--out-dir", type=click.Path(file_okay=False, path_type=Path), required=True)
+def shard_export_cmd(master_key: Path | None, n: int, t: int, out_dir: Path) -> None:
+    """Write HEX shares as OUT-DIR/share#.hex."""
+    if not 1 <= t <= n:
+        raise click.UsageError("threshold must be between 1 and n")
+    secret = Path(master_key).read_bytes() if master_key else sys.stdin.buffer.read()
+    shares = shard_secret(secret, n, t)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for i, sh in enumerate(shares, 1):
+        (out_dir / f"share{i}.hex").write_text(sh.hex())
+
+
+@shard_cmd.command("import")
+@click.option(
+    "--shares",
+    "share_files",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    multiple=True,
+    required=True,
+)
+@click.option("--out", "out_file", type=click.Path(dir_okay=False, path_type=Path), required=True)
+def shard_import_cmd(share_files: tuple[Path, ...], out_file: Path) -> None:
+    """Recover secret from share files."""
+    if len(share_files) < 2:
+        raise click.UsageError("at least two shares required")
+    shards = []
+    for path in share_files:
+        try:
+            data = bytes.fromhex(path.read_text().strip())
+        except Exception as exc:
+            raise click.UsageError(f"malformed share file: {path}") from exc
+        if len(data) < 17:
+            raise click.UsageError(f"malformed share file: {path}")
+        shards.append(data)
+    secret = recover_secret(shards)
+    out_file.write_bytes(secret)
