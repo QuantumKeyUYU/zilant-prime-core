@@ -7,7 +7,6 @@ import hashlib
 import os
 import threading
 import time
-
 from filelock import FileLock
 
 __all__ = ["compute_self_hash", "init_self_watchdog"]

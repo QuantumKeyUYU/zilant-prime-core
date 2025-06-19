@@ -24,7 +24,7 @@ class ScreenGuard:
             return
         for proc in self._psutil.process_iter(attrs=["name"]):
             try:
-                name = (getattr(proc, "info", {}).get("name") or "").lower()
+                name = (proc.info.get("name") or "").lower()
             except Exception:
                 continue
             if name:

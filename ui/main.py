@@ -3,7 +3,6 @@ from __future__ import annotations
 import subprocess
 import sys
 from pathlib import Path
-
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QApplication,

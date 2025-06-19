@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import base64
+import click
 import sys
 from pathlib import Path
 from typing import Final
-
-import click
 
 from zilant_prime_core.crypto.kdf import derive_key_dynamic
 from zilant_prime_core.crypto.password_hash import hash_password, verify_password

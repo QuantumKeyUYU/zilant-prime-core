@@ -1,33 +1,46 @@
-"""Streaming AEAD using XChaCha20-Poly1305 with PyNaCl fallback."""
+from typing import Optional, cast
 
-from __future__ import annotations
+try:
+    # Попытка использовать нативную реализацию из cryptography
+    from cryptography.hazmat.primitives.ciphers.aead import XChaCha20Poly1305 as _NativeAEAD
+except ImportError:
+    _NativeAEAD = None  # type: ignore[assignment]
 
-from typing import cast
 
-try:  # pragma: no cover - executed at import time
-    from cryptography.hazmat.primitives.ciphers.aead import XChaCha20Poly1305
+def encrypt_chunk(
+    key: bytes,
+    nonce: bytes,
+    data: bytes,
+    aad: Optional[bytes] = None,
+) -> bytes:
+    """
+    Шифрует один кусок данных с помощью XChaCha20-Poly1305.
+    Если доступна нативная реализация, используем её, иначе – PyNaCl binding.
+    """
+    header = aad or b""
+    if _NativeAEAD is not None:
+        aead = _NativeAEAD(key)
+        return cast(bytes, aead.encrypt(nonce, data, header))
+    # Падаем на PyNaCl
+    from nacl.bindings import crypto_aead_xchacha20poly1305_ietf_encrypt  # type: ignore[import-error]
 
-    def encrypt_chunk(key: bytes, nonce: bytes, data: bytes, aad: bytes = b"") -> bytes:
-        """Encrypt a chunk of ``data`` using ``key`` and ``nonce``."""
-        return cast(bytes, XChaCha20Poly1305(key).encrypt(nonce, data, aad))
+    return cast(bytes, crypto_aead_xchacha20poly1305_ietf_encrypt(data, header, nonce, key))
 
-    def decrypt_chunk(key: bytes, nonce: bytes, data: bytes, aad: bytes = b"") -> bytes:
-        """Decrypt a chunk previously encrypted with :func:`encrypt_chunk`."""
-        return cast(bytes, XChaCha20Poly1305(key).decrypt(nonce, data, aad))
 
-except Exception:  # pragma: no cover - fallback branch
-    from nacl.bindings import crypto_aead_xchacha20poly1305_ietf_decrypt, crypto_aead_xchacha20poly1305_ietf_encrypt
+def decrypt_chunk(
+    key: bytes,
+    nonce: bytes,
+    ciphertext: bytes,
+    aad: Optional[bytes] = None,
+) -> bytes:
+    """
+    Дешифрует один кусок данных, зашифрованный XChaCha20-Poly1305.
+    """
+    header = aad or b""
+    if _NativeAEAD is not None:
+        aead = _NativeAEAD(key)
+        return cast(bytes, aead.decrypt(nonce, ciphertext, header))
+    # Падаем на PyNaCl
+    from nacl.bindings import crypto_aead_xchacha20poly1305_ietf_decrypt  # type: ignore[import-error]
 
-    def encrypt_chunk(key: bytes, nonce: bytes, data: bytes, aad: bytes = b"") -> bytes:
-        """Encrypt using PyNaCl bindings."""
-        return cast(
-            bytes,
-            crypto_aead_xchacha20poly1305_ietf_encrypt(data, aad, nonce, key),
-        )
-
-    def decrypt_chunk(key: bytes, nonce: bytes, data: bytes, aad: bytes = b"") -> bytes:
-        """Decrypt using PyNaCl bindings."""
-        return cast(
-            bytes,
-            crypto_aead_xchacha20poly1305_ietf_decrypt(data, aad, nonce, key),
-        )
+    return cast(bytes, crypto_aead_xchacha20poly1305_ietf_decrypt(ciphertext, header, nonce, key))

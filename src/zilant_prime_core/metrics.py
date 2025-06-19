@@ -4,9 +4,8 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Iterator, cast
-
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
+from typing import Iterator, cast
 
 __all__ = ["metrics", "Metrics"]
 

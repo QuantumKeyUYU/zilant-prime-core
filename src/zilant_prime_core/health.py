@@ -3,7 +3,6 @@
 
 import threading
 import time
-
 from flask import Flask, Response
 
 from .metrics import metrics

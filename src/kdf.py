@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-from typing import cast
-
 import argon2.low_level as a2
+from typing import cast
 
 __all__ = ["derive_key"]
 

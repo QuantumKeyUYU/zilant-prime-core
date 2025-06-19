@@ -4,9 +4,9 @@ import pytest
 import sys
 import types
 
-import streaming_aead as sa
+from src.streaming_aead import decrypt_chunk, encrypt_chunk
 
-# Исключения для native/fallback
+# Определяем возможные исключения
 try:
     from cryptography.exceptions import InvalidTag
 except ImportError:
@@ -18,51 +18,48 @@ except ImportError:
     CryptoError = Exception
 
 
-@pytest.mark.parametrize("use_native", [True, False])
-def test_encrypt_decrypt_chunk(monkeypatch, use_native):
+@pytest.mark.parametrize("use_fallback", [False, True])
+def test_encrypt_decrypt_both_backends(monkeypatch, use_fallback):
+    """
+    Проверяем и нативную, и fallback-ветки XChaCha20Poly1305:
+    - если use_fallback=True, сбрасываем _NativeAEAD и подсовываем fake nacl.bindings
+    - в любом случае encrypt → decrypt возвращает исходные данные
+    """
     key = b"\x00" * 32
     nonce = b"\x01" * 24
-    data = b"hello world"
-    aad = b"aad-data"
+    data = b"the quick brown fox"
+    aad = b"hdr"
 
-    if use_native:
-
-        class DummyNativeAEAD:
-            def __init__(self, k):
-                assert k == key
-
-            def encrypt(self, n, pt, hdr):
-                assert n == nonce and hdr == aad
-                return b"CT" + pt
-
-            def decrypt(self, n, ct, hdr):
-                assert n == nonce and hdr == aad
-                return ct[2:]
-
-        monkeypatch.setattr(sa, "_NativeAEAD", DummyNativeAEAD)
-        sys.modules.pop("nacl.bindings", None)
-    else:
-        monkeypatch.setattr(sa, "_NativeAEAD", None)
+    if use_fallback:
+        # Форсируем fallback-ветку
+        monkeypatch.setattr("src.streaming_aead._NativeAEAD", None, raising=False)
         fake = types.SimpleNamespace(
-            crypto_aead_xchacha20poly1305_ietf_encrypt=lambda msg, hdr, nonce, key: b"FB" + msg,
-            crypto_aead_xchacha20poly1305_ietf_decrypt=lambda ct, hdr, nonce, key: ct[2:],
+            crypto_aead_xchacha20poly1305_ietf_encrypt=lambda msg, hdr, nonce, key: b"FALLBACK" + msg,
+            crypto_aead_xchacha20poly1305_ietf_decrypt=lambda ct, hdr, nonce, key: ct[len(b"FALLBACK") :],
         )
         sys.modules["nacl"] = types.ModuleType("nacl")
         sys.modules["nacl.bindings"] = fake
 
-    ct = sa.encrypt_chunk(key, nonce, data, aad)
-    pt = sa.decrypt_chunk(key, nonce, ct, aad)
+    ct = encrypt_chunk(key, nonce, data, aad)
+    pt = decrypt_chunk(key, nonce, ct, aad)
     assert pt == data
 
 
 @pytest.mark.parametrize("invalid_ct", [b"", b"short", None])
-def test_decrypt_invalid(invalid_ct):
+def test_decrypt_invalid_permissive(invalid_ct):
+    """
+    Для некорректного ciphertext допускаем:
+      - либо бросание одного из ожидаемых исключений,
+      - либо корректный байтовый ответ (может быть b"" в нативной ветке).
+    """
     key = b"\x00" * 32
     nonce = b"\x01" * 24
 
     try:
-        result = sa.decrypt_chunk(key, nonce, invalid_ct, b"header")
+        result = decrypt_chunk(key, nonce, invalid_ct, b"")
     except (InvalidTag, CryptoError, ValueError, TypeError):
+        # любая ошибка из ожидаемых — ок
         pass
     else:
+        # если без ошибки — возвращён результат, и он должен быть bytes
         assert isinstance(result, (bytes, bytearray))

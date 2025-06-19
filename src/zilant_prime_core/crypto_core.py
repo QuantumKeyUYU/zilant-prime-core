@@ -4,10 +4,9 @@
 
 from __future__ import annotations
 
-from typing import cast
-
 import argon2.low_level as a2
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+from typing import cast
 
 __all__ = [
     "encrypt_chacha20_poly1305",

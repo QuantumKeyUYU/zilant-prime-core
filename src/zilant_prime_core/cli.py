@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import binascii
+import click
 import json
 import os
 import sys
 import time
+import yaml  # type: ignore
 from pathlib import Path
 from typing import Any, NoReturn, cast
-
-import click
-import yaml  # type: ignore
 
 from container import pack_file, unpack_file
 from zilant_prime_core.crypto.password_hash import hash_password, verify_password

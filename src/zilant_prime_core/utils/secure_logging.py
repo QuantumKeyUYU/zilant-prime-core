@@ -8,9 +8,8 @@ import base64
 import json
 import os
 import secrets
-from typing import Any, Optional, Tuple, Union
-
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from typing import Any, Optional, Tuple, Union
 
 __all__ = ["SecureLogger", "get_secure_logger"]
 

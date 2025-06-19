@@ -11,10 +11,9 @@ YAML по умолчанию: docs/iso_controls.yml
 from __future__ import annotations
 
 import sys
+import yaml
 from pathlib import Path
 from textwrap import indent
-
-import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "docs" / "iso_controls.yml"
