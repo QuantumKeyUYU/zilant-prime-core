@@ -2,9 +2,10 @@ from __future__ import annotations
 
 """Project configuration options."""
 
-import tomllib
 from pathlib import Path
 from typing import Any
+
+import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
 
