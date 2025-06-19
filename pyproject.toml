@@ -112,6 +112,7 @@ target-version = ["py310", "py311"]
 profile           = "black"
 line_length       = 120
 known_first_party = ["zilant_prime_core"]
+known_standard_library = ["tomllib"]
 
 
 
