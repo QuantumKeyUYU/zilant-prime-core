@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import base64
 import click
+import hashlib
+import json
 import sys
+import yaml
 from pathlib import Path
 from typing import Final
 
@@ -19,6 +22,17 @@ __all__: Final = [
     "pq_genkeypair_cmd",
     "shard_cmd",
 ]
+
+
+def _emit(data: dict[str, str | list[str]], fmt: str | None) -> None:
+    """Print ``data`` using optional format."""
+    if fmt == "json":
+        click.echo(json.dumps(data))
+    elif fmt == "yaml":
+        click.echo(yaml.safe_dump(data))
+    else:
+        if isinstance(data, dict):
+            click.echo(next(iter(data.values())))
 
 
 # ─────────────────── derive‑key ───────────────────
@@ -81,35 +95,54 @@ def shard_cmd() -> None:
 
 @shard_cmd.command("export")
 @click.option("--master-key", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-@click.option("--n", type=int, required=True, metavar="INT", help="Total number of shares")
-@click.option("--t", type=int, required=True, metavar="INT", help="Minimum shares needed to recover")
-@click.option("--out-dir", type=click.Path(file_okay=False, path_type=Path), required=True)
-def shard_export_cmd(master_key: Path | None, n: int, t: int, out_dir: Path) -> None:
-    """Write HEX shares as OUT-DIR/share#.hex."""
-    if not 1 <= t <= n:
-        raise click.UsageError("threshold must be between 1 and n")
+@click.option("--threshold", type=int, required=True, metavar="N", help="Minimum shares needed to recover")
+@click.option("--shares", type=int, required=True, metavar="M", help="Total number of shares")
+@click.option("--output-dir", type=click.Path(file_okay=False, path_type=Path), required=True)
+@click.option("--output-format", type=click.Choice(["json", "yaml"]))
+def shard_export_cmd(
+    master_key: Path | None,
+    threshold: int,
+    shares: int,
+    output_dir: Path,
+    output_format: str | None,
+) -> None:
+    """Write HEX shares as OUTPUT-DIR/share#.hex and meta.json."""
+    if shares < threshold or threshold < 2:
+        raise click.UsageError("shares must be >= threshold >= 2")
     secret = Path(master_key).read_bytes() if master_key else sys.stdin.buffer.read()
-    shares = shard_secret(secret, n, t)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    for i, sh in enumerate(shares, 1):
-        (out_dir / f"share{i}.hex").write_text(sh.hex())
+    pieces = shard_secret(secret, shares, threshold)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    share_paths: list[str] = []
+    for i, sh in enumerate(pieces, 1):
+        path = output_dir / f"share{i}.hex"
+        path.write_text(sh.hex())
+        share_paths.append(str(path))
+    meta = {
+        "threshold": threshold,
+        "shares": shares,
+        "checksum": hashlib.sha256(secret).hexdigest(),
+    }
+    meta_path = output_dir / "meta.json"
+    meta_path.write_text(json.dumps(meta))
+    _emit({"shares": share_paths, "meta": str(meta_path)}, output_format)
 
 
 @shard_cmd.command("import")
-@click.option(
-    "--shares",
-    "share_files",
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
-    multiple=True,
-    required=True,
-)
-@click.option("--out", "out_file", type=click.Path(dir_okay=False, path_type=Path), required=True)
-def shard_import_cmd(share_files: tuple[Path, ...], out_file: Path) -> None:
-    """Recover secret from share files."""
-    if len(share_files) < 2:
-        raise click.UsageError("at least two shares required")
+@click.option("--input-dir", type=click.Path(exists=True, file_okay=False, path_type=Path), required=True)
+@click.option("--output-file", type=click.Path(dir_okay=False, path_type=Path), required=True)
+@click.option("--output-format", type=click.Choice(["json", "yaml"]))
+def shard_import_cmd(input_dir: Path, output_file: Path, output_format: str | None) -> None:
+    """Recover secret from INPUT-DIR and write to OUTPUT-FILE."""
+    meta_path = input_dir / "meta.json"
+    if not meta_path.exists():
+        raise click.UsageError("meta.json missing in input directory")
+    meta = json.loads(meta_path.read_text())
+    threshold = int(meta.get("threshold", 0))
+    share_paths = sorted(input_dir.glob("share*.hex"))
+    if len(share_paths) < threshold:
+        raise click.UsageError("not enough share files")
     shards = []
-    for path in share_files:
+    for path in share_paths:
         try:
             data = bytes.fromhex(path.read_text().strip())
         except Exception as exc:
@@ -117,5 +150,8 @@ def shard_import_cmd(share_files: tuple[Path, ...], out_file: Path) -> None:
         if len(data) < 17:
             raise click.UsageError(f"malformed share file: {path}")
         shards.append(data)
-    secret = recover_secret(shards)
-    out_file.write_bytes(secret)
+    secret = recover_secret(shards[:threshold])
+    if hashlib.sha256(secret).hexdigest() != meta.get("checksum"):
+        raise click.ClickException("checksum mismatch")
+    output_file.write_bytes(secret)
+    _emit({"path": str(output_file)}, output_format)

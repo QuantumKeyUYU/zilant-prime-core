@@ -91,6 +91,23 @@ zilctl pack secret.txt --vault-path secret/data/zilant/password
 # Расшифровка:
 zilctl unpack secret.zil --output-dir ./out
 
+### Shamir Secret Sharing
+
+Разделите мастер‑ключ на части и восстановите его при необходимости:
+
+```bash
+zilctl key shard export --master-key cosign.key \
+    --threshold 3 --shares 5 --output-dir shards
+
+# храните файлы shards/share*.hex и shards/meta.json в разных безопасных местах
+
+zilctl key shard import --input-dir shards --output-file master.key
+```
+
+Храните полученные шард‑бэкапы на отдельных офлайн‑носителях. Для восстановления
+достаточно собрать ``threshold`` частей в одной директории и выполнить команду
+``shard import``.
+
 ## Root Baseline
 
 Zilant Prime Core aborts execution when root or debugging indicators are found.
@@ -121,6 +138,7 @@ python -c "import zilant_prime_core"
 ```bash
 python - <<'EOF'
 import zilant_prime_core
+
 zilant_prime_core.harden_linux()
 print("hardened")
 EOF
