@@ -14,6 +14,7 @@ from typing import Any, NoReturn, cast
 
 from container import pack_file, unpack_file
 from zilant_prime_core.crypto.password_hash import hash_password, verify_password
+from zilant_prime_core.metrics import metrics
 from zilant_prime_core.utils import VaultClient
 from zilant_prime_core.utils.anti_snapshot import detect_snapshot
 from zilant_prime_core.utils.counter import increment_counter, read_counter
@@ -60,10 +61,11 @@ def _abort(msg: str, code: int = 1) -> NoReturn:  # ← NoReturn → mypy happy
     sys.exit(code)
 
 
-def _emit(data: dict[str, Any], fmt: str | None) -> None:
-    """Print ``data`` using given format."""
+def _emit(ctx: click.Context, data: dict[str, Any], fmt: str | None = None) -> None:
+    """Print ``data`` using given or global format."""
+    fmt = fmt or (ctx.obj.get("output") if ctx.obj else "text")
     if fmt == "json":
-        click.echo(json.dumps(data))
+        click.echo(json.dumps(data, indent=2))
     elif fmt == "yaml":
         click.echo(yaml.safe_dump(data))
     else:
@@ -113,9 +115,24 @@ def _cleanup_old_file(container: Path) -> None:
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option("--metrics-port", type=int, metavar="PORT", help="Expose metrics on PORT")
 @click.option("--vault-key", type=binascii.unhexlify, metavar="HEX", help="AES key for Vault")
+@click.option(
+    "--output",
+    type=click.Choice(["text", "json", "yaml"], case_sensitive=False),
+    default="text",
+    show_default=True,
+    help="Output format",
+)
 @click.pass_context
-def cli(ctx: click.Context, metrics_port: int | None, vault_key: bytes | None) -> None:
-    """Zilant Prime command‑line interface."""
+def cli(
+    ctx: click.Context,
+    metrics_port: int | None,
+    vault_key: bytes | None,
+    output: str,
+) -> None:
+    """Zilant Prime command‑line interface.
+
+    Use ``zilant install-completion bash`` to enable shell autocompletion.
+    """
     try:
         guard.assert_secure()
     except ScreenGuardError as exc:
@@ -127,7 +144,7 @@ def cli(ctx: click.Context, metrics_port: int | None, vault_key: bytes | None) -
 
         start_server(metrics_port)
 
-    ctx.obj = {"vault_key": vault_key}
+    ctx.obj = {"vault_key": vault_key, "output": output}
 
 
 @cli.group()
@@ -139,14 +156,15 @@ def key() -> None:
 @click.option("--days", type=int, required=True, metavar="DAYS", help="Rotation interval in days")
 @click.option("--in-key", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
 @click.option("--out-key", type=click.Path(dir_okay=False, path_type=Path), required=True)
-@click.option("--output-format", type=click.Choice(["json", "yaml"]), help="Format CLI output")
-def cmd_key_rotate(days: int, in_key: Path, out_key: Path, output_format: str | None) -> None:
+@click.pass_context
+@metrics.record_cli("key_rotate")
+def cmd_key_rotate(ctx: click.Context, days: int, in_key: Path, out_key: Path) -> None:
     """Rotate master key and save the result."""
     from key_lifecycle import KeyLifecycle
 
     new_key = KeyLifecycle.rotate_master_key(in_key.read_bytes(), days)
     out_key.write_bytes(new_key)
-    _emit({"path": str(out_key)}, output_format)
+    _emit(ctx, {"path": str(out_key)})
 
 
 # ────────────────────────────── pack ──────────────────────────────
@@ -157,8 +175,8 @@ def cmd_key_rotate(days: int, in_key: Path, out_key: Path, output_format: str | 
 @click.option("--vault-path", metavar="VAULT_PATH", help="Path in HashiCorp Vault")
 @click.option("--pq-pub", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option("--overwrite/--no-overwrite", default=False, show_default=True)
-@click.option("--output-format", type=click.Choice(["json", "yaml"]), help="Format CLI output")
 @click.pass_context
+@metrics.record_cli("pack")
 def cmd_pack(  # noqa: C901  (covered by extensive tests)
     ctx: click.Context,
     source: Path,
@@ -167,7 +185,6 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
     vault_path: str | None,
     pq_pub: Path | None,
     overwrite: bool,
-    output_format: str | None,
 ) -> None:
     from zilant_prime_core.metrics import metrics
 
@@ -221,7 +238,7 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
             sys.exit(1)
 
     metrics.files_processed_total.inc()
-    _emit({"path": str(dest)}, output_format)
+    _emit(ctx, {"path": str(dest)})
 
 
 # ────────────────────────────── unpack ──────────────────────────────
@@ -230,9 +247,14 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
 @click.option("-d", "--dest", metavar="DIR", type=click.Path(file_okay=False, path_type=Path))
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
 @click.option("--pq-sk", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-@click.option("--output-format", type=click.Choice(["json", "yaml"]), help="Format CLI output")
+@click.pass_context
+@metrics.record_cli("unpack")
 def cmd_unpack(
-    container: Path, dest: Path | None, password: str | None, pq_sk: Path | None, output_format: str | None
+    ctx: click.Context,
+    container: Path,
+    dest: Path | None,
+    password: str | None,
+    pq_sk: Path | None,
 ) -> None:
     from zilant_prime_core.metrics import metrics
 
@@ -266,7 +288,7 @@ def cmd_unpack(
         pass
 
     metrics.files_processed_total.inc()
-    _emit({"path": str(out)}, output_format)
+    _emit(ctx, {"path": str(out)})
 
 
 # ─────────────────────── misc utility commands ───────────────────────
@@ -295,13 +317,13 @@ def cmd_incr_counter() -> None:
 @cli.command("sbom")
 @click.option("--output", type=click.Path(dir_okay=False, path_type=Path), default="sbom.json")
 @click.argument("target", type=click.Path(exists=True, path_type=Path), default=".")
-@click.option("--output-format", type=click.Choice(["json", "yaml"]), help="Format CLI output")
-def cmd_sbom(output: Path, target: Path, output_format: str | None) -> None:
+@click.pass_context
+def cmd_sbom(ctx: click.Context, output: Path, target: Path) -> None:
     """Generate SBOM for TARGET into OUTPUT."""
     import subprocess
 
     subprocess.run(["syft", "packages", str(target), "-o", f"cyclonedx-json={output}"], check=True)
-    _emit({"sbom": str(output)}, output_format)
+    _emit(ctx, {"sbom": str(output)})
 
 
 @cli.command("check_snapshot")
@@ -377,20 +399,19 @@ def audit() -> None:
 
 
 @audit.command("verify")
-@click.option("--output-format", type=click.Choice(["json", "yaml"]), help="Format CLI output")
-def cmd_audit_verify(output_format: str | None = None) -> None:
+@click.pass_context
+def cmd_audit_verify(ctx: click.Context) -> None:
     """Verify the integrity of the audit log."""
     from key_lifecycle import AuditLog
 
     log = AuditLog()
     ok = log.verify_log()
     if not ok:
-        if output_format:
-            _emit({"valid": False}, output_format)
-        else:
+        _emit(ctx, {"valid": False})
+        if (ctx.obj or {}).get("output") == "text":
             click.echo("Audit log corrupted", err=True)
         raise click.Abort()
-    _emit({"valid": True}, output_format)
+    _emit(ctx, {"valid": True})
 
 
 @cli.group()
@@ -445,18 +466,19 @@ def attest() -> None:
 
 @attest.command("simulate")
 @click.option("--in-file", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
-def cmd_attest_simulate(in_file: Path) -> None:
+@click.pass_context
+def cmd_attest_simulate(ctx: click.Context, in_file: Path) -> None:
     """Simulate TPM attestation of IN_FILE."""
     from attestation import simulate_tpm_attestation
 
     info = simulate_tpm_attestation(in_file.read_bytes())
-    _emit(info, "json")
+    _emit(ctx, info, "json")
 
 
-@cli.command()
+@cli.command("install-completion")
 @click.argument("shell", type=click.Choice(["bash", "zsh", "fish"]))
 @click.pass_context
-def complete(ctx: click.Context, shell: str) -> None:  # pragma: no cover
+def install_completion(ctx: click.Context, shell: str) -> None:
     import subprocess
 
     env = os.environ.copy()
@@ -467,13 +489,21 @@ def complete(ctx: click.Context, shell: str) -> None:  # pragma: no cover
 
 
 # ───────── external sub‑commands (kdf, pw‑hash, …) ─────────
-from zilant_prime_core.cli_commands import derive_key_cmd, pq_genkeypair_cmd, pw_hash_cmd, pw_verify_cmd, shard_cmd
+from zilant_prime_core.cli_commands import (
+    derive_key_cmd,
+    pq_genkeypair_cmd,
+    pw_hash_cmd,
+    pw_verify_cmd,
+    shard_cmd,
+    stream_cmd,
+)
 
 cli.add_command(derive_key_cmd)
 cli.add_command(pw_hash_cmd)
 cli.add_command(pw_verify_cmd)
 cli.add_command(pq_genkeypair_cmd)
 key.add_command(shard_cmd)
+cli.add_command(stream_cmd)
 
 add_complete_flag()
 
