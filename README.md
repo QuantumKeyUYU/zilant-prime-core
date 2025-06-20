@@ -264,6 +264,28 @@ Source and tests are maintained by @QuantumKeyUYU, while documentation also list
 
 Experimental modules showcasing quantum resistant techniques can be found in
 `docs/ANONYMITY.md` and `docs/QUANTUM_SECURITY.md`.
+Below is a short example:
+
+```python
+from pathlib import Path
+from zilant_prime_core.utils import QAL, QSSA, QuantumRA, QVPN, ZKQP
+
+qal = QAL(3, Path('/tmp/qal'))
+sig = qal.sign(b'hi', 0)
+assert qal.verify(b'hi', sig)
+
+public, private = QSSA().generate_address()
+
+ra = QuantumRA(Path('/tmp/ra'))
+att = ra.attest(b'device')
+ra.verify(b'device', att)
+
+vpn = QVPN()
+vpn.enable()
+
+zk = ZKQP(Path('/tmp/zk'))
+commit, proof = zk.prove(b'data')
+```
 
 ## TODO Stage III
 

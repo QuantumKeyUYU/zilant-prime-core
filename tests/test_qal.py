@@ -1,18 +1,29 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
+import pytest
+
 from zilant_prime_core.utils.qal import QAL
 
 
-def test_qal_sign_verify(tmp_path):
-    group = QAL(3, tmp_path)
+@pytest.mark.parametrize("size", [1, 3, 5])
+def test_qal_sign_verify(tmp_path, size: int) -> None:
+    group = QAL(size, tmp_path)
     msg = b"quantum"
-    sig = group.sign(msg, 1)
+    sig = group.sign(msg, size - 1)
     assert group.verify(msg, sig) is True
 
 
-def test_qal_verify_fail(tmp_path):
+def test_qal_foreign_signature(tmp_path) -> None:
+    group1 = QAL(3, tmp_path / "a")
+    group2 = QAL(3, tmp_path / "b")
+    sig = group1.sign(b"hi", 0)
+    assert group2.verify(b"hi", sig) is False
+
+
+def test_qal_verify_fail(tmp_path) -> None:
     group = QAL(2, tmp_path)
-    msg = b"hello"
-    sig = group.sign(msg, 0)
+    sig = group.sign(b"hello", 0)
     assert group.verify(b"other", sig) is False
