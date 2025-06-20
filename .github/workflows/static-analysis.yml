@@ -25,5 +25,4 @@ jobs:
             p/python
             ./.semgrep.yml
             ./.semgrep/custom
-          generateSarif: true
-          publishSarif: true
+          publishToken: ${{ secrets.GITHUB_TOKEN }}
