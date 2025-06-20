@@ -27,3 +27,14 @@ flowchart TD
   Восстанавливает мастер-ключ из шардов.
 - `zilctl hsm status`  \
   Выводит JSON с полями `created` (timestamp) и `counter`.
+
+## ISO-27001 SoA
+
+Проект сопровождает файл `iso_soa.json` с таблицей соответствия контролям
+международного стандарта ISO-27001.
+
+## SBOM
+
+При каждом пуше в ветку `main` GitHub Actions выполняет workflow `sbom.yml`.
+Он устанавливает утилиту Syft и генерирует список зависимостей в формате
+CycloneDX. Полученный файл `sbom/cyclonedx.json` сохраняется как артефакт CI.
