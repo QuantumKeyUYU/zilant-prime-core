@@ -190,6 +190,16 @@ zilctl pq sign my.zil --key keys/pq_priv.key
 zilctl pq verify my.zil --sig my.zil.sig --key keys/pq_pub.key
 ```
 
+### OPAQUE Auth
+
+```bash
+# Регистрация
+zilctl auth register alice
+
+# Вход
+zilctl auth login alice
+```
+
 ## Root Baseline
 
 Zilant Prime Core aborts execution when root or debugging indicators are found.

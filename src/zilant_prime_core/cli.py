@@ -484,32 +484,34 @@ def cmd_attest_simulate(ctx: click.Context, in_file: Path) -> None:
 
 @cli.group()
 def auth() -> None:
-    """Authentication commands via OPAQUE."""
+    """Registration & login via OPAQUE."""
     pass
 
 
 @auth.command("register")
-@click.option("--server", required=True, help="URL auth-сервера")
-@click.option("--username", required=True, help="Имя пользователя")
-def register(server: str, username: str) -> None:
-    """Регистрирует пользователя через OPAQUE."""
-    from zilant_prime_core.utils.pq_crypto import OpaqueClient
+@click.argument("username")
+@click.option("--password", prompt=True, hide_input=True)
+@click.option("--out-dir", default="auth", help="Directory for credentials")
+def auth_register(username: str, password: str, out_dir: str) -> None:
+    from pathlib import Path
 
-    client = OpaqueClient(server=server)
-    client.register(username)
-    click.echo(f"Registered user: {username}")
+    from zilant_prime_core.utils.auth import OpaqueAuth
+
+    OpaqueAuth().register(username, password, Path(out_dir))
+    click.echo(f"Registered {username} → {out_dir}/{username}.cred")
 
 
 @auth.command("login")
-@click.option("--server", required=True, help="URL auth-сервера")
-@click.option("--username", required=True, help="Имя пользователя")
-def login(server: str, username: str) -> None:
-    """Выполняет вход через OPAQUE."""
-    from zilant_prime_core.utils.pq_crypto import OpaqueClient
+@click.argument("username")
+@click.option("--password", prompt=True, hide_input=True)
+@click.option("--cred-dir", default="auth", help="Directory with credentials")
+def auth_login(username: str, password: str, cred_dir: str) -> None:
+    from pathlib import Path
 
-    client = OpaqueClient(server=server)
-    client.login(username)
-    click.echo(f"Logged in as: {username}")
+    from zilant_prime_core.utils.auth import OpaqueAuth
+
+    ok = OpaqueAuth().login(username, password, Path(cred_dir))
+    click.echo("Login successful" if ok else "Login failed")
 
 
 @cli.group()
