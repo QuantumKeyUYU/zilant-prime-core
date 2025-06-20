@@ -272,9 +272,11 @@ from zilant_prime_core.utils import QAL, QSSA, QuantumRA, QVPN, ZKQP
 
 qal = QAL(3, Path('/tmp/qal'))
 sig = qal.sign(b'hi', 0)
-assert qal.verify(b'hi', sig)
+pubs = [p.read_bytes() for _, p in qal.keys]
+assert qal.verify(b'hi', sig, pubs)
 
-public, private = QSSA().generate_address()
+qssa = QSSA()
+public, private = qssa.generate_keypair()
 
 ra = QuantumRA(Path('/tmp/ra'))
 att = ra.attest(b'device')
@@ -282,6 +284,7 @@ ra.verify(b'device', att)
 
 vpn = QVPN()
 vpn.enable()
+vpn.disable()
 
 zk = ZKQP(Path('/tmp/zk'))
 commit, proof = zk.prove(b'data')

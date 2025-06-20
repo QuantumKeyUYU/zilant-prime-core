@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import List, Tuple, cast
+import json
 
 from .pq_sign import PQSign
 
@@ -21,23 +22,28 @@ class QAL:
 
     def __init__(self, group_size: int, work_dir: Path) -> None:
         self.signers: List[PQSign] = []
-        self.keys: List[Tuple[Path, Path]] = []
         self.work_dir = work_dir
         self.work_dir.mkdir(parents=True, exist_ok=True)
+        self.key_file = self.work_dir / "keys.json"
+        keys: List[Tuple[str, str]] = []
         for i in range(group_size):
             signer = PQSign()
             priv = work_dir / f"sk_{i}.bin"
             pub = work_dir / f"pk_{i}.bin"
             signer.keygen(priv, pub)
             self.signers.append(signer)
-            self.keys.append((priv, pub))
+            keys.append((str(priv), str(pub)))
+        self.key_file.write_text(json.dumps(keys))
+        self.keys = [(Path(priv), Path(pub)) for priv, pub in keys]
 
     def sign(self, message: bytes, index: int) -> bytes:
         priv, _ = self.keys[index]
         return cast(bytes, self.signers[index].sign(message, priv))
 
-    def verify(self, message: bytes, signature: bytes) -> bool:
-        for signer, (_, pub) in zip(self.signers, self.keys, strict=False):
-            if signer.verify(message, signature, pub):
+    def verify(self, message: bytes, signature: bytes, pubkeys: List[bytes]) -> bool:
+        for signer, pub_bytes in zip(self.signers, pubkeys, strict=False):
+            pub_path = Path("/tmp") / "_tmp_pk.bin"
+            pub_path.write_bytes(pub_bytes)
+            if signer.verify(message, signature, pub_path):
                 return True
         return False

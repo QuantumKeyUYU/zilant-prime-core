@@ -19,7 +19,7 @@ assert ra.verify(b'device-info', signature)
 
 ## QVPN
 
-A very small VPN/TOR toggle useful for testing.
+A small Tor wrapper based on ``stem``.
 
 ```python
 from zilant_prime_core.utils import QVPN

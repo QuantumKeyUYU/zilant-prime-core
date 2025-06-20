@@ -10,17 +10,19 @@ from zilant_prime_core.utils import QAL
 
 group = QAL(3, Path('/tmp/qal'))
 sig = group.sign(b'msg', 0)
-assert group.verify(b'msg', sig)
+pubs = [p.read_bytes() for _, p in group.keys]
+assert group.verify(b'msg', sig, pubs)
 ```
 
 ## Stealth Addresses
 
-`QSSA` uses a hybrid post‑quantum KEM to generate ephemeral public keys for
-receiving data. Each call to `generate_address()` returns a unique key pair.
+`QSSA` demonstrates stealth addresses with X25519. Use `generate_keypair()` to
+create a temporary key and `derive_shared_address()` with the other party's
+public key.
 
 ```python
 from zilant_prime_core.utils import QSSA
 
 q = QSSA()
-public, private = q.generate_address()
+pub, priv = q.generate_keypair()
 ```
