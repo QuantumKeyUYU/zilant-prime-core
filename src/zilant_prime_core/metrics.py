@@ -3,12 +3,25 @@
 
 from __future__ import annotations
 
+import os
+import socket
+import sys
+import time
 from contextlib import contextmanager
 from functools import wraps
-from prometheus_client import Counter, Gauge, Histogram, generate_latest
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
+from prometheus_client import Counter, Gauge, Histogram, generate_latest, start_http_server
 from typing import Any, Callable, Iterator, cast
 
-__all__ = ["metrics", "Metrics"]
+__all__ = ["metrics", "Metrics", "start_metrics_server", "trace_cli"]
+
+
+class DynamicConsoleSpanExporter(ConsoleSpanExporter):
+    def export(self, spans: list[trace.Span]) -> None:  # type: ignore[override]
+        self.out = sys.stdout
+        super().export(spans)
 
 
 class Metrics:
@@ -61,3 +74,65 @@ class Metrics:
 
 
 metrics = Metrics()
+
+
+def start_metrics_server(port: int = 9109) -> int:
+    """Start Prometheus metrics HTTP server on *port*.
+
+    If ``port`` is ``0`` then ``$ZILANT_METRICS_PORT`` is used if set, otherwise
+    a random free port is chosen. The actual port is printed to ``stdout`` and
+    returned.
+    """
+    if port == 0:
+        env_port = os.getenv("ZILANT_METRICS_PORT")
+        port = int(env_port) if env_port else 0
+        if port == 0:
+            with socket.socket() as s:
+                s.bind(("", 0))
+                port = s.getsockname()[1]
+        print(port)
+    start_http_server(port)
+    return port
+
+
+def _trace_enabled() -> bool:
+    return os.getenv("ZILANT_TRACE") == "1"
+
+
+def _ensure_tracer() -> trace.Tracer:
+    if not isinstance(trace.get_tracer_provider(), TracerProvider):
+        exporter = DynamicConsoleSpanExporter(
+            formatter=lambda span: "[Span] " + " ".join(f"{k}={v}" for k, v in span.attributes.items()) + os.linesep,
+        )
+        provider = TracerProvider()
+        provider.add_span_processor(SimpleSpanProcessor(exporter))
+        trace.set_tracer_provider(provider)
+    return trace.get_tracer("zilant.cli")
+
+
+def trace_cli(name: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Decorate CLI command and emit OpenTelemetry span when enabled."""
+
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        if not _trace_enabled():
+            return func
+
+        @wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            start = time.perf_counter()
+            tracer = _ensure_tracer()
+            with tracer.start_as_current_span(name) as span:
+                span.set_attribute("cli.command", name)
+                try:
+                    result = func(*args, **kwargs)
+                    span.set_attribute("success", True)
+                    return result
+                except Exception:
+                    span.set_attribute("success", False)
+                    raise
+                finally:
+                    span.set_attribute("duration_ms", int((time.perf_counter() - start) * 1000))
+
+        return wrapper
+
+    return decorator

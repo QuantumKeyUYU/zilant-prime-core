@@ -60,8 +60,6 @@ jobs:
     needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    labels:
-      needs-large-runner: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -78,6 +76,16 @@ jobs:
         with: { python-version: "3.13" }
       - run: pip install -e .[dev]
       - run: pytest -q tests/test_cli_observability.py
+
+  observability:
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - run: pip install .[dev]
+      - run: pytest -q tests/test_metrics_server.py tests/test_tracing_cli.py
 
 # ──────────────────────────── Build + artefacts ─────────────────────
   build-pq:

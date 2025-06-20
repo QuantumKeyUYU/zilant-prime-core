@@ -91,6 +91,15 @@ zilctl pack secret.txt --vault-path secret/data/zilant/password
 # Расшифровка:
 zilctl unpack secret.zil --output-dir ./out
 
+## Observability
+
+```bash
+zilant metrics serve --port 9200 &
+curl http://localhost:9200/metrics | grep zilant_command_duration_seconds
+```
+
+Set `ZILANT_TRACE=1` to print OpenTelemetry spans to the console.
+
 ### Shamir Secret Sharing
 
 Разделите мастер‑ключ на части и восстановите его при необходимости:

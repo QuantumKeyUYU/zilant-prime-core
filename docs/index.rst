@@ -19,3 +19,4 @@ documentation for details.
    api/autogen
    THREATS.rst
    architecture/index
+   observability

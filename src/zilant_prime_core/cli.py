@@ -14,7 +14,7 @@ from typing import Any, NoReturn, cast
 
 from container import pack_file, unpack_file
 from zilant_prime_core.crypto.password_hash import hash_password, verify_password
-from zilant_prime_core.metrics import metrics
+from zilant_prime_core.metrics import metrics, start_metrics_server, trace_cli
 from zilant_prime_core.utils import VaultClient
 from zilant_prime_core.utils.anti_snapshot import detect_snapshot
 from zilant_prime_core.utils.counter import increment_counter, read_counter
@@ -147,6 +147,23 @@ def cli(
     ctx.obj = {"vault_key": vault_key, "output": output}
 
 
+@cli.group(name="metrics")
+def metrics_cli() -> None:
+    """Metrics related commands."""
+
+
+@metrics_cli.command("serve")
+@click.option("--port", type=int, default=9109, show_default=True)
+def metrics_serve(port: int) -> None:
+    """Serve Prometheus metrics via HTTP."""
+    port = start_metrics_server(port)
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
+
+
 @cli.group()
 def key() -> None:
     """Key management commands."""
@@ -158,6 +175,7 @@ def key() -> None:
 @click.option("--out-key", type=click.Path(dir_okay=False, path_type=Path), required=True)
 @click.pass_context
 @metrics.record_cli("key_rotate")
+@trace_cli("key.rotate")
 def cmd_key_rotate(ctx: click.Context, days: int, in_key: Path, out_key: Path) -> None:
     """Rotate master key and save the result."""
     from key_lifecycle import KeyLifecycle
@@ -175,8 +193,10 @@ def cmd_key_rotate(ctx: click.Context, days: int, in_key: Path, out_key: Path) -
 @click.option("--vault-path", metavar="VAULT_PATH", help="Path in HashiCorp Vault")
 @click.option("--pq-pub", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.option("--overwrite/--no-overwrite", default=False, show_default=True)
+@click.option("--dry-run", is_flag=True, default=False, help="Run without writing container")
 @click.pass_context
 @metrics.record_cli("pack")
+@trace_cli("pack")
 def cmd_pack(  # noqa: C901  (covered by extensive tests)
     ctx: click.Context,
     source: Path,
@@ -185,6 +205,7 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
     vault_path: str | None,
     pq_pub: Path | None,
     overwrite: bool,
+    dry_run: bool,
 ) -> None:
     from zilant_prime_core.metrics import metrics
 
@@ -215,8 +236,14 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
         start = time.perf_counter()
         with metrics.track("pack"):
             if pq_pub:
-                pack_file(source, dest, pwd.encode(), pq_public_key=pq_pub.read_bytes())
-                blob: bytes | None = None
+                if dry_run:
+                    tmp = dest.with_suffix(".tmp")
+                    pack_file(source, tmp, pwd.encode(), pq_public_key=pq_pub.read_bytes())
+                    tmp.unlink(missing_ok=True)
+                    blob = None
+                else:
+                    pack_file(source, dest, pwd.encode(), pq_public_key=pq_pub.read_bytes())
+                    blob = None
             else:
                 blob = _pack_bytes(source, pwd, dest, overwrite)
         metrics.encryption_duration_seconds.observe(time.perf_counter() - start)
@@ -226,7 +253,7 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
         _abort(f"Pack error: {exc}")
 
     # write container (non‑PQ branch)
-    if blob is not None:
+    if blob is not None and not dry_run:
         tmp = dest.with_suffix(dest.suffix + ".tmp")
         try:
             with open(tmp, "wb") as fh:  # noqa: PTH123
@@ -249,6 +276,7 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
 @click.option("--pq-sk", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.pass_context
 @metrics.record_cli("unpack")
+@trace_cli("unpack")
 def cmd_unpack(
     ctx: click.Context,
     container: Path,

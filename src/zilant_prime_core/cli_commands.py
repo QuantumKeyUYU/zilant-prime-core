@@ -14,7 +14,7 @@ from typing import Final
 from key_lifecycle import recover_secret, shard_secret
 from zilant_prime_core.crypto.kdf import derive_key_dynamic
 from zilant_prime_core.crypto.password_hash import hash_password, verify_password
-from zilant_prime_core.metrics import metrics
+from zilant_prime_core.metrics import metrics, trace_cli
 
 __all__: Final = [
     "derive_key_cmd",
@@ -103,6 +103,7 @@ def shard_cmd() -> None:
 @click.option("--output-dir", type=click.Path(file_okay=False, path_type=Path), required=True)
 @click.pass_context
 @metrics.record_cli("shard_export")
+@trace_cli("shard.export")
 def shard_export_cmd(
     ctx: click.Context,
     master_key: Path | None,
@@ -136,6 +137,7 @@ def shard_export_cmd(
 @click.option("--output-file", type=click.Path(dir_okay=False, path_type=Path), required=True)
 @click.pass_context
 @metrics.record_cli("shard_import")
+@trace_cli("shard.import")
 def shard_import_cmd(ctx: click.Context, input_dir: Path, output_file: Path) -> None:
     """Recover secret from INPUT-DIR and write to OUTPUT-FILE."""
     meta_path = input_dir / "meta.json"
@@ -176,6 +178,7 @@ def stream_cmd() -> None:
 @click.option("--progress/--no-progress", default=False, show_default=True)
 @click.pass_context
 @metrics.record_cli("stream_pack")
+@trace_cli("stream.pack")
 def stream_pack_cmd(ctx: click.Context, src: Path, dst: Path, key: Path, threads: int, progress: bool) -> None:
     """Pack SRC into DST using streaming AEAD."""
     from streaming_aead import pack_stream
@@ -194,6 +197,7 @@ def stream_pack_cmd(ctx: click.Context, src: Path, dst: Path, key: Path, threads
 @click.option("--offset", type=int, default=0, show_default=True, help="Skip first OFFSET bytes of ciphertext")
 @click.pass_context
 @metrics.record_cli("stream_unpack")
+@trace_cli("stream.unpack")
 def stream_unpack_cmd(
     ctx: click.Context,
     src: Path,
