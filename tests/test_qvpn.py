@@ -1,8 +1,9 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
 
-from zilant_prime_core.utils.qvpn import QVPN
 import pytest
+
+from zilant_prime_core.utils.qvpn import QVPN
 
 
 @pytest.fixture
@@ -11,9 +12,11 @@ def mock_launch_tor(monkeypatch):
 
     def fake_launch(config, tor_cmd="tor"):
         calls.append(config)
+
         class P:
             def terminate(self):
                 pass
+
         return P()
 
     monkeypatch.setattr("zilant_prime_core.utils.qvpn.launch_tor_with_config", fake_launch)

@@ -10,9 +10,9 @@ experimentation and tests.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import List, Tuple, cast
-import json
 
 from .pq_sign import PQSign
 
