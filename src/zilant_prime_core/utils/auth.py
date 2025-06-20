@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 
 try:
@@ -20,11 +21,14 @@ class OpaqueAuth:
         """Генерирует OPAQUE-регистр и сохраняет данные."""
         out_dir.mkdir(exist_ok=True, parents=True)
         # TODO: реальная логика OPAQUE
-        cred = f"{username}:{password}".encode()
-        (out_dir / f"{username}.cred").write_bytes(cred)
+        # храним только SHA-256 хеш учётных данных, а не сам пароль
+        raw = f"{username}:{password}".encode()
+        digest = hashlib.sha256(raw).digest()
+        (out_dir / f"{username}.cred").write_bytes(digest)
 
     def login(self, username: str, password: str, cred_dir: Path) -> bool:
         """Проверяет пароль по OPAQUE-данным."""
         data = (cred_dir / f"{username}.cred").read_bytes()
-        stored = data.decode().split(":", 1)
-        return username == stored[0] and password == stored[1]
+        raw = f"{username}:{password}".encode()
+        digest = hashlib.sha256(raw).digest()
+        return data == digest
