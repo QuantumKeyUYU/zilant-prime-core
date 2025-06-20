@@ -21,7 +21,10 @@ jobs:
       - name: Run Semgrep
         uses: returntocorp/semgrep-action@v1
         with:
-          config: ./.semgrep.yml
+          config: |
+            p/python
+            ./.semgrep.yml
+            ./.semgrep/custom
           generateSarif: true
           publishSarif: true
           args: --metrics=off --disable-version-check
