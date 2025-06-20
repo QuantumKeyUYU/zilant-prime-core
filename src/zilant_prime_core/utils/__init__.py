@@ -38,6 +38,12 @@ from .shard_secret import recover_secret, split_secret
 
 # ───────────────────────── Vault integration ────────────────────────
 from .vault_client import VaultClient
+from .qal import QAL
+from .qssa import QSSA
+from .zkqp import ZKQP
+from .qvpn import QVPN
+from .qema import QEMA
+from .quantum_ra import QuantumRA
 
 __all__: list[str] = [
     # constants.py
@@ -81,4 +87,10 @@ __all__: list[str] = [
     "HoneyfileError",
     "check_tmp_for_honeyfiles",
     "generate_daily_challenge",
+    "QAL",
+    "QSSA",
+    "ZKQP",
+    "QVPN",
+    "QEMA",
+    "QuantumRA",
 ]

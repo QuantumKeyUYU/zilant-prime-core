@@ -260,6 +260,11 @@ zilctl login --server https://auth.example --username alice
 
 Source and tests are maintained by @QuantumKeyUYU, while documentation also lists @DocMaintainers. CI workflows fall under @DevSecOpsTeam. Pull requests run Semgrep with custom rules in `.semgrep.yml` to prevent hardcoded keys and insecure random usage.
 
+## Quantum Anonymity & Security
+
+Experimental modules showcasing quantum resistant techniques can be found in
+`docs/ANONYMITY.md` and `docs/QUANTUM_SECURITY.md`.
+
 ## TODO Stage III
 
 - GUI demonstration (PyQt/Web)
