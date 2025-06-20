@@ -31,6 +31,7 @@ from .honeyfile import HoneyfileError, check_tmp_for_honeyfiles
 
 # ───────────────────────────── Logging ──────────────────────────────
 from .logging import get_file_logger, get_logger
+from .pq_ring import PQRing
 from .qal import QAL
 from .qema import QEMA
 from .qssa import QSSA
@@ -89,6 +90,7 @@ __all__: list[str] = [
     "generate_daily_challenge",
     "QAL",
     "QSSA",
+    "PQRing",
     "ZKQP",
     "QVPN",
     "QEMA",
