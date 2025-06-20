@@ -55,6 +55,51 @@ graph LR
 CLI использует эти функции при старте, что закладывает фундамент для дальнейшей
 работы Pseudo‑HSM.
 
+### Pseudo-HSM CLI
+
+- **init**
+  `zilctl hsm init`
+  Инициализирует Pseudo-HSM: создаёт `lock.json` и `counter.txt`.
+
+- **seal**
+```bash
+zilctl hsm seal \
+  --master-key master.key \
+  --threshold 2 \
+  --shares 3 \
+  --output-dir shards
+```
+Генерирует 3 шард-файла `shard_1.hex` … `shard_3.hex` из мастер-ключа.
+
+- **unseal**
+```bash
+zilctl hsm unseal \
+  --input-dir shards \
+  --output-file master_restored.key
+```
+Восстанавливает мастер-ключ из сохранённых шардов.
+
+- **status**
+```bash
+zilctl hsm status
+```
+Выводит JSON с полями `created` (timestamp) и `counter`.
+
+#### Quickstart
+```bash
+# Инициализация
+zilctl hsm init
+
+# Разбиваем ключ
+zilctl hsm seal --master-key master.key --threshold 2 --shares 3 --output-dir shards
+
+# Восстанавливаем
+zilctl hsm unseal --input-dir shards --output-file master_restored.key
+
+# Проверяем статус
+zilctl hsm status
+```
+
 ---
 
 ## Документация
