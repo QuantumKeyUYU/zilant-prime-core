@@ -46,6 +46,30 @@ ui = [
     "PyQt5>=5.15.0",
 ]
 
+[tool.poetry.extras]
+dev = [
+    "pytest", 
+    "pytest-cov", 
+    "hypothesis", 
+    "ruff", 
+    "black", 
+    "isort", 
+    "mypy", 
+    "sphinx", 
+    "filelock", 
+    "hvac", 
+    "prometheus-client", 
+    "opentelemetry-sdk", 
+    "opentelemetry-exporter-otlp", 
+    "PyYAML",
+]
+docs = [
+    "sphinx", 
+    "m2r2", 
+    "sphinx-autodoc-typehints", 
+    "sphinxcontrib-mermaid",
+]
+
 [tool.black]
 line-length = 120
 

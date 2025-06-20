@@ -9,6 +9,7 @@ import os
 import sys
 import time
 import yaml  # type: ignore
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any, NoReturn, cast
 
@@ -114,6 +115,7 @@ def _cleanup_old_file(container: Path) -> None:
 
 # ──────────────────────────────── CLI root ────────────────────────────────
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
+@click.version_option(version("zilant-prime-core"))
 @click.option("--metrics-port", type=int, metavar="PORT", help="Expose metrics on PORT")
 @click.option("--vault-key", type=binascii.unhexlify, metavar="HEX", help="AES key for Vault")
 @click.option(
