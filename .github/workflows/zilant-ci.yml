@@ -30,7 +30,7 @@ jobs:
       - run: black --check .
       - run: isort --check-only .
       - run: bandit -r src -ll
-      - run: semgrep ci
+      - run: semgrep ci --metrics=off
       - run: mypy --config-file mypy.ini src
       - run: pytest -q tests/test_contributing_sections.py tests/test_key_lifecycle.py tests/test_cli_key_audit.py tests/test_streaming_aead.py tests/test_pqcrypto.py tests/test_ui_launch.py tests/test_cli_output.py tests/test_metrics.py tests/test_health.py tests/test_health_additional.py tests/test_plugin_manager.py tests/test_s3_backend.py tests/test_onion.py tests/test_attestation.py tests/test_timelock.py tests/test_audit_ledger.py
 

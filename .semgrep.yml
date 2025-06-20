@@ -1,3 +1,6 @@
+include:
+  - .semgrep/custom/rules.yml
+
 rules:
   - id: no-hardcoded-crypto-key
     message: Do not hardcode cryptographic keys
@@ -21,6 +24,9 @@ rules:
           - pattern-inside: |
               import cryptography
               ...
-          - pattern-inside: |
+      - pattern-inside: |
               from cryptography import $X
               ...
+
+metrics:
+  enabled: false

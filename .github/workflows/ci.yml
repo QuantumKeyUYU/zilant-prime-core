@@ -33,9 +33,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install ".[dev]"
 
-      - name: Install linters
+      - name: Install linters & test tools
         run: |
-          pip install ruff black isort mypy
+          pip install pytest ruff black isort mypy sphinx prometheus_client
 
       - name: Lint
         run: |

@@ -14,7 +14,34 @@ dependencies = [
     "PyQt5>=5.15.0",
     "opentelemetry-sdk>=1.20.0",
     "opentelemetry-exporter-otlp>=1.20.0",
+    "prometheus-client>=0.16.0",
     "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "hypothesis>=6.0.0",
+    "ruff>=0.2.0",
+    "black>=23.1.0",
+    "isort>=5.10.1",
+    "mypy>=1.8.0",
+    "sphinx>=7.0",
+    "filelock>=3.13.0",
+    "prometheus-client>=0.16.0",
+    "opentelemetry-sdk>=1.20.0",
+    "opentelemetry-exporter-otlp>=1.20.0",
+    "PyYAML>=6.0",
+]
+docs = [
+    "sphinx>=7.0",
+    "m2r2",
+    "sphinx-autodoc-typehints",
+    "sphinxcontrib-mermaid",
+]
+ui = [
+    "pyinstaller>=6.0",
+    "PyQt5>=5.15.0",
 ]
 
 [tool.black]

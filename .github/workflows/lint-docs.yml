@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: '16'
       - run: npm install -g @mermaid-js/mermaid-cli
-      - run: pip install -e .[docs]
+      - run: pip install -e .[docs] sphinx m2r2
       - name: Build docs
         run: make docs
       - name: Verify docs files

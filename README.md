@@ -181,6 +181,12 @@ zilant metrics serve --endpoint http://localhost:4317
 
 ## Development
 
+Install development dependencies:
+
+```bash
+pip install -e .[dev]
+```
+
 ### Code Owners & Static Analysis
 
 Source and tests are maintained by @QuantumKeyUYU, while documentation also lists @DocMaintainers. CI workflows fall under @DevSecOpsTeam. Pull requests run Semgrep with custom rules in `.semgrep.yml` to prevent hardcoded keys and insecure random usage.
