@@ -24,4 +24,4 @@ jobs:
           config: ./.semgrep.yml
           generateSarif: true
           publishSarif: true
-          args: --metrics=off
+          args: --metrics=off --disable-version-check
