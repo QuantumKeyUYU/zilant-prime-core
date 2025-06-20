@@ -1,15 +1,16 @@
-from __future__ import annotations
+#!/usr/bin/env python3
+# ui/main.py
 
 import subprocess
 import sys
-from pathlib import Path
+import threading
+import time
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QApplication,
     QFileDialog,
     QLabel,
     QMainWindow,
-    QMessageBox,
     QProgressBar,
     QPushButton,
     QVBoxLayout,
@@ -17,93 +18,85 @@ from PyQt5.QtWidgets import (
 )
 
 
-class DropLabel(QLabel):
-    def __init__(self, parent: "MainWindow") -> None:
-        super().__init__("Drop file to pack/unpack")
-        self._parent = parent
-        self.setAlignment(Qt.AlignCenter)
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Zilant Prime GUI")
         self.setAcceptDrops(True)
+        self._build_ui()
 
-    def dragEnterEvent(self, event):  # type: ignore[override]
+    def _build_ui(self):
+        central = QWidget()
+        self.setCentralWidget(central)
+        layout = QVBoxLayout()
+        central.setLayout(layout)
+
+        self.label = QLabel("Перетащи файл сюда или выбери кнопкой")
+        self.label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.label)
+
+        self.btn_select = QPushButton("Выбрать файл...")
+        self.btn_select.clicked.connect(self._select_file)
+        layout.addWidget(self.btn_select)
+
+        self.btn_pack = QPushButton("Pack")
+        self.btn_pack.clicked.connect(lambda: self._run_task("pack"))
+        self.btn_sbom = QPushButton("Generate SBOM")
+        self.btn_sbom.clicked.connect(lambda: self._run_task("sbom"))
+        layout.addWidget(self.btn_pack)
+        layout.addWidget(self.btn_sbom)
+
+        self.progress = QProgressBar()
+        self.progress.setValue(0)
+        layout.addWidget(self.progress)
+
+    def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
 
-    def dropEvent(self, event):  # type: ignore[override]
+    def dropEvent(self, event):
         urls = event.mimeData().urls()
         if urls:
-            path = Path(urls[0].toLocalFile())
-            self._parent.process_file(path)
+            path = urls[0].toLocalFile()
+            self.label.setText(f"Файл: {path}")
+            self._last_file = path
+
+    def _select_file(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Выберите файл")
+        if path:
+            self.label.setText(f"Файл: {path}")
+            self._last_file = path
+
+    def _run_task(self, cmd):
+        file_arg = getattr(self, "_last_file", None)
+        args = ["zilant", cmd]
+        if cmd == "pack" and file_arg:
+            args.append(file_arg)
+
+        self.progress.setValue(0)
+        thread = threading.Thread(target=self._worker, args=(args,), daemon=True)
+        thread.start()
+
+    def _worker(self, args):
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        total = 100
+        current = 0
+        for _ in proc.stdout:
+            current = min(current + total // 20, total)
+            self.progress.setValue(current)
+        proc.wait()
+        self.progress.setValue(total)
+        time.sleep(0.5)
+        self.progress.setValue(0)
 
 
-class MainWindow(QMainWindow):
-    def __init__(self) -> None:
-        super().__init__()
-        self.setWindowTitle("Zilant GUI")
-        self._file: Path | None = None
-
-        self.drop_area = DropLabel(self)
-        self.progress = QProgressBar()
-        self.progress.setVisible(False)
-        self.sbom_btn = QPushButton("Generate SBOM")
-        self.sbom_btn.clicked.connect(self.gen_sbom)
-
-        central = QWidget()
-        layout = QVBoxLayout(central)
-        layout.addWidget(self.drop_area)
-        layout.addWidget(self.progress)
-        layout.addWidget(self.sbom_btn)
-        self.setCentralWidget(central)
-
-        file_menu = self.menuBar().addMenu("File")
-        file_menu.addAction("Pack", self.pack)
-        file_menu.addAction("Unpack", self.unpack)
-        self.statusBar()
-
-    # public API -----------------------------------------------------
-    def process_file(self, path: Path) -> None:
-        self._file = path
-        self.drop_area.setText(str(path))
-        if path.suffix == ".zil":
-            self.unpack()
-        else:
-            self.pack()
-
-    def pack(self) -> None:
-        if not self._file:
-            return
-        self._run(["zilant", "pack", str(self._file)])
-
-    def unpack(self) -> None:
-        if not self._file:
-            return
-        out_dir = QFileDialog.getExistingDirectory(self, "Unpack to", str(self._file.parent))
-        if out_dir:
-            self._run(["zilant", "unpack", str(self._file), "-d", out_dir])
-
-    def gen_sbom(self) -> None:
-        target = str(self._file or ".")
-        self._run(["zilant", "sbom", "--output", "sbom.json", target])
-        QMessageBox.information(self, "SBOM", "sbom.json generated")
-
-    # helpers --------------------------------------------------------
-    def _run(self, args: list[str]) -> None:
-        self.progress.setVisible(True)
-        self.statusBar().showMessage("Running...")
-        try:
-            subprocess.run(args, check=True)
-            self.statusBar().showMessage("Done", 5000)
-        except Exception as exc:  # nosec - UI surface
-            self.statusBar().showMessage(f"Error: {exc}", 5000)
-        finally:
-            self.progress.setVisible(False)
-
-
-def main() -> int:
+def main():
     app = QApplication(sys.argv)
     win = MainWindow()
+    win.resize(500, 300)
     win.show()
-    return app.exec()
+    sys.exit(app.exec_())
 
 
-if __name__ == "__main__":  # pragma: no cover
-    raise SystemExit(main())
+if __name__ == "__main__":
+    main()

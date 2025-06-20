@@ -162,6 +162,23 @@ zilctl register --server https://auth.example --username alice
 zilctl login --server https://auth.example --username alice
 ```
 
+## GUI
+
+The repository includes a minimal PyQt5 interface. Run it directly or use the
+prebuilt `zilant-gui.exe` from CI:
+
+```bash
+python ui/main.py
+```
+
+## Metrics
+
+Export internal metrics via OpenTelemetry OTLP:
+
+```bash
+zilant metrics serve --endpoint http://localhost:4317
+```
+
 ## Development
 
 ### Code Owners & Static Analysis

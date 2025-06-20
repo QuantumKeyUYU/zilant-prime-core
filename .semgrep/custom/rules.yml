@@ -1,0 +1,16 @@
+rules:
+  - id: no-hardcoded-secrets
+    patterns:
+      - pattern: |
+          ["'](AKIA|AIza|-----BEGIN PRIVATE KEY)[A-Za-z0-9/+=]+["']
+    message: "Hardcoded secret detected"
+    languages: [python]
+    severity: ERROR
+
+  - id: require-timeout-requests
+    pattern: requests.$METHOD(...)
+    message: "Specify timeout for requests"
+    languages: [python]
+    severity: WARNING
+    metavariable-regex:
+      METHOD: get|post|put|delete|head|options

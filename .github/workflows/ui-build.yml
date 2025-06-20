@@ -1,19 +1,44 @@
-name: Build UI
+name: Build GUI (PyInstaller)
+
 on:
   push:
-    paths: ["ui/**", ".github/workflows/ui-build.yml"]
-  pull_request:
+    paths:
+      - 'ui/**'
+      - '.github/workflows/ui-build.yml'
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build-gui:
+    runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - run: make -C ui build-ui
-      - uses: actions/upload-artifact@v4
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[ui]
+
+      - name: PyInstaller build
+        run: pyinstaller --onefile --windowed ui/main.py --name zilant-gui
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
         with:
-          name: zilant-ui
-          path: ui/dist/zilant-ui
+          name: zilant-gui.exe
+          path: dist/zilant-gui.exe
+
+  smoke-test:
+    runs-on: windows-latest
+    needs: build-gui
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download GUI
+        uses: actions/download-artifact@v2
+        with:
+          name: zilant-gui.exe
+      - name: Run smoke test
+        run: tests/windows_smoke_test.bat

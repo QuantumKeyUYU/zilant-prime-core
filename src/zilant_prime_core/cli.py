@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, NoReturn, cast
 
 from container import pack_file, unpack_file
+from zilant.metrics import metrics_cli
 from zilant_prime_core.crypto.password_hash import hash_password, verify_password
 from zilant_prime_core.metrics import metrics
 from zilant_prime_core.utils import VaultClient
@@ -504,6 +505,7 @@ cli.add_command(pw_verify_cmd)
 cli.add_command(pq_genkeypair_cmd)
 key.add_command(shard_cmd)
 cli.add_command(stream_cmd)
+cli.add_command(metrics_cli, name="metrics")
 
 add_complete_flag()
 

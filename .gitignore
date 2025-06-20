@@ -1,6 +1,7 @@
-﻿# Byte-compiled / optimized / DLL files
+# Byte-compiled
 __pycache__/
 *.py[cod]
+*.pyo
 *$py.class
 
 # C extensions
@@ -8,10 +9,11 @@ __pycache__/
 *.pyd
 *.bin
 
-# Distribution / packaging
+# CI / build
 build/
 dist/
 *.egg-info/
+*.spec
 .eggs/
 *.whl
 
@@ -36,17 +38,16 @@ htmlcov/
 # Mypy
 .mypy_cache/
 
-# Virtual environments
-.env/
+# Virtual envs
 .venv/
-env/
 venv/
+env/
 ENV/
 
-# Pre-commit cache (hooks), but NOT the config file!
+# Pre-commit cache (hooks)
 .pre-commit/
 
-# Editor directories and files
+# PyCharm
 .idea/
 .vscode/
 *.sublime-project
@@ -57,9 +58,10 @@ ENV/
 Thumbs.db
 desktop.ini
 
-# Logs and databases
+# Logs
 *.log
 *.sqlite3
+sbom.json
 
 # Backup files
 *~

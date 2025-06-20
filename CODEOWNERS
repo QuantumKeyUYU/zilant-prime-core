@@ -1,0 +1,10 @@
+# Core
+/src/zilant/ @core-team
+/src/zilant/metrics.py @observability-team
+
+# GUI
+/ui/ @ui-team
+
+# Docs & tests
+/docs/ @docs-team
+/tests/ @qa-team
