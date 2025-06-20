@@ -11,6 +11,7 @@ experimentation and tests.
 from __future__ import annotations
 
 import json
+import tempfile
 from pathlib import Path
 from typing import List, Tuple, cast
 
@@ -42,8 +43,13 @@ class QAL:
 
     def verify(self, message: bytes, signature: bytes, pubkeys: List[bytes]) -> bool:
         for signer, pub_bytes in zip(self.signers, pubkeys, strict=False):
-            pub_path = Path("/tmp") / "_tmp_pk.bin"
-            pub_path.write_bytes(pub_bytes)
-            if signer.verify(message, signature, pub_path):
-                return True
+            with tempfile.NamedTemporaryFile(delete=False) as tf:
+                tf.write(pub_bytes)
+                tf.flush()
+                tmp_pub = Path(tf.name)
+            try:
+                if signer.verify(message, signature, tmp_pub):
+                    return True
+            finally:
+                tmp_pub.unlink(missing_ok=True)
         return False
