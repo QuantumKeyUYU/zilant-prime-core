@@ -133,6 +133,12 @@ def cli(
     """Zilant Prime command‑line interface.
 
     Use ``zilant install-completion bash`` to enable shell autocompletion.
+
+    Available HSM commands:
+      ``hsm init``
+      ``hsm seal``
+      ``hsm unseal``
+      ``hsm status``
     """
     try:
         guard.assert_secure()
