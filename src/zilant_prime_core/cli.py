@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, NoReturn, cast
 
 from container import pack_file, unpack_file
+from key_lifecycle import recover_secret, shard_secret
 from zilant_prime_core.crypto.password_hash import hash_password, verify_password
 from zilant_prime_core.metrics import metrics
 from zilant_prime_core.utils import VaultClient
@@ -132,6 +133,12 @@ def cli(
     """Zilant Prime command‑line interface.
 
     Use ``zilant install-completion bash`` to enable shell autocompletion.
+
+    Available HSM commands:
+      ``hsm init``
+      ``hsm seal``
+      ``hsm unseal``
+      ``hsm status``
     """
     try:
         guard.assert_secure()
@@ -475,6 +482,116 @@ def cmd_attest_simulate(ctx: click.Context, in_file: Path) -> None:
     _emit(ctx, info, "json")
 
 
+@cli.group()
+def auth() -> None:
+    """Authentication commands via OPAQUE."""
+    pass
+
+
+@auth.command("register")
+@click.option("--server", required=True, help="URL auth-сервера")
+@click.option("--username", required=True, help="Имя пользователя")
+def register(server: str, username: str) -> None:
+    """Регистрирует пользователя через OPAQUE."""
+    from zilant_prime_core.utils.pq_crypto import OpaqueClient
+
+    client = OpaqueClient(server=server)
+    client.register(username)
+    click.echo(f"Registered user: {username}")
+
+
+@auth.command("login")
+@click.option("--server", required=True, help="URL auth-сервера")
+@click.option("--username", required=True, help="Имя пользователя")
+def login(server: str, username: str) -> None:
+    """Выполняет вход через OPAQUE."""
+    from zilant_prime_core.utils.pq_crypto import OpaqueClient
+
+    client = OpaqueClient(server=server)
+    client.login(username)
+    click.echo(f"Logged in as: {username}")
+
+
+@cli.group()
+def hsm() -> None:
+    """Pseudo-HSM management commands."""
+
+
+@hsm.command("init")
+def hsm_init_cmd() -> None:
+    """Initialize lock.json and counter.txt."""
+    lock = Path("lock.json")
+    counter = Path("counter.txt")
+    if lock.exists() or counter.exists():
+        raise click.ClickException("Pseudo-HSM already initialized")
+    try:
+        lock.write_text(json.dumps({"created": int(time.time())}))
+        counter.write_text("0")
+    except Exception as exc:  # pragma: no cover - filesystem errors
+        raise click.ClickException(str(exc)) from exc
+    click.echo("initialized")
+
+
+@hsm.command("seal")
+@click.option("--master-key", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option("--threshold", type=int, required=True, metavar="N")
+@click.option("--shares", type=int, required=True, metavar="M")
+@click.option("--output-dir", type=click.Path(file_okay=False, path_type=Path), required=True)
+def hsm_seal_cmd(master_key: Path, threshold: int, shares: int, output_dir: Path) -> None:
+    """Encrypt MASTER-KEY into shard files."""
+    if shares < threshold or threshold < 2:
+        raise click.UsageError("shares must be >= threshold >= 2")
+    secret = master_key.read_bytes()
+    pieces = shard_secret(secret, shares, threshold)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for i, piece in enumerate(pieces, 1):
+        (output_dir / f"shard_{i}.hex").write_text(piece.hex())
+    click.echo(f"{len(pieces)} shards written to {output_dir}")
+
+
+@hsm.command("unseal")
+@click.option("--input-dir", type=click.Path(exists=True, file_okay=False, path_type=Path), required=True)
+@click.option("--output-file", type=click.Path(dir_okay=False, path_type=Path), required=True)
+def hsm_unseal_cmd(input_dir: Path, output_file: Path) -> None:
+    """Recover master key from shards in INPUT-DIR."""
+    shard_paths = sorted(input_dir.glob("shard_*.hex"))
+    if not shard_paths:
+        raise click.ClickException("no shard files found")
+    shards = []
+    for p in shard_paths:
+        try:
+            shards.append(bytes.fromhex(p.read_text().strip()))
+        except Exception as exc:
+            raise click.ClickException(f"malformed shard file: {p}") from exc
+    secret = recover_secret(shards)
+    output_file.write_bytes(secret)
+    click.echo(str(output_file))
+
+
+@hsm.command("status")
+def hsm_status_cmd() -> None:
+    """Show lock file creation time and counter value."""
+    lock = Path("lock.json")
+    counter = Path("counter.txt")
+
+    created: int | None = None
+    counter_val: int | None = None
+
+    if lock.exists():
+        try:
+            created = json.loads(lock.read_text()).get("created")
+        except Exception as exc:  # pragma: no cover - invalid json
+            raise click.ClickException("invalid lock.json") from exc
+
+    if counter.exists():
+        try:
+            counter_val = int(counter.read_text().strip())
+        except Exception as exc:  # pragma: no cover - invalid number
+            raise click.ClickException("invalid counter file") from exc
+
+    click.echo(json.dumps({"created": created, "counter": counter_val}))
+
+
 @cli.command("install-completion")
 @click.argument("shell", type=click.Choice(["bash", "zsh", "fish"]))
 @click.pass_context
@@ -506,6 +623,8 @@ cli.add_command(pq_genkeypair_cmd)
 key.add_command(shard_cmd)
 cli.add_command(stream_cmd)
 cli.add_command(hpke_cmd)
+cli.add_command(auth)
+cli.add_command(hsm)
 
 add_complete_flag()
 

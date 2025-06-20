@@ -260,3 +260,22 @@ def derive_key_pq(shared_secret: bytes, length: int = 32) -> bytes:
 
     key: bytes = derive_key(bytes(shared_secret), b"pq_salt!")
     return key[:length]
+
+
+class OpaqueClient:
+    """OPAQUE client for registration and login."""
+
+    def __init__(self, server: str) -> None:
+        self.server = server
+
+    def register(self, username: str) -> None:
+        """Register a user with the auth server."""
+
+        # TODO: implement real HTTP request
+        print(f"Registering {username} at {self.server}")
+
+    def login(self, username: str) -> None:
+        """Authenticate a user with the auth server."""
+
+        # TODO: implement real HTTP request
+        print(f"Logging in {username} at {self.server}")

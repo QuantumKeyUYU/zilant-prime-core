@@ -16,3 +16,14 @@ flowchart TD
 - **Secure Logger** – encrypts audit logs with AES‑GCM.
 - **Vault/Pseudo‑HSM** – secrets storage.
 - **SBOM tools** – reproducible builds and vulnerability scanning.
+
+## CLI-интерфейс
+
+- `zilctl hsm init`  \
+  Инициализирует HSM: создаёт файлы lock.json и counter.txt.
+- `zilctl hsm seal --master-key <путь> --threshold N --shares M --output-dir <директория>`  \
+  Разбивает мастер-ключ на M шардов shard_1.hex … shard_M.hex.
+- `zilctl hsm unseal --input-dir <директория> --output-file <файл>`  \
+  Восстанавливает мастер-ключ из шардов.
+- `zilctl hsm status`  \
+  Выводит JSON с полями `created` (timestamp) и `counter`.

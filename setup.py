@@ -19,7 +19,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "zilant=zilant_prime_core.cli:main",
+            "zilctl=zilant_prime_core.cli:cli",
         ],
     },
 )
