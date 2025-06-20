@@ -75,3 +75,4 @@ ui/dist/
 *.dylib
 *.zip
 *.tar.gz
+*.lock
