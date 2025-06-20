@@ -177,6 +177,19 @@ zilctl hpke encrypt src.bin ct.bin --pq-pub kyber.pk --x-pub x25519.pk
 zilctl hpke decrypt ct.bin out.bin --pq-sk kyber.sk --x-sk x25519.sk
 ```
 
+### PQ Signatures
+
+```bash
+# Генерация PQ-ключей
+zilctl pq gen-key --out keys
+
+# Подпись контейнера
+zilctl pq sign my.zil --key keys/pq_priv.key
+
+# Проверка подписи
+zilctl pq verify my.zil --sig my.zil.sig --key keys/pq_pub.key
+```
+
 ## Root Baseline
 
 Zilant Prime Core aborts execution when root or debugging indicators are found.

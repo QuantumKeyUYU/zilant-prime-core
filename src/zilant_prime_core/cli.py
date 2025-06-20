@@ -592,6 +592,53 @@ def hsm_status_cmd() -> None:
     click.echo(json.dumps({"created": created, "counter": counter_val}))
 
 
+@cli.group()
+def pq() -> None:
+    """Post-quantum signing commands."""
+    pass
+
+
+@pq.command("gen-key")
+@click.option("--out", default="keys", help="Directory for keypair")
+def gen_key(out: str) -> None:
+    from pathlib import Path
+
+    from zilant_prime_core.utils.pq_sign import PQSign
+
+    Path(out).mkdir(exist_ok=True)
+    priv = Path(out) / "pq_priv.key"
+    pub = Path(out) / "pq_pub.key"
+    PQSign().keygen(priv, pub)
+    click.echo(f"Generated {priv} / {pub}")
+
+
+@pq.command("sign")
+@click.argument("file", type=click.Path(exists=True))
+@click.option("--key", required=True, type=click.Path(exists=True), help="Private key")
+def sign_file(file: str, key: str) -> None:
+    from pathlib import Path
+
+    from zilant_prime_core.utils.pq_sign import PQSign
+
+    data = Path(file).read_bytes()
+    sig = PQSign().sign(data, Path(key))
+    Path(file + ".sig").write_bytes(sig)
+    click.echo("Signature written to " + file + ".sig")
+
+
+@pq.command("verify")
+@click.argument("file", type=click.Path(exists=True))
+@click.option("--sig", required=True, type=click.Path(exists=True), help="Signature file")
+@click.option("--key", required=True, type=click.Path(exists=True), help="Public key")
+def verify_file(file: str, sig: str, key: str) -> None:
+    from pathlib import Path
+
+    from zilant_prime_core.utils.pq_sign import PQSign
+
+    ok = PQSign().verify(Path(file).read_bytes(), Path(sig).read_bytes(), Path(key))
+    click.echo("OK" if ok else "INVALID")
+
+
 @cli.command("install-completion")
 @click.argument("shell", type=click.Choice(["bash", "zsh", "fish"]))
 @click.pass_context
