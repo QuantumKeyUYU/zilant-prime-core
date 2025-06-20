@@ -10,10 +10,10 @@ jobs:
   build-gui:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -26,7 +26,7 @@ jobs:
         run: pyinstaller --onefile --windowed ui/main.py --name zilant-gui
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: zilant-gui.exe
           path: dist/zilant-gui.exe
@@ -35,9 +35,9 @@ jobs:
     runs-on: windows-latest
     needs: build-gui
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Download GUI
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: zilant-gui.exe
       - name: Run smoke test

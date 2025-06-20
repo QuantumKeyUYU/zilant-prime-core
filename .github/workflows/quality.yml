@@ -21,6 +21,9 @@ jobs:
       - name: Install dev‑deps
         run: pip install -e .[dev]
 
+      - name: Install linters
+        run: pip install ruff black isort mypy
+
       - name: Pre‑commit
         run: pre-commit run --all-files
 

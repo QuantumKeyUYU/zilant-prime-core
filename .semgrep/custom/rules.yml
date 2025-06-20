@@ -14,3 +14,15 @@ rules:
     severity: WARNING
     metavariable-regex:
       METHOD: get|post|put|delete|head|options
+
+  - id: no-print-statements
+    pattern: print(...)
+    message: "Avoid print statements in production code"
+    languages: [python]
+    severity: WARNING
+
+  - id: no-shell-true
+    pattern: subprocess.run(..., shell=True)
+    message: "Avoid shell=True in subprocess calls"
+    languages: [python]
+    severity: ERROR

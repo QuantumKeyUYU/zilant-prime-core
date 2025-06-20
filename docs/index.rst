@@ -20,3 +20,4 @@ documentation for details.
    THREATS.rst
    architecture/index
    observability
+   devops
