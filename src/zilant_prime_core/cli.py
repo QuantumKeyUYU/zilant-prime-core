@@ -483,6 +483,36 @@ def cmd_attest_simulate(ctx: click.Context, in_file: Path) -> None:
 
 
 @cli.group()
+def auth() -> None:
+    """Authentication commands via OPAQUE."""
+    pass
+
+
+@auth.command("register")
+@click.option("--server", required=True, help="URL auth-сервера")
+@click.option("--username", required=True, help="Имя пользователя")
+def register(server: str, username: str) -> None:
+    """Регистрирует пользователя через OPAQUE."""
+    from zilant_prime_core.utils.pq_crypto import OpaqueClient
+
+    client = OpaqueClient(server=server)
+    client.register(username)
+    click.echo(f"Registered user: {username}")
+
+
+@auth.command("login")
+@click.option("--server", required=True, help="URL auth-сервера")
+@click.option("--username", required=True, help="Имя пользователя")
+def login(server: str, username: str) -> None:
+    """Выполняет вход через OPAQUE."""
+    from zilant_prime_core.utils.pq_crypto import OpaqueClient
+
+    client = OpaqueClient(server=server)
+    client.login(username)
+    click.echo(f"Logged in as: {username}")
+
+
+@cli.group()
 def hsm() -> None:
     """Pseudo-HSM management commands."""
 
@@ -593,6 +623,7 @@ cli.add_command(pq_genkeypair_cmd)
 key.add_command(shard_cmd)
 cli.add_command(stream_cmd)
 cli.add_command(hpke_cmd)
+cli.add_command(auth)
 cli.add_command(hsm)
 
 add_complete_flag()

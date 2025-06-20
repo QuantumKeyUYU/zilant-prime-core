@@ -98,6 +98,11 @@ zilctl hsm unseal --input-dir shards --output-file master_restored.key
 
 # Проверяем статус
 zilctl hsm status
+# Регистрация
+zilctl auth register --server https://auth.example.com --username alice
+
+# Вход
+zilctl auth login    --server https://auth.example.com --username alice
 ```
 
 ---
