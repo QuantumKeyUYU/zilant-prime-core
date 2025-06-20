@@ -534,25 +534,26 @@ def hsm_unseal_cmd(input_dir: Path, output_file: Path) -> None:
 
 @hsm.command("status")
 def hsm_status_cmd() -> None:
-    """Show lock file content and counter value."""
+    """Show lock file creation time and counter value."""
     lock = Path("lock.json")
     counter = Path("counter.txt")
+
+    created: int | None = None
+    counter_val: int | None = None
+
     if lock.exists():
         try:
-            lock_info = lock.read_text().strip()
-        except Exception as exc:  # pragma: no cover
-            raise click.ClickException(str(exc)) from exc
-    else:
-        lock_info = "missing"
+            created = json.loads(lock.read_text()).get("created")
+        except Exception as exc:  # pragma: no cover - invalid json
+            raise click.ClickException("invalid lock.json") from exc
+
     if counter.exists():
         try:
-            count = counter.read_text().strip()
-        except Exception as exc:  # pragma: no cover
-            raise click.ClickException(str(exc)) from exc
-    else:
-        count = "missing"
-    click.echo(f"lock.json: {lock_info}")
-    click.echo(f"counter: {count}")
+            counter_val = int(counter.read_text().strip())
+        except Exception as exc:  # pragma: no cover - invalid number
+            raise click.ClickException("invalid counter file") from exc
+
+    click.echo(json.dumps({"created": created, "counter": counter_val}))
 
 
 @cli.command("install-completion")
