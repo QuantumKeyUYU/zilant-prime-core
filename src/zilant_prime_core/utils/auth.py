@@ -1,4 +1,4 @@
-import hashlib
+from argon2 import PasswordHasher
 from pathlib import Path
 
 try:
@@ -21,14 +21,16 @@ class OpaqueAuth:
         """Генерирует OPAQUE-регистр и сохраняет данные."""
         out_dir.mkdir(exist_ok=True, parents=True)
         # TODO: реальная логика OPAQUE
-        # храним только SHA-256 хеш учётных данных, а не сам пароль
-        raw = f"{username}:{password}".encode()
-        digest = hashlib.sha256(raw).digest()
-        (out_dir / f"{username}.cred").write_bytes(digest)
+        ph = PasswordHasher()
+        digest = ph.hash(f"{username}:{password}")
+        (out_dir / f"{username}.cred").write_text(digest)
 
     def login(self, username: str, password: str, cred_dir: Path) -> bool:
         """Проверяет пароль по OPAQUE-данным."""
-        data = (cred_dir / f"{username}.cred").read_bytes()
-        raw = f"{username}:{password}".encode()
-        digest = hashlib.sha256(raw).digest()
-        return data == digest
+        stored = (cred_dir / f"{username}.cred").read_text()
+        ph = PasswordHasher()
+        try:
+            ph.verify(stored, f"{username}:{password}")
+            return True
+        except Exception:
+            return False
