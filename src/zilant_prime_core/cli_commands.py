@@ -191,15 +191,33 @@ def stream_pack_cmd(ctx: click.Context, src: Path, dst: Path, key: Path, threads
 @click.option("--threads", type=int, default=0, show_default=True)
 @click.option("--progress/--no-progress", default=False, show_default=True)
 @click.option("--verify-only", is_flag=True, default=False)
+@click.option("--offset", type=int, default=0, show_default=True, help="Skip first OFFSET bytes of ciphertext")
 @click.pass_context
 @metrics.record_cli("stream_unpack")
 def stream_unpack_cmd(
-    ctx: click.Context, src: Path, out_dir: Path, key: Path, threads: int, progress: bool, verify_only: bool
+    ctx: click.Context,
+    src: Path,
+    out_dir: Path,
+    key: Path,
+    threads: int,
+    progress: bool,
+    verify_only: bool,
+    offset: int,
 ) -> None:
-    """Unpack SRC into OUT-DIR."""
+    """Unpack SRC into OUT-DIR.
+
+    ``offset`` allows resuming from the given ciphertext byte offset.
+    """
     from streaming_aead import unpack_stream
 
     out = out_dir / Path(src).stem
-    unpack_stream(src, out, key.read_bytes(), verify_only=verify_only, progress=progress)
+    unpack_stream(
+        src,
+        out,
+        key.read_bytes(),
+        verify_only=verify_only,
+        progress=progress,
+        offset=offset,
+    )
     if not verify_only:
         _emit(ctx, {"path": str(out)})

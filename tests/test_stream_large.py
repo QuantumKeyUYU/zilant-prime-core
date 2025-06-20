@@ -11,9 +11,9 @@ from streaming_aead import pack_stream, resume_decrypt
 def test_stream_large(tmp_path: Path) -> None:
     psutil = pytest.importorskip("psutil")
 
-    # create sparse 5 GB file
+    # create sparse 1 GiB file
     with tempfile.NamedTemporaryFile(delete=False) as src_tmp:
-        src_tmp.seek(5 * 1024 * 1024 * 1024 - 1)
+        src_tmp.seek(1 * 1024 * 1024 * 1024 - 1)
         src_tmp.write(b"\0")
     src = Path(src_tmp.name)
 

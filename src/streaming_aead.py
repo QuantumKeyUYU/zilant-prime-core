@@ -105,10 +105,18 @@ def _read_exact(fh: IO[bytes], n: int) -> bytes:
     return bytes(buf)
 
 
-def resume_decrypt(path: Path, key: bytes, have_bytes: int, out_path: Path) -> None:
+def resume_decrypt(path: Path, key: bytes, have_bytes: int, out_path: Path, offset: int = 0) -> None:
+    """Resume decrypting *path* once at least 51 % is present.
+
+    ``offset`` skips the first ``offset`` bytes of ciphertext (plus header)
+    before writing plaintext. Data integrity is verified against the tree
+    MAC embedded in the header.
+    """
+
     total = os.path.getsize(path)
     if have_bytes < total * 0.51:
         raise ValueError("insufficient data for resume")
+
     with open(path, "rb") as f_in:
         header = bytearray()
         while not header.endswith(b"\n\n"):
@@ -117,6 +125,8 @@ def resume_decrypt(path: Path, key: bytes, have_bytes: int, out_path: Path) -> N
         root_tag = bytes.fromhex(meta["root_tag"])
         chunk_count = meta["chunks"]
         tags: List[bytes] = []
+        pos = len(header)
+
         with open(out_path, "wb") as f_out:
             for cid in range(chunk_count):
                 clen = int.from_bytes(_read_exact(f_in, 4), "big")
@@ -124,13 +134,25 @@ def resume_decrypt(path: Path, key: bytes, have_bytes: int, out_path: Path) -> N
                 nonce = _derive_nonce(cid, key)
                 plain = decrypt_chunk(key, nonce, cipher)
                 data = zstd.decompress(plain)
-                f_out.write(data)
+                if pos >= offset:
+                    f_out.write(data)
+                pos += 4 + clen
                 tags.append(cipher[-TAG_SZ:])
+
     if _tree_mac(tags, key) != root_tag:
         raise ValueError("MAC mismatch")
 
 
-def unpack_stream(src: Path, dst: Path, key: bytes, verify_only: bool = False, progress: bool = False) -> None:
+def unpack_stream(
+    src: Path,
+    dst: Path,
+    key: bytes,
+    verify_only: bool = False,
+    progress: bool = False,
+    offset: int = 0,
+) -> None:
+    """Unpack *src* into *dst*, optionally starting at *offset* bytes."""
+
     with open(src, "rb") as f_in:
         header = bytearray()
         while not header.endswith(b"\n\n"):
@@ -142,6 +164,7 @@ def unpack_stream(src: Path, dst: Path, key: bytes, verify_only: bool = False, p
         root_tag = bytes.fromhex(meta["root_tag"])
         chunk_count = meta["chunks"]
         tags: List[bytes] = []
+        pos = len(header)
         out_fh = None if verify_only else open(dst, "wb")
         try:
             for cid in range(chunk_count):
@@ -151,8 +174,9 @@ def unpack_stream(src: Path, dst: Path, key: bytes, verify_only: bool = False, p
                 nonce = _derive_nonce(cid, key)
                 plain = decrypt_chunk(key, nonce, cipher)
                 data = zstd.decompress(plain)
-                if out_fh:
+                if out_fh and pos >= offset:
                     out_fh.write(data)
+                pos += 4 + clen
         finally:
             if out_fh:
                 out_fh.close()
