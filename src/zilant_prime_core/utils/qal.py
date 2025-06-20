@@ -11,7 +11,7 @@ experimentation and tests.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, cast
 
 from .pq_sign import PQSign
 
@@ -34,10 +34,10 @@ class QAL:
 
     def sign(self, message: bytes, index: int) -> bytes:
         priv, _ = self.keys[index]
-        return self.signers[index].sign(message, priv)
+        return cast(bytes, self.signers[index].sign(message, priv))
 
     def verify(self, message: bytes, signature: bytes) -> bool:
-        for signer, (_, pub) in zip(self.signers, self.keys):
+        for signer, (_, pub) in zip(self.signers, self.keys, strict=False):
             if signer.verify(message, signature, pub):
                 return True
         return False

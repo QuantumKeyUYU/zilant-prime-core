@@ -9,6 +9,8 @@ This is a minimal helper and not a full stealth address scheme.
 from __future__ import annotations
 
 import os
+from typing import Optional, Tuple, Union
+
 from .pq_crypto import HybridKEM
 
 
@@ -17,11 +19,13 @@ class QSSA:
 
     def __init__(self) -> None:
         try:
-            self.kem = HybridKEM()
+            self.kem: Optional[HybridKEM] = HybridKEM()
         except Exception:  # pragma: no cover - optional dependency
             self.kem = None
 
-    def generate_address(self):
+    def generate_address(
+        self,
+    ) -> Union[Tuple[Tuple[bytes, bytes], Tuple[bytes, bytes]], Tuple[bytes, bytes]]:
         """Return a new `(public_key, private_key)` pair."""
         if self.kem is not None:
             pk_pq, sk_pq, pk_x, sk_x = self.kem.generate_keypair()
