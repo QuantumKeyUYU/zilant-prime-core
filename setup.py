@@ -15,6 +15,7 @@ setup(
     python_requires=">=3.8",
     install_requires=[
         "click",
+        "oqs",
         # …другие ваши runtime-зависимости
     ],
     entry_points={

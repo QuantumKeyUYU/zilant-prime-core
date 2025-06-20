@@ -260,6 +260,36 @@ zilctl login --server https://auth.example --username alice
 
 Source and tests are maintained by @QuantumKeyUYU, while documentation also lists @DocMaintainers. CI workflows fall under @DevSecOpsTeam. Pull requests run Semgrep with custom rules in `.semgrep.yml` to prevent hardcoded keys and insecure random usage.
 
+## Quantum Anonymity & Security
+
+Experimental modules showcasing quantum resistant techniques can be found in
+`docs/ANONYMITY.md` and `docs/QUANTUM_SECURITY.md`.
+Below is a short example:
+
+```python
+from pathlib import Path
+from zilant_prime_core.utils import QAL, QSSA, QuantumRA, QVPN, ZKQP
+
+qal = QAL(3, Path('/tmp/qal'))
+sig = qal.sign(b'hi', 0)
+pubs = [p.read_bytes() for _, p in qal.keys]
+assert qal.verify(b'hi', sig, pubs)
+
+qssa = QSSA()
+public, private = qssa.generate_keypair()
+
+ra = QuantumRA(Path('/tmp/ra'))
+att = ra.attest(b'device')
+ra.verify(b'device', att)
+
+vpn = QVPN()
+vpn.enable()
+vpn.disable()
+
+zk = ZKQP(Path('/tmp/zk'))
+commit, proof = zk.prove(b'data')
+```
+
 ## TODO Stage III
 
 - GUI demonstration (PyQt/Web)

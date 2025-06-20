@@ -4,7 +4,10 @@ from typing import cast
 try:
     import oqs  # PQ-Crypto (Dilithium)
 
-    _HAS_OQS = True
+    if hasattr(oqs, "Signature"):
+        _HAS_OQS = True
+    else:  # pragma: no cover - wrong oqs package
+        raise ImportError
 except ImportError:  # pragma: no cover - optional dependency
     from nacl import signing  # Fallback Ed25519
 

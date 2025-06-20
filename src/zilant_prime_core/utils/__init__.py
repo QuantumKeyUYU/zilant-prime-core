@@ -31,6 +31,12 @@ from .honeyfile import HoneyfileError, check_tmp_for_honeyfiles
 
 # ───────────────────────────── Logging ──────────────────────────────
 from .logging import get_file_logger, get_logger
+from .pq_ring import PQRing
+from .qal import QAL
+from .qema import QEMA
+from .qssa import QSSA
+from .quantum_ra import QuantumRA
+from .qvpn import QVPN
 from .root_guard import assert_safe_or_die, is_device_rooted
 from .screen_guard import ScreenGuard, ScreenGuardError, guard
 from .secure_logging import SecureLogger, get_secure_logger
@@ -38,6 +44,7 @@ from .shard_secret import recover_secret, split_secret
 
 # ───────────────────────── Vault integration ────────────────────────
 from .vault_client import VaultClient
+from .zkqp import ZKQP
 
 __all__: list[str] = [
     # constants.py
@@ -81,4 +88,11 @@ __all__: list[str] = [
     "HoneyfileError",
     "check_tmp_for_honeyfiles",
     "generate_daily_challenge",
+    "QAL",
+    "QSSA",
+    "PQRing",
+    "ZKQP",
+    "QVPN",
+    "QEMA",
+    "QuantumRA",
 ]
