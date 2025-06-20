@@ -491,6 +491,7 @@ def install_completion(ctx: click.Context, shell: str) -> None:
 # ───────── external sub‑commands (kdf, pw‑hash, …) ─────────
 from zilant_prime_core.cli_commands import (
     derive_key_cmd,
+    hpke_cmd,
     pq_genkeypair_cmd,
     pw_hash_cmd,
     pw_verify_cmd,
@@ -504,6 +505,7 @@ cli.add_command(pw_verify_cmd)
 cli.add_command(pq_genkeypair_cmd)
 key.add_command(shard_cmd)
 cli.add_command(stream_cmd)
+cli.add_command(hpke_cmd)
 
 add_complete_flag()
 

@@ -108,6 +108,25 @@ zilctl key shard import --input-dir shards --output-file master.key
 достаточно собрать ``threshold`` частей в одной директории и выполнить команду
 ``shard import``.
 
+### Stream Verification
+
+Проверить целостность большого контейнера можно без распаковки:
+
+```bash
+zilctl stream verify big.zst --key master.key
+```
+
+Изменение хотя бы одного байта приведёт к ошибке «MAC mismatch».
+
+### HPKE Encryption
+
+Гибридное шифрование (Kyber768+X25519) доступно через подкоманды ``hpke``:
+
+```bash
+zilctl hpke encrypt src.bin ct.bin --pq-pub kyber.pk --x-pub x25519.pk
+zilctl hpke decrypt ct.bin out.bin --pq-sk kyber.sk --x-sk x25519.sk
+```
+
 ## Root Baseline
 
 Zilant Prime Core aborts execution when root or debugging indicators are found.

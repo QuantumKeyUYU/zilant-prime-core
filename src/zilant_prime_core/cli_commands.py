@@ -6,6 +6,7 @@ import base64
 import click
 import hashlib
 import json
+import os
 import sys
 import yaml  # type: ignore
 from pathlib import Path
@@ -23,6 +24,7 @@ __all__: Final = [
     "pq_genkeypair_cmd",
     "shard_cmd",
     "stream_cmd",
+    "hpke_cmd",
 ]
 
 
@@ -221,3 +223,74 @@ def stream_unpack_cmd(
     )
     if not verify_only:
         _emit(ctx, {"path": str(out)})
+
+
+@stream_cmd.command("verify")
+@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--key", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.pass_context
+@metrics.record_cli("stream_verify")
+def stream_verify_cmd(ctx: click.Context, src: Path, key: Path) -> None:
+    """Verify stream container integrity and exit."""
+    from streaming_aead import unpack_stream
+
+    try:
+        unpack_stream(src, Path(os.devnull), key.read_bytes(), verify_only=True)
+    except Exception as exc:
+        raise click.ClickException(str(exc)) from exc
+    _emit(ctx, {"status": "verified"})
+
+
+# ────────────────────────── hpke ──────────────────────────
+@click.group("hpke")
+def hpke_cmd() -> None:
+    """Hybrid public key encryption operations."""
+
+
+@hpke_cmd.command("encrypt")
+@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument("dst", type=click.Path(dir_okay=False, path_type=Path))
+@click.option("--pq-pub", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option("--x-pub", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.pass_context
+@metrics.record_cli("hpke_encrypt")
+def hpke_encrypt_cmd(
+    ctx: click.Context,
+    src: Path,
+    dst: Path,
+    pq_pub: Path,
+    x_pub: Path,
+) -> None:
+    """Encrypt SRC for recipient public keys and write DST."""
+    import pqcrypto as pq
+
+    plaintext = src.read_bytes()
+    hdr, ct = pq.hybrid_encrypt((pq_pub.read_bytes(), x_pub.read_bytes()), plaintext)
+    dst.write_bytes(len(hdr).to_bytes(2, "big") + hdr + ct)
+    _emit(ctx, {"path": str(dst)})
+
+
+@hpke_cmd.command("decrypt")
+@click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument("dst", type=click.Path(dir_okay=False, path_type=Path))
+@click.option("--pq-sk", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option("--x-sk", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.pass_context
+@metrics.record_cli("hpke_decrypt")
+def hpke_decrypt_cmd(
+    ctx: click.Context,
+    src: Path,
+    dst: Path,
+    pq_sk: Path,
+    x_sk: Path,
+) -> None:
+    """Decrypt SRC using private keys and write DST."""
+    import pqcrypto as pq
+
+    blob = src.read_bytes()
+    hdr_len = int.from_bytes(blob[:2], "big")
+    hdr = blob[2 : 2 + hdr_len]
+    ct = blob[2 + hdr_len :]
+    plain = pq.hybrid_decrypt((pq_sk.read_bytes(), x_sk.read_bytes()), hdr, ct)
+    dst.write_bytes(plain)
+    _emit(ctx, {"path": str(dst)})
