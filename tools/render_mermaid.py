@@ -8,6 +8,7 @@ without network access.
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -25,14 +26,21 @@ def render(src: Path, dst: Path) -> None:
         "npx",
         "-y",
         "@mermaid-js/mermaid-cli",
-        "--no-sandbox",
         "-i",
         str(src),
         "-o",
         str(dst),
     ]
+    env = os.environ.copy()
+    env["PUPPETEER_DISABLE_SANDBOX"] = "true"
     try:
-        subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(
+            cmd,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+        )
         return
     except Exception:
         pass

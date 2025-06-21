@@ -62,7 +62,7 @@ jobs:
       - name: Upload PQ wheels
         uses: actions/upload-artifact@v4
         with:
-          name: pq-wheels
+          name: pq-wheels-${{ matrix.os }}-${{ matrix.python-version }}
           path: dist/*.whl
 
       - name: Upload coverage to Codecov

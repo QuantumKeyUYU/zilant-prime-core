@@ -63,7 +63,7 @@ jobs:
       - name: Upload PQ wheels
         uses: actions/upload-artifact@v4
         with:
-          name: pq-wheels
+          name: pq-wheels-${{ github.job }}
           path: dist/*.whl
 
       - name: Install Pandoc & XeLaTeX
