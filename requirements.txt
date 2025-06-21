@@ -6,6 +6,7 @@ prometheus-client
 pytest
 pytest-timeout
 hypothesis
+filelock>=3.13.0
 PyQt5>=5.15
 PyYAML>=6.0
 boto3>=1.28.0

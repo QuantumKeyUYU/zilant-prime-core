@@ -1,6 +1,6 @@
-name-template: 'v$NEXT_PATCH_VERSION 🌟'
+name-template: 'Quantum Security v$NEXT_PATCH_VERSION'
 template: |
-  ## Changes
+  ## Quantum Security Release Notes
   $CHANGES
 change-template: '- $TITLE (#$NUMBER) by @$AUTHOR'
 categories:

@@ -4,7 +4,7 @@ from pathlib import Path
 try:
     import oqs  # type: ignore
 
-    _HAS_OQS = True  # pragma: no cover – depends on external lib
+    _HAS_OQS = hasattr(oqs, "KeyEncapsulation")  # pragma: no cover – depends on external lib
 except ImportError:
     _HAS_OQS = False
 
