@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
-from typing import List, Tuple, cast
+from typing import List, Tuple
 
 from .pq_sign import PQSign
 
@@ -40,7 +40,8 @@ class QAL:
 
     def sign(self, message: bytes, index: int) -> bytes:
         priv, _ = self.keys[index]
-        return cast(bytes, self.signers[index].sign(message, priv))
+        result: bytes = self.signers[index].sign(message, priv)
+        return result
 
     def verify(self, message: bytes, signature: bytes, pubkeys: List[bytes]) -> bool:
         """Verify the signature against a list of public‐key bytes."""
