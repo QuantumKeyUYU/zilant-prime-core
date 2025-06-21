@@ -1,12 +1,21 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
+"""
+Packing / unpacking .zil контейнера.
+
+Изменения vs оригинал
+---------------------
+* Все значения, участвующие в конкатенации, жёстко приведены к `bytes`
+  (meta_blob, nonce, ciphertext) – `mypy` больше не жалуется.
+* Импорты упорядочены согласно isort/black.
+"""
 
 from __future__ import annotations
 
 import os
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from zilant_prime_core.container.metadata import (
     MetadataError,
@@ -31,36 +40,56 @@ __all__ = [
 ]
 
 
+# ─────────────────────────────── exceptions ────────────────────────────────
 class PackError(Exception):
-    pass
+    """Ошибки при упаковке .zil контейнера."""
 
 
 class UnpackError(Exception):
-    pass
+    """Ошибки при распаковке .zil контейнера."""
 
 
+# ──────────────────────────────── helpers ────────────────────────────────
+def _require(cond: bool, msg: str) -> None:
+    if not cond:
+        raise UnpackError(msg)
+
+
+# ──────────────────────────────── packing ────────────────────────────────
 def _pack_bytes(src: Path, password: str) -> bytes:
-    meta_blob = serialize_metadata(new_meta_for_file(src))
+    """Сериализует файл *src* в защищённый контейнер."""
+    meta_blob: bytes = cast(bytes, serialize_metadata(new_meta_for_file(src)))
+
     salt = os.urandom(DEFAULT_SALT_LENGTH)
     key = derive_key(password.encode(), salt)
-    nonce = generate_nonce()
-    ct = encrypt_aead(key, nonce, src.read_bytes(), aad=meta_blob)
+
+    # generate_nonce() типизирован как Any → явно к bytes
+    nonce: bytes = cast(bytes, generate_nonce())
+
+    # encrypt_aead типизирован как Any → приводим к bytes
+    ct: bytes = cast(
+        bytes,
+        encrypt_aead(key, nonce, src.read_bytes(), aad=meta_blob),
+    )
+
     return len(meta_blob).to_bytes(4, "big") + meta_blob + salt + nonce + ct
 
 
 def pack(path: str | Path, password: str) -> bytes:
+    """Упаковать файл на диске в защищённый контейнер (bytes)."""
     src = Path(path)
     if not src.is_file():
         raise PackError(f"{src} is not a regular file")
     return _pack_bytes(src, password)
 
 
-def _require(cond: bool, msg: str) -> None:
-    if not cond:
-        raise UnpackError(msg)
-
-
+# ──────────────────────────────── unpacking ────────────────────────────────
 def unpack(container: bytes | Path, output_dir: str | Path, password: str) -> Path:
+    """
+    Распаковать контейнер *container* во временную директорию *output_dir*.
+
+    Возвращает путь к созданному файлу.
+    """
     raw = Path(container).read_bytes() if isinstance(container, Path) else container
     pos = 0
 
@@ -89,15 +118,18 @@ def unpack(container: bytes | Path, output_dir: str | Path, password: str) -> Pa
     _require(len(ct_tag) >= 16, "Ciphertext слишком короткий для включения тега.")
 
     key = derive_key(password.encode(), salt)
-    try:
-        payload = decrypt_aead(key, nonce, ct_tag, aad=meta_blob)
-    except AEADInvalidTagError:
-        raise UnpackError("Неверная метка аутентификации.")
 
+    # decrypt_aead → Any; приводим к bytes
+    try:
+        payload: bytes = cast(bytes, decrypt_aead(key, nonce, ct_tag, aad=meta_blob))
+    except AEADInvalidTagError as exc:
+        raise UnpackError("Неверная метка аутентификации.") from exc
+
+    # базовая валидация метаданных
     try:
         filename = str(meta["filename"])
         size = int(meta["size"])
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         raise UnpackError(f"Некорректные поля метаданных: {exc}") from exc
 
     _require(len(payload) == size, "Размер payload не совпадает с size из метаданных.")
@@ -108,5 +140,6 @@ def unpack(container: bytes | Path, output_dir: str | Path, password: str) -> Pa
     out_file = out_dir / filename
     if out_file.exists():
         raise FileExistsError(f"{out_file} already exists")
+
     out_file.write_bytes(payload)
     return out_file

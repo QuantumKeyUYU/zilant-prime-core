@@ -29,7 +29,13 @@ def test_hash_challenge_cache():
 
 def test_root_guard_full(monkeypatch):
     monkeypatch.setattr(rg, "_check_uid_gid", lambda: True)
-    for fn in ("_check_root_binaries", "_check_mounts", "_check_selinux", "_check_ptrace", "_check_ld_preload"):
+    for fn in (
+        "_check_root_binaries",
+        "_check_mounts",
+        "_check_selinux",
+        "_check_ptrace",
+        "_check_ld_preload",
+    ):
         monkeypatch.setattr(rg, fn, lambda: False)
     assert rg.is_device_rooted()
     monkeypatch.setattr(rg, "is_device_rooted", lambda: True)

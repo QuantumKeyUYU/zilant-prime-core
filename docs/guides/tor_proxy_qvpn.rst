@@ -6,7 +6,7 @@ This guide shows how to route your traffic through Tor using QVPN.
 
 Prerequisites
 -------------
-- Installed QVPN (see `API Reference <../api/qvpn.html>`_).  
+- Installed QVPN (see `API Reference <../api/qvpn.html>`_).
 - Tor running locally (default SOCKS port 9050).
 
 Configuration

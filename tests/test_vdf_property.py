@@ -28,7 +28,11 @@ def test_posw_invalid_steps(seed, steps):
         verify_posw_sha256(seed, b"", steps)
 
 
-@given(seed=st.binary(min_size=1), steps=st.integers(min_value=1, max_value=100), bad_proof=st.binary())
+@given(
+    seed=st.binary(min_size=1),
+    steps=st.integers(min_value=1, max_value=100),
+    bad_proof=st.binary(),
+)
 def test_posw_bad_proof_returns_false(seed, steps, bad_proof):
     # неверная длина или содержимое → False
     if len(bad_proof) != __import__("hashlib").sha256().digest_size:

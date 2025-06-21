@@ -41,7 +41,11 @@ def test_enable_and_disable_happy_path(monkeypatch):
         calls.append((config, tor_cmd))
         return FakeProc()
 
-    monkeypatch.setattr("zilant_prime_core.utils.qvpn.launch_tor_with_config", fake_launch, raising=False)
+    monkeypatch.setattr(
+        "zilant_prime_core.utils.qvpn.launch_tor_with_config",
+        fake_launch,
+        raising=False,
+    )
 
     vpn = QVPN(tor_path="custom-tor")
     assert not vpn.is_enabled()

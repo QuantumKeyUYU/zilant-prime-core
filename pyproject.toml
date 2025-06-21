@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 [build-system]
-requires    = ["setuptools>=64", "wheel", "cffi"]
+requires = ["setuptools>=68", "wheel", "cffi"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -12,11 +12,9 @@ description     = "ZILANT Prime™ core: AEAD, Argon2id, Phase-VDF, .zil contain
 readme          = "README.md"
 requires-python = ">=3.10"
 license         = { text = "MIT" }
-authors = [
-  { name = "Ильдар", email = "you@example.com" }
-]
-keywords    = ["crypto", "VDF", "argon2", "AEAD", "secure-storage"]
-classifiers = [
+authors         = [{ name = "Ильдар", email = "you@example.com" }]
+keywords        = ["crypto", "VDF", "argon2", "AEAD", "secure-storage"]
+classifiers     = [
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.10",
@@ -52,6 +50,8 @@ Documentation = "https://github.com/QuantumKeyUYU/zilant-prime-core#readme"
 Issues        = "https://github.com/QuantumKeyUYU/zilant-prime-core/issues"
 
 [project.optional-dependencies]
+
+# --- testing ---
 test = [
   "pytest>=8.0,<9.0",
   "pytest-cov>=5.0,<6.0",
@@ -60,68 +60,73 @@ test = [
   "filelock>=3.13,<4.0",
 ]
 
+# --- development / CI ---
+#  ❗  semgrep — нет поддержки Windows;
+#  ❗  atheris — подходит только Linux + Python < 3.12.
 dev = [
   "black>=24.4,<25.0",
   "isort>=5.13,<6.0",
   "ruff>=0.4,<0.5",
   "mypy>=1.10,<2.0",
   "pre-commit>=2.21,<3.0",
+  "types-hvac>=2.3.0.0",
   "bandit>=1.7,<2.0",
-  # Semgrep под Windows пока не работает, ставим только на *nix
-  "semgrep>=1.68,<2.0; sys_platform!='win32' and sys_platform!='cygwin'",
-  "cyclonedx-bom>=3.16,<7.0",
-  "build>=1.2,<2.0",
+  "semgrep>=1.68,<2.0 ; platform_system != 'Windows'",
+  "cyclonedx-bom>=6.0,<7.0",
+  "build>=1.2",
   "twine>=5.0,<6.0",
-  "atheris>=2.1; python_version < '3.12'",
+  "atheris>=2.1 ; platform_system == 'Linux' and python_version < '3.12'",
   "pyinstaller>=6.0,<7.0",
   "types-PyYAML>=6.0",
-  "types-hvac>=2.3.0.0",
 ]
 
+# --- post-quantum crypto toolchains ---
 pq = [
-  "pqclean[kyber768]>=1.0.0",
-  "pqclean[dilithium2]>=1.0.0",
-  "oqs-python>=1.0.0",
+  "pqclean[kyber768]",
+  "pqclean[dilithium2]",
+  "oqs-python",
 ]
 
+# --- docs ---
 docs = [
   "sphinx>=7.2,<8.0",
   "furo>=2023.9",
   "sphinx-autodoc-typehints>=1.25,<2.0",
-  "m2r2>=0.3.4",
-  "sphinxcontrib-mermaid>=1.0.0",
+  "m2r2",
+  "sphinxcontrib-mermaid",
 ]
 
+# --- metrics / monitoring ---
 metrics = [
   "prometheus-client>=0.16.0,<1.0",
   "flask>=2.2,<3.0",
 ]
 
+# --- notifications ---
 notify = [
-  "slack-sdk>=3.0,<4.0",
-  "python-telegram-bot>=20.0,<21.0",
+  "slack-sdk",
+  "python-telegram-bot",
 ]
 
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = false
+
 [tool.setuptools]
-package-dir = { "" = "src" }
 ext-modules = [
   { name = "zilant_prime_core.utils.crypto_core", sources = ["src/zilant_prime_core/utils/crypto_core.c"], language = "c" },
   { name = "zilant_prime_core.utils.hardening",   sources = ["src/zilant_prime_core/utils/hardening.c"],   language = "c" },
 ]
-
-[tool.setuptools.packages.find]
-where      = ["src"]
-namespaces = false
 
 [tool.black]
 line-length    = 120
 target-version = ["py310", "py311"]
 
 [tool.isort]
-profile                = "black"
-line_length            = 120
-known_first_party      = ["zilant_prime_core"]
-known_standard_library = ["tomllib"]
+profile                 = "black"
+line_length             = 120
+known_first_party       = ["zilant_prime_core"]
+known_standard_library  = ["tomllib"]
 
 [tool.ruff]
 line-length = 120
@@ -130,16 +135,20 @@ line-length = 120
 select = ["E", "F", "W", "C90", "B"]
 ignore = ["E402", "B904", "C901"]
 
+[tool.lint]
+line-length = 120
+
 [tool.lint.mccabe]
 max-complexity = 12
 
 [tool.mypy]
-python_version           = 3.10
+python_version           = "3.13"
 strict                   = true
 allow_untyped_decorators = true
 warn_return_any          = false
 ignore_missing_imports   = true
 disable_error_code       = ["attr-defined"]
+exclude                  = '(^(src/zil\.py)|^scripts/)'
 
 [tool.zilant]
 pq_mode      = "classic"

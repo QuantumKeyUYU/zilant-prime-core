@@ -171,4 +171,12 @@ def unpack(blob: bytes, key: bytes) -> tuple[dict[str, Any], bytes]:
     return meta, plaintext
 
 
-__all__ = ["pack_file", "unpack_file", "pack", "unpack", "ZIL_MAGIC", "ZIL_VERSION", "HEADER_SEPARATOR"]
+__all__ = [
+    "pack_file",
+    "unpack_file",
+    "pack",
+    "unpack",
+    "ZIL_MAGIC",
+    "ZIL_VERSION",
+    "HEADER_SEPARATOR",
+]

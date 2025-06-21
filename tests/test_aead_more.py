@@ -84,7 +84,11 @@ def test_pqaead_encrypt_type_errors(bad, monkeypatch):
 @pytest.mark.parametrize("bad", [123, None, b"short"])
 def test_pqaead_decrypt_type_errors(bad, monkeypatch):
     pq = ModuleType("src.utils.pq_crypto")
-    pq.Kyber768KEM = type("KEM", (), {"ciphertext_length": lambda self: 1, "decapsulate": lambda self, pk, ct: b""})()
+    pq.Kyber768KEM = type(
+        "KEM",
+        (),
+        {"ciphertext_length": lambda self: 1, "decapsulate": lambda self, pk, ct: b""},
+    )()
     pq.derive_key_pq = lambda shared: b"\x00" * 32
     sys.modules["src.utils.pq_crypto"] = pq
     with pytest.raises(TypeError):

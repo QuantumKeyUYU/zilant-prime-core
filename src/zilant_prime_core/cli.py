@@ -161,7 +161,11 @@ def key() -> None:
 
 @key.command("rotate")
 @click.option("--days", type=int, required=True, metavar="DAYS", help="Rotation interval in days")
-@click.option("--in-key", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option(
+    "--in-key",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
 @click.option("--out-key", type=click.Path(dir_okay=False, path_type=Path), required=True)
 @click.pass_context
 @metrics.record_cli("key_rotate")
@@ -428,7 +432,11 @@ def timelock() -> None:
 
 @timelock.command("lock")
 @click.option("--delay", type=int, required=True, metavar="SECONDS")
-@click.option("--in-file", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option(
+    "--in-file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
 @click.option("--out-file", type=click.Path(dir_okay=False, path_type=Path), required=True)
 def cmd_timelock_lock(delay: int, in_file: Path, out_file: Path) -> None:
     """Lock IN_FILE for the given DELAY."""
@@ -439,7 +447,11 @@ def cmd_timelock_lock(delay: int, in_file: Path, out_file: Path) -> None:
 
 
 @timelock.command("unlock")
-@click.option("--in-file", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option(
+    "--in-file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
 @click.option("--out-file", type=click.Path(dir_okay=False, path_type=Path), required=True)
 def cmd_timelock_unlock(in_file: Path, out_file: Path) -> None:
     """Unlock IN_FILE previously locked via :func:`lock`."""
@@ -472,7 +484,11 @@ def attest() -> None:
 
 
 @attest.command("simulate")
-@click.option("--in-file", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option(
+    "--in-file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
 @click.pass_context
 def cmd_attest_simulate(ctx: click.Context, in_file: Path) -> None:
     """Simulate TPM attestation of IN_FILE."""
@@ -535,7 +551,11 @@ def hsm_init_cmd() -> None:
 
 
 @hsm.command("seal")
-@click.option("--master-key", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option(
+    "--master-key",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
 @click.option("--threshold", type=int, required=True, metavar="N")
 @click.option("--shares", type=int, required=True, metavar="M")
 @click.option("--output-dir", type=click.Path(file_okay=False, path_type=Path), required=True)
@@ -552,7 +572,11 @@ def hsm_seal_cmd(master_key: Path, threshold: int, shares: int, output_dir: Path
 
 
 @hsm.command("unseal")
-@click.option("--input-dir", type=click.Path(exists=True, file_okay=False, path_type=Path), required=True)
+@click.option(
+    "--input-dir",
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    required=True,
+)
 @click.option("--output-file", type=click.Path(dir_okay=False, path_type=Path), required=True)
 def hsm_unseal_cmd(input_dir: Path, output_file: Path) -> None:
     """Recover master key from shards in INPUT-DIR."""

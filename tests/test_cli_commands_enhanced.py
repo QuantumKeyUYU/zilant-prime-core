@@ -35,6 +35,9 @@ def test_shard_import_missing_meta(tmp_path):
     inp = tmp_path / "in"
     inp.mkdir()
     # никакого meta.json
-    result = runner.invoke(shard_cmd, ["import", "--input-dir", str(inp), "--output-file", str(tmp_path / "out.bin")])
+    result = runner.invoke(
+        shard_cmd,
+        ["import", "--input-dir", str(inp), "--output-file", str(tmp_path / "out.bin")],
+    )
     assert result.exit_code != 0
     assert "meta.json missing in input directory" in result.output

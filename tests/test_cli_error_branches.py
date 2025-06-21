@@ -34,7 +34,11 @@ def test_unpack_chmod_exception(tmp_path, monkeypatch):
     container.write_bytes(b"hello.bin\nworld")
     runner = CliRunner()
 
-    monkeypatch.setattr(os, "chmod", lambda *args, **kwargs: (_ for _ in ()).throw(OSError("no permission")))
+    monkeypatch.setattr(
+        os,
+        "chmod",
+        lambda *args, **kwargs: (_ for _ in ()).throw(OSError("no permission")),
+    )
     result = runner.invoke(cli, ["unpack", str(container), "-p", "pwd"])
     out = tmp_path / "hello.bin"
     assert result.exit_code == 0

@@ -1,25 +1,29 @@
-# Minimal makefile for Sphinx documentation
-#
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
 
-# You can set these variables from the command line, and also
-# from the environment for the first two.
-SPHINXOPTS    ?=
-SPHINXBUILD   ?= sphinx-build
-SOURCEDIR     = .
-BUILDDIR      = _build
+SHELL := /usr/bin/env bash
 
-# Put it first so that "make" without argument is like "make help".
-help:
-	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+.PHONY: mermaid html clean
 
-.PHONY: help Makefile
+# --------------------------------------------------------------------
+# 1) Generate the static SVG once from Mermaid source
+# --------------------------------------------------------------------
+mermaid: docs/_static/key_lifecycle.svg docs/_static/threat_diagram.svg
 
-# Catch-all target: route all unknown targets to Sphinx using the new
-# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-%: Makefile
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+docs/_static/key_lifecycle.svg: docs/architecture/key_lifecycle.mmd
+	mmdc -i $< -o $@
 
-mermaid:
-	python ../tools/gen_threat_diagram.py
-	mkdir -p _static
-	python ../tools/render_mermaid.py architecture/key_lifecycle.mmd _static/key_lifecycle.png
+docs/_static/threat_diagram.svg: docs/threats.mmd
+	mmdc -i $< -o $@
+
+# --------------------------------------------------------------------
+# 2) Build HTML documentation
+# --------------------------------------------------------------------
+html: mermaid
+	sphinx-build -b html . _build/html
+
+# Convenience target for CI
+docs: html
+
+clean:
+	rm -rf _build docs/_static/key_lifecycle.svg docs/_static/threat_diagram.svg
