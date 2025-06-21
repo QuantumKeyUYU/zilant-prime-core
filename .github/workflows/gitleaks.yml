@@ -19,14 +19,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Install gitleaks
+        run: |
+          GITLEAKS_VER=8.12.0
+          curl -sSL "https://github.com/zricethezav/gitleaks/releases/download/v${GITLEAKS_VER}/gitleaks_${GITLEAKS_VER}_linux_x64.tar.gz" \
+            | tar xz -C /usr/local/bin gitleaks
+          chmod +x /usr/local/bin/gitleaks
       - name: Run gitleaks scan
-        uses: zricethezav/gitleaks-action@v2.3.2
+        run: >-
+          gitleaks detect --source . --redact --exit-code=1 \
+            --report-format sarif --report-path gitleaks_sarif
+      - name: Upload gitleaks report
+        uses: actions/upload-artifact@v4
         with:
-          args: >-
-            detect --source .
-                   --config-path=.gitleaks.toml
-                   --redact
-                   --report-format sarif
-                   --report-path gitleaks.sarif
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: gitleaks-report
+          path: gitleaks_sarif
