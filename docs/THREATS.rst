@@ -1,3 +1,4 @@
+# docs/THREATS.rst
 .. SPDX-License-Identifier: MIT
 .. SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
 
@@ -26,39 +27,32 @@ Asset / Threat / Control
 ------------------------
 
 - **Source code**
-
    - *Threat:* A1, A2
    - *Control:* signed commits; CI lint & tests
 
 - **Secrets**
-
    - *Threat:* A3
    - *Control:* Vault AppRole; encrypted logs
 
 - **Dependencies**
-
    - *Threat:* A4
    - *Control:* SBOM + Grype scans
 
 - **Artifacts**
-
    - *Threat:* A5
    - *Control:* reproducible build; cosign signatures
 
 - **Logs**
-
    - *Threat:* A5
    - *Control:* AES-GCM secure logger
 
 - **Temporary directories**
-
    - *Threat:* A3 (leftover key files)
    - *Control:* use ``with tempfile.TemporaryDirectory():`` for auto-cleanup
 
 - **CI logs**
-
    - *Threat:* A2, A3 (secrets printed via ``echo ${{ secrets.* }}``)
-   - *Control:* remove those echoes or mask via ``::add-mask::${{ secrets.NAME }}``
+   - *Control:* mask via ``::add-mask::${{ secrets.NAME }}``
 
 Mermaid Diagram
 ---------------
