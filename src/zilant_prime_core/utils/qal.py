@@ -1,4 +1,5 @@
-# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# src/zilant_prime_core/utils/qal.py
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
 # SPDX-License-Identifier: MIT
 """Simplified Quantum Anonymity Layer (QAL).
 
@@ -42,14 +43,12 @@ class QAL:
         return cast(bytes, self.signers[index].sign(message, priv))
 
     def verify(self, message: bytes, signature: bytes, pubkeys: List[bytes]) -> bool:
+        """Verify the signature against a list of public‐key bytes."""
         for signer, pub_bytes in zip(self.signers, pubkeys, strict=False):
-            with tempfile.NamedTemporaryFile(delete=False) as tf:
-                tf.write(pub_bytes)
-                tf.flush()
-                tmp_pub = Path(tf.name)
-            try:
+            # Use TemporaryDirectory for auto-cleanup of any temp files
+            with tempfile.TemporaryDirectory() as tmpdir:
+                tmp_pub = Path(tmpdir) / "pubkey.bin"
+                tmp_pub.write_bytes(pub_bytes)
                 if signer.verify(message, signature, tmp_pub):
                     return True
-            finally:
-                tmp_pub.unlink(missing_ok=True)
         return False

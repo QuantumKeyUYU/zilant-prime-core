@@ -1,24 +1,66 @@
-name: CI Fuzz
+# .github/workflows/fuzz.yml
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+
+name: Nightly Fuzz
+
 on:
-  push:
-    branches: [ main, ci-check-ready ]
-  pull_request:
-    branches: [ main, ci-check-ready ]
+  schedule:
+    # Каждая ночь в 03:00 UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:
 
 jobs:
   fuzz:
+    name: Atheris Fuzz Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10']
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache pip
+        uses: actions/cache@v3
         with:
-          python-version: '3.13'
-      - name: Install deps
-        run: pip install -e .[dev]
-      - name: Run atheris fuzzing
-        run: python tools/atheris_fuzz.py --ci -max_total_time=30 > fuzz-report.txt
-      - uses: actions/upload-artifact@v4
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          name: fuzz-report
-          path: fuzz-report.txt
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ".[dev]"
+
+      - name: Run fuzz tests with Atheris
+        run: |
+          pytest tests/fuzz --maxfail=1 --disable-warnings -q
+
+      - name: Archive fuzz inputs & crashes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-artifacts-${{ matrix.python-version }}
+          path: |
+            tests/fuzz/artifacts/
+            tests/fuzz/crashes/
+
+      - name: Generate coverage report
+        run: |
+          pytest --maxfail=1 --disable-warnings --cov=src --cov-report=xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          flags: fuzz
+          fail_ci_if_error: false
+          comment: false

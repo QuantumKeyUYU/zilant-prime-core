@@ -1,6 +1,8 @@
+# src/zilant_prime_core/utils/honeyfile.py
 # SPDX-License-Identifier: MIT
-# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
 
+import os
 import random
 import tempfile
 from pathlib import Path
@@ -31,8 +33,12 @@ def check_tmp_for_honeyfiles(tmp_dir: str | None = None) -> None:
     if tmp_dir is not None:
         check_dir = Path(tmp_dir)
     else:
-        # Use the most secure and portable way to get temp directory
-        check_dir = Path(tempfile.gettempdir())  # pragma: no cover
+        # Respect TMPDIR/TMP/TEMP environment variables if set, else use default
+        dir_env = os.environ.get("TMPDIR") or os.environ.get("TMP") or os.environ.get("TEMP")
+        if dir_env:
+            check_dir = Path(dir_env)
+        else:
+            check_dir = Path(tempfile.gettempdir())  # pragma: no cover
     for f in check_dir.iterdir():
         if not f.is_file():
             continue

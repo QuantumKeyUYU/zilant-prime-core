@@ -10,7 +10,7 @@ on:
 
 # Для корректной работы через GitHub Actions вам нужно в интерфейсе
 # репозитория дать GITHUB_TOKEN право "secrets: write" (Settings → Actions → General → Workflow permissions).
-# Но в этом YAML мы не указываем `permissions: secrets: write`, чтобы 'act' не падал на неизвестное поле.
+# Но в этом YAML мы не указываем `permissions: secrets: write`, чтобы 'act' не падал на неизв
 permissions:
   contents: read
   id-token: write
@@ -92,7 +92,8 @@ jobs:
       - name: (Опционально) Revoke old Vault token
         if: always()
         run: |
-          echo "ℹ️ Если требуется, здесь можно отозвать старый токен: "
-          echo "  curl --header \"X-Vault-Token: ${{ secrets.VAULT_TOKEN }}\" \\"
+          echo "ℹ️ Если требуется, здесь можно"
+          echo "::add-mask::${{ secrets.VAULT_TOKEN }}"
+          echo "  curl --header \"X-Vault-Token: [REDACTED]\" \\"
           echo "       --request POST ${{ secrets.VAULT_ADDR }}/v1/auth/token/revoke-self"
           # Закомментировано, т.к. ревокировать старый токен можно вручную или отдельным шагом.
