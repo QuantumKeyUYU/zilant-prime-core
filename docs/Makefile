@@ -1,29 +1,32 @@
 # SPDX-License-Identifier: MIT
-# SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
-SHELL := /usr/bin/env bash
+# ----------------------- paths / tools -----------------------------
+SPHINXBUILD   ?= sphinx-build
+SPHINXOPTS    ?=
+SOURCEDIR     ?= .
+BUILDDIR      ?= _build
 
-.PHONY: mermaid html clean
+MERMAID       ?= npx -y @mermaid-js/mermaid-cli
+DIAGRAM_SRC    = architecture/key_lifecycle.mmd
+DIAGRAM_OUT    = _static/key_lifecycle.svg
 
-# --------------------------------------------------------------------
-# 1) Generate the static SVG once from Mermaid source
-# --------------------------------------------------------------------
-mermaid: docs/_static/key_lifecycle.svg docs/_static/threat_diagram.svg
+.PHONY: help clean mermaid html
 
-docs/_static/key_lifecycle.svg: docs/architecture/key_lifecycle.mmd
-	mmdc -i $< -o $@
+help:
+	@echo "make mermaid   – обновить все *.mmd → SVG"
+	@echo "make html      – полная сборка HTML (вызывает mermaid)"
+	@echo "make clean     – стереть $(BUILDDIR) и сгенерённые SVG"
 
-docs/_static/threat_diagram.svg: docs/threats.mmd
-	mmdc -i $< -o $@
+# ----------------------- mermaid diagrams --------------------------
+$(DIAGRAM_OUT): $(DIAGRAM_SRC)
+	$(MERMAID) -i $< -o $@
 
-# --------------------------------------------------------------------
-# 2) Build HTML documentation
-# --------------------------------------------------------------------
+mermaid: $(DIAGRAM_OUT)
+
+# ----------------------- Sphinx build ------------------------------
 html: mermaid
-	sphinx-build -b html . _build/html
-
-# Convenience target for CI
-docs: html
+	$(SPHINXBUILD) -M html $(SOURCEDIR) $(BUILDDIR) $(SPHINXOPTS)
 
 clean:
-	rm -rf _build docs/_static/key_lifecycle.svg docs/_static/threat_diagram.svg
+	rm -rf $(BUILDDIR) $(DIAGRAM_OUT)
