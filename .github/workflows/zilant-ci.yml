@@ -10,6 +10,7 @@ jobs:
   quality:
     name: quality
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -39,11 +40,12 @@ jobs:
       - run: bandit -r src -ll
       - run: semgrep ci
       - run: mypy --config-file mypy.ini src
-      - run: pytest -q tests/test_contributing_sections.py tests/test_key_lifecycle.py tests/test_cli_key_audit.py tests/test_streaming_aead.py tests/test_pqcrypto.py tests/test_ui_launch.py tests/test_cli_output.py tests/test_metrics.py tests/test_health.py tests/test_health_additional.py tests/test_plugin_manager.py tests/test_s3_backend.py tests/test_onion.py tests/test_attestation.py tests/test_timelock.py tests/test_audit_ledger.py
+      - run: pytest --maxfail=1 --exitfirst -q tests/test_contributing_sections.py tests/test_key_lifecycle.py tests/test_cli_key_audit.py tests/test_streaming_aead.py tests/test_pqcrypto.py tests/test_ui_launch.py tests/test_cli_output.py tests/test_metrics.py tests/test_health.py tests/test_health_additional.py tests/test_plugin_manager.py tests/test_s3_backend.py tests/test_onion.py tests/test_attestation.py tests/test_timelock.py tests/test_audit_ledger.py
 
   perf:
     name: perf
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: quality
     steps:
       - uses: actions/checkout@v4
@@ -51,12 +53,13 @@ jobs:
         with:
           python-version: '3.13'
       - run: pip install -e .[dev]
-      - run: pytest -q --maxfail=1 --disable-warnings -m perf
+      - run: pytest --maxfail=1 --exitfirst -q --disable-warnings -m perf
 
   build-pq:
     name: build-pq
     runs-on: ubuntu-latest
     needs: [ quality, perf ]
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

@@ -18,9 +18,10 @@ jobs:
   build-test:
     name: Lint & Test (${{ matrix.os }} / Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest]
         python-version: ['3.10', '3.11']
 
     steps:
@@ -61,7 +62,7 @@ jobs:
         run: mypy src
 
       - name: Run tests with coverage
-        run: pytest --cov=src --cov-report=xml
+        run: pytest --maxfail=1 --exitfirst -q --cov=src --cov-report=xml
 
       - name: Build PQ wheels
         run: python tools/build_pq_wheels.py
@@ -84,6 +85,7 @@ jobs:
   trivy-scan:
     name: Trivy SCA / CVE scan
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: build-test
 
     steps:

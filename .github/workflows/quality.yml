@@ -10,6 +10,7 @@ jobs:
 # ──────────────────────────── Lint + type + tests ───────────────────
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -45,14 +46,15 @@ jobs:
 
       - name: Unit-tests (with coverage)
         run: |
-          ZILANT_ALLOW_ROOT=1 pytest -q --cov=src --cov-report=xml
+          ZILANT_ALLOW_ROOT=1 pytest --maxfail=1 --exitfirst -q --cov=src --cov-report=xml
 # ──────────────────────────── Perf subset ───────────────────────────
   perf:
     needs: quality
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.13", cache: pip }
       - run: pip install -e ".[dev]"
-      - run: SKIP_FUZZ=1 ZILANT_ALLOW_ROOT=1 pytest -q -m perf --disable-warnings --maxfail=1
+      - run: SKIP_FUZZ=1 ZILANT_ALLOW_ROOT=1 pytest --maxfail=1 --exitfirst -q -m perf --disable-warnings
