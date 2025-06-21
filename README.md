@@ -141,6 +141,9 @@ zilctl pack secret.txt --vault-path secret/data/zilant/password
 # Расшифровка:
 zilctl unpack secret.zil --output-dir ./out
 
+# Просмотр метаданных:
+zilctl inspect secret.zil --output json
+
 ### Shamir Secret Sharing
 
 Разделите мастер‑ключ на части и восстановите его при необходимости:

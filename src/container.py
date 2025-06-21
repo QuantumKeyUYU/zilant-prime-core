@@ -135,6 +135,17 @@ def unpack_file(
     logger.info("Unpacked '%s' -> '%s'", input_path.name, output_path.name)
 
 
+def read_header(path: Path) -> dict[str, Any]:
+    """Return container metadata without decrypting payload."""
+    data = path.read_bytes()
+    sep_idx = data.find(HEADER_SEPARATOR)
+    if sep_idx == -1:
+        raise ValueError("Invalid ZIL container format")
+    header_bytes = data[:sep_idx]
+    meta = json.loads(header_bytes.decode("utf-8"))
+    return cast(dict[str, Any], meta)
+
+
 def pack(meta: dict[str, Any], payload: bytes, key: bytes) -> bytes:
     if not isinstance(meta, dict):
         raise TypeError("meta must be a dict")
@@ -176,6 +187,7 @@ __all__ = [
     "unpack_file",
     "pack",
     "unpack",
+    "read_header",
     "ZIL_MAGIC",
     "ZIL_VERSION",
     "HEADER_SEPARATOR",
