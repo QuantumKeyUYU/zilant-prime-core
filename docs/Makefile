@@ -10,6 +10,7 @@ BUILDDIR      ?= _build
 MERMAID       ?= npx -y @mermaid-js/mermaid-cli
 DIAGRAM_SRC    = architecture/key_lifecycle.mmd
 DIAGRAM_OUT    = _static/key_lifecycle.svg
+export PUPPETEER_DISABLE_SANDBOX ?= true
 
 .PHONY: help clean mermaid html
 
@@ -20,7 +21,7 @@ help:
 
 # ----------------------- mermaid diagrams --------------------------
 $(DIAGRAM_OUT): $(DIAGRAM_SRC)
-        PUPPETEER_DISABLE_SANDBOX=true $(MERMAID) -i $< -o $@
+	$(MERMAID) -i $< -o $@
 
 mermaid: $(DIAGRAM_OUT)
 

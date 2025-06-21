@@ -4,6 +4,10 @@
 
 name: CI
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
@@ -15,64 +19,75 @@ permissions:
   actions: read
 
 jobs:
-  build-test:
-    name: Lint & Test (${{ matrix.os }} / Python ${{ matrix.python-version }})
+  lint-fast:
+    if: github.event_name == 'pull_request'
+    name: lint-fast
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        python-version: ['3.11']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Cache pip & pre-commit
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/pre-commit
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      - name: Install dev deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Format check
+        run: black --check .
+      - name: Ruff lint
+        run: ruff check .
+      - name: Check imports
+        run: isort --check-only .
+      - name: Mypy strict
+        run: mypy --strict --no-warn-unused-ignores src
+
+  tests-full:
+    if: github.event_name == 'push'
+    name: tests-full
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 30
     strategy:
       matrix:
         os: [ubuntu-latest]
         python-version: ['3.10', '3.11']
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-
+      - name: Cache pip & pre-commit
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/pre-commit
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}-${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ".[dev]"
-
-      - name: Cache pre-commit environment
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pre-commit
-          key: ${{ runner.os }}-precommit-${{ hashFiles('.pre-commit-config.yaml') }}
-          restore-keys: ${{ runner.os }}-precommit-
-
-      - name: Run pre-commit hooks
-        run: pre-commit run --all-files
-
-      - name: Lint with Ruff
-        run: ruff check src tests
-
-      - name: Check imports with isort
-        run: isort --check-only src tests
-
-      - name: Check formatting with Black
-        run: black --check src tests
-
-      - name: Type checking with mypy
-        run: mypy src
-
-      - name: Run tests with coverage
+          pip install -e ".[dev]"
+      - name: Run tests
         run: pytest --maxfail=1 --exitfirst -q --cov=src --cov-report=xml
-
       - name: Build PQ wheels
         run: python tools/build_pq_wheels.py
-
-      - name: Upload PQ wheels
+      - name: upload-wheel
         uses: actions/upload-artifact@v4
         with:
-          name: pq-wheels-${{ matrix.os }}-${{ matrix.python-version }}
+          name: pq-wheel-${{ github.run_number }}
           path: dist/*.whl
-
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -83,15 +98,13 @@ jobs:
           comment_mode: github-pr
 
   trivy-scan:
+    if: github.event_name == 'push'
     name: Trivy SCA / CVE scan
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: build-test
-
+    timeout-minutes: 30
+    needs: tests-full
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Trivy scan (vuln only)
         uses: aquasecurity/trivy-action@0.20.0
         with:
