@@ -12,7 +12,7 @@ import yaml  # type: ignore
 from pathlib import Path
 from typing import Any, NoReturn, cast
 
-from container import pack_file, unpack_file
+from container import pack_file, read_header, unpack_file
 from key_lifecycle import recover_secret, shard_secret
 from zilant_prime_core.crypto.password_hash import hash_password, verify_password
 from zilant_prime_core.metrics import metrics
@@ -300,6 +300,16 @@ def cmd_unpack(
 
     metrics.files_processed_total.inc()
     _emit(ctx, {"path": str(out)})
+
+
+# ────────────────────────── inspect ──────────────────────────
+@cli.command("inspect")
+@click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.pass_context
+def cmd_inspect(ctx: click.Context, container: Path) -> None:
+    """Show container metadata."""
+    meta = read_header(container)
+    _emit(ctx, meta)
 
 
 # ─────────────────────── misc utility commands ───────────────────────

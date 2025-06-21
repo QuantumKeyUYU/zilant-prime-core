@@ -11,9 +11,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with: {python-version: '3.x'}
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      - name: Install mermaid-cli
+        run: npm install -g @mermaid-js/mermaid-cli@10.4.0
       - name: Install dependencies
         run: |
           pip install sphinx sphinx-rtd-theme
+      - name: Disable Chromium sandbox for Mermaid
+        run: echo "PUPPETEER_DISABLE_SANDBOX=true" >> $GITHUB_ENV
       - name: Build docs
         run: |
           cd docs

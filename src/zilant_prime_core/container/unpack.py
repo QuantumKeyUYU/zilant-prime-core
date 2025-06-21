@@ -15,7 +15,7 @@ from __future__ import annotations
 import os
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 from zilant_prime_core.container.metadata import (
     MetadataError,
@@ -58,21 +58,27 @@ def _require(cond: bool, msg: str) -> None:
 # ──────────────────────────────── packing ────────────────────────────────
 def _pack_bytes(src: Path, password: str) -> bytes:
     """Сериализует файл *src* в защищённый контейнер."""
-    meta_blob: bytes = cast(bytes, serialize_metadata(new_meta_for_file(src)))
+    meta_blob = serialize_metadata(new_meta_for_file(src))
 
     salt = os.urandom(DEFAULT_SALT_LENGTH)
     key = derive_key(password.encode(), salt)
 
     # generate_nonce() типизирован как Any → явно к bytes
-    nonce: bytes = cast(bytes, generate_nonce())
+    nonce = generate_nonce()
 
     # encrypt_aead типизирован как Any → приводим к bytes
-    ct: bytes = cast(
-        bytes,
-        encrypt_aead(key, nonce, src.read_bytes(), aad=meta_blob),
-    )
+    ct = encrypt_aead(key, nonce, src.read_bytes(), aad=meta_blob)
 
-    return len(meta_blob).to_bytes(4, "big") + meta_blob + salt + nonce + ct
+    result = b"".join(
+        [
+            len(meta_blob).to_bytes(4, "big"),
+            meta_blob,
+            salt,
+            nonce,
+            ct,
+        ]
+    )
+    return result
 
 
 def pack(path: str | Path, password: str) -> bytes:
@@ -119,9 +125,9 @@ def unpack(container: bytes | Path, output_dir: str | Path, password: str) -> Pa
 
     key = derive_key(password.encode(), salt)
 
-    # decrypt_aead → Any; приводим к bytes
+    # decrypt_aead возвращает bytes
     try:
-        payload: bytes = cast(bytes, decrypt_aead(key, nonce, ct_tag, aad=meta_blob))
+        payload = decrypt_aead(key, nonce, ct_tag, aad=meta_blob)
     except AEADInvalidTagError as exc:
         raise UnpackError("Неверная метка аутентификации.") from exc
 

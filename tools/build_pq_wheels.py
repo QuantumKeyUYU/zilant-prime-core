@@ -22,3 +22,17 @@ for setup_py in glob.glob(str(PQ_DIR / "**" / "setup.py"), recursive=True):
         cwd=pkg_dir,
         check=True,
     )
+
+# Always build the main project wheel so that CI uploads at least one artifact
+subprocess.run(
+    [
+        "python",
+        "-m",
+        "build",
+        "--wheel",
+        "--outdir",
+        str(OUT),
+    ],
+    cwd=ROOT,
+    check=True,
+)

@@ -43,7 +43,7 @@ intersphinx_mapping = {
 }
 
 # Mermaid (если нужна встроенная диаграмма)
-mermaid_cmd = "npx -y @mermaid-js/mermaid-cli"
+mermaid_cmd = "PUPPETEER_DISABLE_SANDBOX=true npx -y @mermaid-js/mermaid-cli"
 mermaid_output_format = "png"
 
 templates_path = ["_templates"]

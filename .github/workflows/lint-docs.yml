@@ -14,8 +14,11 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16'
-      - run: npm install -g @mermaid-js/mermaid-cli
+      - name: Install mermaid-cli
+        run: npm install -g @mermaid-js/mermaid-cli@10.4.0
       - run: pip install -e .[docs]
+      - name: Disable Chromium sandbox for Mermaid
+        run: echo "PUPPETEER_DISABLE_SANDBOX=true" >> $GITHUB_ENV
       - name: Build docs
         run: make docs
       - name: Verify docs files

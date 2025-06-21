@@ -54,6 +54,6 @@ repos:
     hooks:
       - id: fuzz
         name: atheris fuzz
-        entry: python tools/atheris_fuzz.py --ci
+        entry: bash -c 'PYTHONPATH=src python tools/atheris_fuzz.py --ci'
         language: system
         pass_filenames: false
