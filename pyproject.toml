@@ -135,6 +135,7 @@ ext-modules = [
   { name = "zilant_prime_core.utils.crypto_core", sources = [ "src/zilant_prime_core/utils/crypto_core.c" ], language = "c" },
   { name = "zilant_prime_core.utils.hardening",   sources = [ "src/zilant_prime_core/utils/hardening.c" ],   language = "c" },
 ]
+py-modules = ["container"]
 
 [tool.setuptools.packages.find]
 where      = ["src"]
