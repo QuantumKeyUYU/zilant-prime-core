@@ -22,8 +22,11 @@ jobs:
       - name: Run gitleaks scan
         uses: zricethezav/gitleaks-action@v2.3.2
         with:
-          config_path: .gitleaks.toml
-          report_format: sarif
-          report_path: results.sarif
-          artifact_name: gitleaks-report
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          args: >-
+            detect --source .
+                   --config-path=.gitleaks.toml
+                   --redact
+                   --report-format sarif
+                   --report-path gitleaks.sarif
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

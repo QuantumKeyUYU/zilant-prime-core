@@ -29,6 +29,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
+      - name: Install gitleaks binary
+        run: |
+          GITLEAKS_VER=8.12.0
+          curl -sSL "https://github.com/zricethezav/gitleaks/releases/download/v${GITLEAKS_VER}/gitleaks_${GITLEAKS_VER}_linux_x64.tar.gz" \
+            | tar xz -C /usr/local/bin gitleaks
+          chmod +x /usr/local/bin/gitleaks
+
       - name: Cache pip & pre-commit
         uses: actions/cache@v3
         with:
@@ -36,12 +43,6 @@ jobs:
             ~/.cache/pip
             ~/.cache/pre-commit
           key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}-${{ hashFiles('.pre-commit-config.yaml') }}
-
-      - name: Install gitleaks binary
-        run: |
-          GITLEAKS_VER=8.12.0
-          curl -sSL "https://github.com/zricethezav/gitleaks/releases/download/v${GITLEAKS_VER}/gitleaks_${GITLEAKS_VER}_linux_x64.tar.gz" \
-            | tar xz -C /usr/local/bin gitleaks
 
       - name: Pre-commit
         run: pre-commit run --all-files

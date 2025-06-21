@@ -23,4 +23,3 @@ This file contains tasks from the "Сделай-ка, Codex!" package.
 | QA-1 | Logging: Replace `print()` with logging at INFO level in `src/**.py`. | `grep -R "print(" src` shows none |
 | QA-2 | Typing: Enable `mypy --strict` in pre-commit, ignore only `cryptography`, `hpke`, `oqs`. | `mypy` ends with 0 errors |
 | FEAT-X | Placeholder: Create empty scaffolds for all "New features" under `src/feature/` (directories, `__init__.py`, `TODO.md`). | Modules import without errors |
-
