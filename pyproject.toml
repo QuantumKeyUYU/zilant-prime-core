@@ -1,9 +1,8 @@
-# pyproject.toml
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 [build-system]
-requires = ["setuptools>=64", "wheel", "cffi"]
+requires    = ["setuptools>=64", "wheel", "cffi"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -68,7 +67,8 @@ dev = [
   "mypy>=1.10,<2.0",
   "pre-commit>=2.21,<3.0",
   "bandit>=1.7,<2.0",
-  "semgrep>=1.68,<2.0",
+  # Semgrep под Windows пока не работает, ставим только на *nix
+  "semgrep>=1.68,<2.0; sys_platform!='win32' and sys_platform!='cygwin'",
   "cyclonedx-bom>=3.16,<7.0",
   "build>=1.2,<2.0",
   "twine>=5.0,<6.0",
@@ -130,6 +130,9 @@ line-length = 120
 select = ["E", "F", "W", "C90", "B"]
 ignore = ["E402", "B904", "C901"]
 
+[tool.lint.mccabe]
+max-complexity = 12
+
 [tool.mypy]
 python_version           = 3.10
 strict                   = true
@@ -137,9 +140,6 @@ allow_untyped_decorators = true
 warn_return_any          = false
 ignore_missing_imports   = true
 disable_error_code       = ["attr-defined"]
-
-[tool.lint.mccabe]
-max-complexity = 12
 
 [tool.zilant]
 pq_mode      = "classic"
