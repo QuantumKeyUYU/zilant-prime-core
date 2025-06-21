@@ -8,6 +8,7 @@ SOURCEDIR     ?= .
 BUILDDIR      ?= _build
 
 MERMAID       ?= npx -y @mermaid-js/mermaid-cli
+MERMAID_OPTS  ?= --no-sandbox
 DIAGRAM_SRC    = architecture/key_lifecycle.mmd
 DIAGRAM_OUT    = _static/key_lifecycle.svg
 export PUPPETEER_DISABLE_SANDBOX ?= true
@@ -21,7 +22,7 @@ help:
 
 # ----------------------- mermaid diagrams --------------------------
 $(DIAGRAM_OUT): $(DIAGRAM_SRC)
-	$(MERMAID) -i $< -o $@
+	$(MERMAID) $(MERMAID_OPTS) -i $< -o $@
 
 mermaid: $(DIAGRAM_OUT)
 
