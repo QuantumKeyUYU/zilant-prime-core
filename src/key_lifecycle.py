@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import secrets
 from pathlib import Path
-from typing import List, cast
+from typing import List
 
 import shamir  # our local shamir.py stub
 
@@ -16,12 +16,12 @@ class KeyLifecycle:
     @staticmethod
     def derive_session_key(master_key: bytes, context: str) -> bytes:
         h = hashlib.blake2s(context.encode(), key=master_key)
-        return cast(bytes, h.digest())
+        return h.digest()
 
     @staticmethod
     def rotate_master_key(old_key: bytes, days: int) -> bytes:
         data = days.to_bytes(4, "big", signed=False)
-        return cast(bytes, hashlib.blake2s(data, key=old_key).digest())
+        return hashlib.blake2s(data, key=old_key).digest()
 
 
 def shard_secret(secret: bytes, n: int, t: int) -> List[bytes]:
@@ -58,7 +58,8 @@ def recover_secret(shards: List[bytes]) -> bytes:
         points.append((x, y))
     secret_int = shamir.recover_secret(points)
     length = (secret_int.bit_length() + 7) // 8
-    return cast(bytes, secret_int.to_bytes(length, "big"))
+    secret_bytes: bytes = secret_int.to_bytes(length, "big")
+    return secret_bytes
 
 
 class AuditLog:
