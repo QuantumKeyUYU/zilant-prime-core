@@ -25,6 +25,7 @@ def render(src: Path, dst: Path) -> None:
         "npx",
         "-y",
         "@mermaid-js/mermaid-cli",
+        "--no-sandbox",
         "-i",
         str(src),
         "-o",
