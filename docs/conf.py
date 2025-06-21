@@ -31,6 +31,15 @@ extensions = [
 # Автоматически генерить заглушки для модулей
 autosummary_generate = True
 
+# Mock heavy optional dependencies during doc build
+autodoc_mock_imports = [
+    "hvac",
+    "PyQt5",
+    "oqs",
+    "boto3",
+    "prometheus_client",
+]
+
 # Опции по умолчанию для autodoc
 autodoc_default_options = {
     "members": True,
