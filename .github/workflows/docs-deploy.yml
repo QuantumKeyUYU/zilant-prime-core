@@ -11,19 +11,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with: {python-version: '3.x'}
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-      - name: Install mermaid-cli
-        run: npm install -g @mermaid-js/mermaid-cli@8.9.1
-      - name: Install dependencies
-        run: |
-          pip install sphinx sphinx-rtd-theme
+      - name: Install Sphinx
+        run: pip install sphinx sphinx-rtd-theme
       - name: Build docs (strict)
+        env:
+          SKIP_MERMAID: '1'
         run: |
-          cd docs
-          make mermaid
-          make html SPHINXOPTS="-W"
+          make -C docs html SPHINXOPTS="-W"
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

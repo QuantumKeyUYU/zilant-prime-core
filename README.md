@@ -305,6 +305,10 @@ To build it locally run:
 ```bash
 make -C docs html
 ```
+If the Mermaid CLI is unavailable you can skip diagram generation:
+```bash
+SKIP_MERMAID=1 make -C docs html
+```
 The output will be available in `docs/_build/html/index.html`.
 
 ## TODO Stage III
