@@ -1,25 +1,32 @@
-# Minimal makefile for Sphinx documentation
-#
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
-# You can set these variables from the command line, and also
-# from the environment for the first two.
-SPHINXOPTS    ?=
+# ----------------------- paths / tools -----------------------------
 SPHINXBUILD   ?= sphinx-build
-SOURCEDIR     = .
-BUILDDIR      = _build
+SPHINXOPTS    ?=
+SOURCEDIR     ?= .
+BUILDDIR      ?= _build
 
-# Put it first so that "make" without argument is like "make help".
+MERMAID       ?= npx -y @mermaid-js/mermaid-cli
+DIAGRAM_SRC    = architecture/key_lifecycle.mmd
+DIAGRAM_OUT    = _static/key_lifecycle.svg
+
+.PHONY: help clean mermaid html
+
 help:
-	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@echo "make mermaid   – обновить все *.mmd → SVG"
+	@echo "make html      – полная сборка HTML (вызывает mermaid)"
+	@echo "make clean     – стереть $(BUILDDIR) и сгенерённые SVG"
 
-.PHONY: help Makefile
+# ----------------------- mermaid diagrams --------------------------
+$(DIAGRAM_OUT): $(DIAGRAM_SRC)
+	$(MERMAID) -i $< -o $@
 
-# Catch-all target: route all unknown targets to Sphinx using the new
-# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-%: Makefile
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+mermaid: $(DIAGRAM_OUT)
 
-mermaid:
-	python ../tools/gen_threat_diagram.py
-	mkdir -p _static
-	python ../tools/render_mermaid.py architecture/key_lifecycle.mmd _static/key_lifecycle.png
+# ----------------------- Sphinx build ------------------------------
+html: mermaid
+	$(SPHINXBUILD) -M html $(SOURCEDIR) $(BUILDDIR) $(SPHINXOPTS)
+
+clean:
+	rm -rf $(BUILDDIR) $(DIAGRAM_OUT)
