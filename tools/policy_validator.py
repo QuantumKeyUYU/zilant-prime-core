@@ -45,7 +45,10 @@ def main() -> None:
         if rate < conf["coverage_min"]:
             errors.append(f"coverage {rate:.1f}% < {conf['coverage_min']}")
 
-    REPORT.write_text("# Policy validation report\n\n" + "\n".join(f"- {e}" for e in errors))
+    content = "# Policy validation report\n\n" + "\n".join(f"- {e}" for e in errors)
+    if not content.endswith("\n"):
+        content += "\n"
+    REPORT.write_text(content)
     if errors:
         print("Policy violations detected:")
         for e in errors:

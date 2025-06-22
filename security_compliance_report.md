@@ -54,11 +54,10 @@ No blocked licenses.
 
 # TODO/FIXME report
 
-- tools/todo_report.py:36 `fh.write("# TODO/FIXME report\n\n")`
 - tools/gen_cli_docs.py:80 `suggestion = lines[i].rstrip() + "  # TODO add help"`
+- tools/todo_report.py:36 `fh.write("# TODO/FIXME report\n\n")`
 
 
 ## Supply chain – warning
 
 pip-audit not installed
-

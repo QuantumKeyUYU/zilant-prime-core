@@ -26,7 +26,10 @@ def main() -> None:
     if Path("docs/threats.mmd").exists():
         Path("docs/threats.mmd").replace(diagram)
     sections.append(f"## Threat model\n\nDiagram saved to {diagram}\n")
-    REPORT.write_text("# Crypto & Threat Report\n\n" + "\n".join(sections))
+    content = "# Crypto & Threat Report\n\n" + "\n".join(sections)
+    if not content.endswith("\n"):
+        content += "\n"
+    REPORT.write_text(content)
     print(f"Report written to {REPORT}")
 
 

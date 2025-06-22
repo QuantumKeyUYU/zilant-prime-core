@@ -110,7 +110,10 @@ def main() -> None:
         status, body = func()
         sections.append(section(title + f" – {status}", body))
 
-    REPORT.write_text("# Security & Compliance Report\n\n" + "\n".join(sections))
+    content = "# Security & Compliance Report\n\n" + "\n".join(sections)
+    if not content.endswith("\n"):
+        content += "\n"
+    REPORT.write_text(content)
     print(f"Report written to {REPORT}")
 
 
