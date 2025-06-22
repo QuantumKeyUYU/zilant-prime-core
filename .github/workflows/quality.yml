@@ -7,82 +7,122 @@ on:
     branches: [ main, ci-check-ready ]
 
 jobs:
-  # ────────────────────────────────────────────── Lint + type + tests ──────────────────────────────────────────────
+  #────────────────────────────── Lint + type + tests ──────────────────────────────
   quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Python
+
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
-      - run: pip install -e .[dev]
-      - run: pre-commit run --all-files
-      - run: ruff check .
-      - run: black --check .
-      - run: isort --check-only .
-      - run: bandit -r src -ll
-      - run: semgrep ci
-      - run: mypy --config-file mypy.ini src
-      - run: ZILANT_ALLOW_ROOT=1 pytest -q
+          python-version: "3.13"
 
+      - name: Install dev-deps
+        run: pip install -e .[dev]
+
+      - name: Pre-commit
+        run: pre-commit run --all-files
+
+      - name: Ruff (lint)
+        run: ruff check .
+
+      - name: Black (format)
+        run: black --check .
+
+      - name: isort (imports)
+        run: isort --check-only .
+
+      - name: Bandit (SAST)
+        run: bandit -r src -ll
+
+      - name: Semgrep (SAST)
+        run: semgrep ci
+
+      - name: Mypy (types)
+        run: mypy --config-file mypy.ini src
+
+      - name: Pytest
+        run: ZILANT_ALLOW_ROOT=1 pytest -q
+
+  #────────────────────────────── Perf tests ──────────────────────────────
   perf:
     needs: quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
-        with: { python-version: '3.13' }
+        with:
+          python-version: "3.13"
+
       - run: pip install -e .[dev]
+
       - run: SKIP_FUZZ=1 ZILANT_ALLOW_ROOT=1 pytest -q -m perf --disable-warnings --maxfail=1
 
+  #────────────────────────────── Large-file tests ──────────────────────────────
   large-file-test:
     needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
-        with: { python-version: '3.13' }
+        with:
+          python-version: "3.13"
+
       - run: pip install -e .[dev]
+
       - run: pytest -q tests/test_stream_large.py tests/test_stream_resume.py
 
+  #────────────────────────────── CLI-polish tests ──────────────────────────────
   cli-polish:
     needs: quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
-        with: { python-version: '3.13' }
+        with:
+          python-version: "3.13"
+
       - run: pip install -e .[dev]
+
       - run: pytest -q tests/test_cli_observability.py
 
-  # ────────────────────────────────────────────── Build docs ──────────────────────────────────────────────
+  #────────────────────────────── Build docs ──────────────────────────────
   docs:
     needs: quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # 1) Python-deps для Sphinx
       - name: Install docs-deps
         run: pip install -e .[docs]
 
-      # 2) Node + mmdc
       - uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
+
       - name: Install Mermaid-CLI
         run: npm install -g @mermaid-js/mermaid-cli
 
-      # 3) Создаём конфиг для Puppeteer (sandbox-workaround)
-      - name: Write puppeteer-config.json
+      - name: Install Chrome deps
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 \
+            libxext6 libxfixes3 libxi6 libxrandr2 libxtst6 \
+            libnss3 libatk1.0-0 libgtk-3-0 libpangocairo-1.0-0
+
+      - name: Create puppeteer-config.json
+        run: |
+          mkdir -p docs
           cat > docs/puppeteer-config.json << 'EOF'
           { "args": ["--no-sandbox", "--disable-setuid-sandbox"] }
           EOF
 
-      # 4) Генерируем диаграммы через mmdc
       - name: Generate Mermaid diagrams
         run: |
           npx mmdc \
@@ -90,46 +130,53 @@ jobs:
             -i docs/architecture/key_lifecycle.mmd \
             -o docs/_static/key_lifecycle.svg
 
-      # 5) Собираем HTML Sphinx
       - name: Build HTML docs
         working-directory: docs
         run: make html
 
-  # ────────────────────────────────────────────── Build + artefacts ──────────────────────────────────────────────
+  #────────────────────────────── Build + Whitepaper + Artefacts ──────────────────────────────
   build-pq:
     needs: [ quality, perf ]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout repository (with submodules)
+        uses: actions/checkout@v4
         with:
-          python-version: '3.13'
+          submodules: recursive
+          fetch-depth: 0
 
-      # 1) Ставим Python-deps для билда и сборщик wheel
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
       - name: Install build deps
         run: pip install -e .[dev] build pyyaml
 
-      # 2) Генерим wheel’ы
       - name: Build PQ wheels
         run: python tools/build_pq_wheels.py
 
-      # 3) Устанавливаем pandoc + LaTeX (требуется для Whitepaper)
       - name: Install Pandoc & XeLaTeX
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y pandoc texlive-xetex
 
-      # 4) Делает из вашего THREATS.rst файл THREATS.md, чтобы gen_whitepaper.py его нашёл
       - name: Prepare THREATS placeholder
         run: cp docs/THREATS.rst docs/THREATS.md
 
-      # 5) Генерим Whitepaper
       - name: Generate Whitepaper
         run: python tools/gen_whitepaper.py
 
-      # 6) Подгружаем wheel’ы как артефакт
       - name: Upload PQ wheels
         uses: actions/upload-artifact@v4
         with:
           name: pq-wheels
           path: dist/*.whl
+          if-no-files-found: ignore
+
+  # sign (закомментировано)
+  # sign:
+  #   needs: build-pq
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     …
