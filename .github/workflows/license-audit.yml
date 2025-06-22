@@ -22,6 +22,9 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Install dependencies for license audit
+        run: pip install requests tomli packaging
+
       - name: Run license audit
         run: python tools/license_audit.py
 
