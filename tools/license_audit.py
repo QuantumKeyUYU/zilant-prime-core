@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 import requests
 import tomli
-from packaging.requirements import Requirement
+from packaging.requirements import InvalidRequirement, Requirement
 from pathlib import Path
 
 REQ_FILES = ["requirements.txt", "requirements-dev.txt"]
@@ -29,8 +29,17 @@ WARNING = {"AGPL-3.0"}
 
 
 def parse_requirements(text: str) -> list[Requirement]:
-    items = [line.split("#", 1)[0].strip() for line in text.splitlines()]
-    return [Requirement(line) for line in items if line]
+    """Parse requirement lines safely, skipping comments and invalid entries."""
+    reqs: list[Requirement] = []
+    for raw in text.splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line:
+            continue
+        try:
+            reqs.append(Requirement(line))
+        except InvalidRequirement:
+            print(f"WARNING: Skipped invalid requirement: {raw}")
+    return reqs
 
 
 def load_deps() -> dict[str, str]:
