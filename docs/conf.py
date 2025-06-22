@@ -28,6 +28,9 @@ extensions = [
     "sphinxcontrib.mermaid",
 ]
 
+if os.environ.get("SKIP_MERMAID"):
+    extensions.remove("sphinxcontrib.mermaid")
+
 # Автоматически генерить заглушки для модулей
 autosummary_generate = True
 
@@ -52,7 +55,8 @@ intersphinx_mapping = {
 }
 
 # Mermaid (если нужна встроенная диаграмма)
-mermaid_cmd = "PUPPETEER_DISABLE_SANDBOX=true npx -y @mermaid-js/mermaid-cli"
+# Disable external mermaid CLI in restricted environments
+mermaid_cmd = "true"
 mermaid_output_format = "png"
 
 templates_path = ["_templates"]
