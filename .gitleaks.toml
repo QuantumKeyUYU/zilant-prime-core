@@ -1,2 +1,2 @@
-[[allowlist]]
-paths = ["tests/**", "docs/**"]
+[allowlist]
+paths = ["tests/.*", "docs/.*"]

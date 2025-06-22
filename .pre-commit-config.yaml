@@ -41,11 +41,6 @@ repos:
         name: Check for large files
 
   # Gitleaks – обнаружение секретов
-  - repo: https://github.com/zricethezav/pre-commit-gitleaks
-    rev: v2.3.2
-    hooks:
-      - id: gitleaks
-
   - repo: local
     hooks:
       - id: gitleaks
