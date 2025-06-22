@@ -1,6 +1,10 @@
 # Zilant Prime Core
 
-[![Coverage](https://img.shields.io/codecov/c/github/QuantumKeyUYU/zilant-prime-core?branch=main)](https://codecov.io/gh/QuantumKeyUYU/zilant-prime-core) [![Security](https://img.shields.io/badge/security-scan-passed-success.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/security) [![Docs](https://img.shields.io/badge/docs-available-blue.svg)](./docs/ARCH.md) ![ISO 27001](https://img.shields.io/badge/ISO27001-compliant-brightgreen.svg)
+[![CI](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/codecov/c/github/QuantumKeyUYU/zilant-prime-core?branch=main)](https://codecov.io/gh/QuantumKeyUYU/zilant-prime-core)
+[![Docker Scan](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/trivy-critical-scan.yml/badge.svg?branch=main)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/trivy-critical-scan.yml)
+[![Docs](https://img.shields.io/badge/docs-online-blue.svg)](https://quantumkeyuyu.github.io/zilant-prime-core/)
+![ISO 27001](https://img.shields.io/badge/ISO27001-compliant-brightgreen.svg)
 
 Универсальная CLI и библиотека для создания безопасных контейнеров, шифрования логов, VDF-доказательств и полной DevSecOps-цепочки.
 
@@ -295,7 +299,8 @@ commit, proof = zk.prove(b'data')
 
 ## Documentation
 
-To generate the HTML documentation run:
+Documentation is automatically published to [GitHub Pages](https://quantumkeyuyu.github.io/zilant-prime-core/).
+To build it locally run:
 
 ```bash
 make -C docs html
