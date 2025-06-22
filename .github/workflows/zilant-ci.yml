@@ -52,10 +52,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
       - run: pip install -e .[dev]
+
       - run: SKIP_FUZZ=1 ZILANT_ALLOW_ROOT=1 pytest -q -m perf --disable-warnings --maxfail=1
 
   #────────────────────────────── Large-file tests ──────────────────────────────
@@ -65,10 +68,13 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
       - run: pip install -e .[dev]
+
       - run: pytest -q tests/test_stream_large.py tests/test_stream_resume.py
 
   #────────────────────────────── CLI-polish tests ──────────────────────────────
@@ -77,10 +83,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
       - run: pip install -e .[dev]
+
       - run: pytest -q tests/test_cli_observability.py
 
   #────────────────────────────── Build docs ──────────────────────────────
@@ -90,18 +99,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Устанавливаем Sphinx-deps
       - name: Install docs-deps
         run: pip install -e .[docs]
 
-      # Устанавливаем Node + mermaid-cli
       - uses: actions/setup-node@v3
         with:
           node-version: "18"
+
       - name: Install Mermaid-CLI
         run: npm install -g @mermaid-js/mermaid-cli
 
-      # Системные библиотеки для headless Chrome
       - name: Install Chrome deps
         run: |
           sudo apt-get update -qq
@@ -110,7 +117,6 @@ jobs:
             libxext6 libxfixes3 libxi6 libxrandr2 libxtst6 \
             libnss3 libatk1.0-0 libgtk-3-0 libpangocairo-1.0-0
 
-      # Конфиг для Puppeteer (--no-sandbox workaround)
       - name: Create puppeteer-config.json
         run: |
           mkdir -p docs
@@ -118,7 +124,6 @@ jobs:
           { "args": ["--no-sandbox", "--disable-setuid-sandbox"] }
           EOF
 
-      # Генерим диаграмму
       - name: Generate Mermaid diagrams
         run: |
           npx mmdc \
@@ -126,7 +131,6 @@ jobs:
             -i docs/architecture/key_lifecycle.mmd \
             -o docs/_static/key_lifecycle.svg
 
-      # Сборка HTML
       - name: Build HTML docs
         working-directory: docs
         run: make html
@@ -136,7 +140,11 @@ jobs:
     needs: [ quality, perf ]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -155,7 +163,6 @@ jobs:
           sudo apt-get install -y pandoc texlive-xetex
 
       - name: Prepare THREATS placeholder
-        # gen_whitepaper.py ищет docs/THREATS.md
         run: cp docs/THREATS.rst docs/THREATS.md
 
       - name: Generate Whitepaper
@@ -167,7 +174,7 @@ jobs:
           name: pq-wheels
           path: dist/*.whl
 
-  # Ниже ваш закомментированный шаг подписи — оставляем как есть
+  #─────────────────────────────────────────────────────────────────────────────────────────
   # sign:
   #   name: sign
   #   runs-on: ubuntu-latest
