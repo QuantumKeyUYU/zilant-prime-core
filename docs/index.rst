@@ -8,10 +8,7 @@ Welcome to the Zilant Prime Core documentation!
    :maxdepth: 2
    :caption: API Reference:
 
-   api/qal
-   api/pq_ring
-   api/qvpn
-   api/zkqp
+   api
 
 .. toctree::
    :maxdepth: 2
@@ -24,3 +21,10 @@ Welcome to the Zilant Prime Core documentation!
    ARCH
    ANONYMITY
    QUANTUM_SECURITY
+
+.. toctree::
+   :maxdepth: 2
+   :caption: How-To:
+
+   how-to/tor_proxy
+   how-to/ring_signatures

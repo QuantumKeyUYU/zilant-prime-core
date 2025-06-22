@@ -12,7 +12,7 @@ This file contains tasks from the "Сделай-ка, Codex!" package.
 | CI-2 | Nightly fuzz: Create `fuzz-nightly` job (Atheris) with cron `"0 3 * * *"`, publish artifact `atheris-report.html`. | Artifact available, workflow doesn't fail |
 | CI-3 | Codecov: In `tests-full` add step `codecov/codecov-action@v3`, enable PR comments. | Diff comment with coverage link visible |
 | CI-4 | SCA scan: Fix Trivy job skipping. Condition should be `if: github.event_name == 'pull_request'`. | Job runs on PR |
-| DOC-1 | Sphinx strict: In `docs/conf.py` set `nitpicky = True`, `nitpick_ignore = []`, and build with `-W`. | `make -C docs html` fails on warnings |
+| DOC-1 | Sphinx strict & API autodoc enabled. See [docs/conf.py](docs/conf.py) and [docs/api.rst](docs/api.rst). | ✅ |
 | DOC-2 | How-to: Add two MD guides in `docs/how-to/`:
  1. `tor_proxy.md` – running CLI traffic via Tor.
  2. `ring_signatures.md` – generate/verify PQ-ring signatures.
@@ -31,3 +31,4 @@ This file contains tasks from the "Сделай-ка, Codex!" package.
 - CI-2: nightly fuzz job uploads atheris-report.html artifacts
 - CI-3: Codecov uploads coverage and comments on PRs
 - CI-4: Trivy SCA scan runs on push and pull_request
+- DOC-1: API autodoc enabled and Sphinx strict mode

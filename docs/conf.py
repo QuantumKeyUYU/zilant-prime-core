@@ -38,6 +38,10 @@ autodoc_mock_imports = [
     "oqs",
     "boto3",
     "prometheus_client",
+    "qal",
+    "pq_ring",
+    "qvpn",
+    "zkqp",
 ]
 
 # Опции по умолчанию для autodoc
