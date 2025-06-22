@@ -28,9 +28,9 @@ jobs:
       - name: Run gitleaks scan
         run: >-
           gitleaks detect --source . --redact --exit-code=1 \
-            --report-format sarif --report-path gitleaks_sarif
+            --report-format sarif --report-path gitleaks.sarif
       - name: Upload gitleaks report
         uses: actions/upload-artifact@v4
         with:
           name: gitleaks-report
-          path: gitleaks_sarif
+          path: gitleaks.sarif

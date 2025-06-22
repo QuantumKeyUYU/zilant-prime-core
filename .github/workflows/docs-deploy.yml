@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: '16'
       - name: Install mermaid-cli
-        run: npm install -g @mermaid-js/mermaid-cli@9.3.2
+        run: npm install -g @mermaid-js/mermaid-cli@8.9.1
       - name: Install dependencies
         run: |
           pip install sphinx sphinx-rtd-theme
