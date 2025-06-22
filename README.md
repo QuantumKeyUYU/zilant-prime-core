@@ -293,6 +293,15 @@ zk = ZKQP(Path('/tmp/zk'))
 commit, proof = zk.prove(b'data')
 ```
 
+## Documentation
+
+To generate the HTML documentation run:
+
+```bash
+make -C docs html
+```
+The output will be available in `docs/_build/html/index.html`.
+
 ## TODO Stage III
 
 - GUI demonstration (PyQt/Web)

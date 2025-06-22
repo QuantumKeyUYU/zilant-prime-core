@@ -70,3 +70,14 @@ docs/.zilant_log
 ui/dist/
 sbom/*
 !sbom/.gitkeep
+
+# Reports
+bandit-report.txt
+grype-report.json
+ruff.log
+black.log
+isort.log
+pytest.log
+coverage_report.log
+pip.log
+
