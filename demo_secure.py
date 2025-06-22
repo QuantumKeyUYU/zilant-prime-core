@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
-# SPDX-License-Identifier: MIT 
+# SPDX-License-Identifier: MIT
 
 # demo_secure.py
 from zilant_prime_core.utils import get_secure_logger
