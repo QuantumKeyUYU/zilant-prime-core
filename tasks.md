@@ -27,3 +27,4 @@ This file contains tasks from the "Сделай-ка, Codex!" package.
 ## Completed
 - SEC-1: no workflow secrets echoed
 - SEC-2: no tempfile.mkdtemp usage
+- CI-1: unified matrix workflow running tests and linters
