@@ -1,0 +1,41 @@
+name: Nightly Atheris Fuzz
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dev dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Run Atheris fuzz tests
+        run: |
+          mkdir -p tests/fuzz/artifacts
+          PYTHONPATH=src python -m pytest tests/fuzz \
+            --maxfail=1 --disable-warnings --exitfirst \
+            --junitxml=tests/fuzz/artifacts/fuzz-${{ matrix.python-version }}.xml
+          pip install junit2html
+          junit2html tests/fuzz/artifacts/fuzz-${{ matrix.python-version }}.xml \
+            tests/fuzz/artifacts/atheris-report-${{ matrix.python-version }}.html
+
+      - name: Upload fuzz artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: atheris-report-${{ matrix.python-version }}
+          path: tests/fuzz/artifacts/atheris-report-${{ matrix.python-version }}.html

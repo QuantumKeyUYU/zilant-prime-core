@@ -93,7 +93,6 @@ jobs:
         if: always()
         run: |
           echo "ℹ️ Если требуется, здесь можно"
-          echo "::add-mask::${{ secrets.VAULT_TOKEN }}"
           echo "  curl --header \"X-Vault-Token: [REDACTED]\" \\"
-          echo "       --request POST ${{ secrets.VAULT_ADDR }}/v1/auth/token/revoke-self"
+          echo "       --request POST [REDACTED]/v1/auth/token/revoke-self"
           # Закомментировано, т.к. ревокировать старый токен можно вручную или отдельным шагом.

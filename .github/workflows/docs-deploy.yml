@@ -15,17 +15,15 @@ jobs:
         with:
           node-version: '16'
       - name: Install mermaid-cli
-        run: npm install -g @mermaid-js/mermaid-cli@10.4.0
+        run: npm install -g @mermaid-js/mermaid-cli@8.9.1
       - name: Install dependencies
         run: |
           pip install sphinx sphinx-rtd-theme
-      - name: Disable Chromium sandbox for Mermaid
-        run: echo "PUPPETEER_DISABLE_SANDBOX=true" >> $GITHUB_ENV
-      - name: Build docs
+      - name: Build docs (strict)
         run: |
           cd docs
           make mermaid
-          make html
+          make html SPHINXOPTS="-W"
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

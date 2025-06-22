@@ -62,3 +62,9 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "alabaster"
 html_static_path = ["_static"]
+
+# ─────────────────── строгий режим ───────────────────
+# падать на все неудалённые предупреждения
+nitpicky = True
+# никакие предупреждения не игнорируем
+nitpick_ignore = []

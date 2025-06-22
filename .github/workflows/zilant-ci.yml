@@ -38,6 +38,12 @@ jobs:
           time.sleep(0.2)
           assert urllib.request.urlopen('http://localhost:8000/metrics').status == 200
           PY
+
+      - name: Install gitleaks binary
+        run: |
+          GITLEAKS_VER=8.12.0
+          curl -sSL "https://github.com/zricethezav/gitleaks/releases/download/v${GITLEAKS_VER}/gitleaks_${GITLEAKS_VER}_linux_x64.tar.gz" \
+            | tar xz -C /usr/local/bin gitleaks
       - run: pre-commit run --all-files
       - run: ruff check .
       - run: black --check .

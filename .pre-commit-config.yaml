@@ -40,6 +40,16 @@ repos:
       - id: check-added-large-files
         name: Check for large files
 
+  # Gitleaks – обнаружение секретов
+  - repo: local
+    hooks:
+      - id: gitleaks
+        name: gitleaks (secrets scan)
+        entry: gitleaks detect --source .
+        language: system
+        pass_filenames: false
+        always_run: true
+
   # Mypy – статическая проверка типов (только для кода внутри пакета, не затрагиваем скрипты)
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.16.1
