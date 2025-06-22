@@ -1,2 +1,2 @@
-[allowlist]
-paths = ["cosign.key", "tests/test_cli_vault_key.py"]
+[[allowlist]]
+paths = ["tests/**", "docs/**"]
