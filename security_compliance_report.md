@@ -22,8 +22,6 @@ No blocked licenses.
 
 - src/audit_ledger.py:19 **low**: open() for writing
   - Ensure paths are validated
-- src/key_lifecycle.py:73 **low**: open() for writing
-  - Ensure paths are validated
 - src/streaming_aead.py:63 **low**: open() for writing
   - Ensure paths are validated
 - src/streaming_aead.py:87 **low**: open() for writing
@@ -32,6 +30,10 @@ No blocked licenses.
   - Ensure paths are validated
 - src/streaming_aead.py:168 **low**: open() for writing
   - Ensure paths are validated
+- src/key_lifecycle.py:73 **low**: open() for writing
+  - Ensure paths are validated
+- src/utils/file_utils.py:15 **low**: open() for writing
+  - Ensure paths are validated
 - src/zilant_prime_core/cli.py:325 **medium**: subprocess.run call
   - Validate input and avoid shell=True
 - src/zilant_prime_core/cli.py:487 **medium**: subprocess.run call
@@ -39,8 +41,6 @@ No blocked licenses.
 - src/zilant_prime_core/cli.py:35 **medium**: subprocess.run call
   - Validate input and avoid shell=True
 - src/zilant_prime_core/cli.py:232 **low**: open() for writing
-  - Ensure paths are validated
-- src/utils/file_utils.py:15 **low**: open() for writing
   - Ensure paths are validated
 - src/zilant_prime_core/utils/honeyfile.py:17 **low**: open() for writing
   - Ensure paths are validated
@@ -61,3 +61,4 @@ No blocked licenses.
 ## Supply chain – warning
 
 pip-audit not installed
+
