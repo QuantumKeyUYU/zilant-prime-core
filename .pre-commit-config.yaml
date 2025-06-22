@@ -3,7 +3,7 @@
 repos:
   # Black – автоформатирование кода
   - repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 25.1.0
     hooks:
       - id: black
         name: Black (format)
@@ -11,7 +11,7 @@ repos:
 
   # Ruff – линтинг (pre-commit поддерживается через отдельный репо)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.4
+    rev: v0.12.0
     hooks:
       - id: ruff
         name: Ruff (lint)
@@ -29,7 +29,7 @@ repos:
 
   # Проверка YAML, удаление лишних пробелов, финальная пустая строка
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v5.0.0
     hooks:
       - id: check-yaml
         name: YAML syntax check
@@ -42,7 +42,7 @@ repos:
 
   # Mypy – статическая проверка типов (только для кода внутри пакета, не затрагиваем скрипты)
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.991
+    rev: v1.16.1
     hooks:
       - id: mypy
         name: mypy (type check)

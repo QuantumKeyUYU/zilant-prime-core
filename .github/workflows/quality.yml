@@ -24,22 +24,22 @@ jobs:
       - name: Pre-commit
         run: pre-commit run --all-files
 
-      - name: Ruff
+      - name: Ruff (lint)
         run: ruff check .
 
-      - name: Black
+      - name: Black (format check)
         run: black --check .
 
-      - name: isort
+      - name: isort (imports)
         run: isort --check-only .
 
-      - name: Bandit
+      - name: Bandit (SAST)
         run: bandit -r src -ll
 
       - name: Semgrep (SAST)
         run: semgrep ci
 
-      - name: Mypy
+      - name: Mypy (type checks)
         run: mypy --config-file mypy.ini src
 
       - name: Pytest
@@ -52,8 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
+        with: { python-version: "3.13" }
       - run: pip install -e .[dev]
       - run: SKIP_FUZZ=1 ZILANT_ALLOW_ROOT=1 pytest -q -m perf --disable-warnings --maxfail=1
 
@@ -65,8 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
+        with: { python-version: "3.13" }
       - run: pip install -e .[dev]
       - run: pytest -q tests/test_stream_large.py tests/test_stream_resume.py
 
@@ -77,8 +75,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
+        with: { python-version: "3.13" }
       - run: pip install -e .[dev]
       - run: pytest -q tests/test_cli_observability.py
 
@@ -89,35 +86,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1) Python‐зависимости для Sphinx/Makefile
       - name: Install docs-deps
         run: pip install -e .[docs]
 
-      # 2) Node + mermaid-cli
       - uses: actions/setup-node@v3
-        with:
-          node-version: "18"
+        with: { node-version: "18" }
+
       - name: Install Mermaid-CLI
         run: npm install -g @mermaid-js/mermaid-cli
 
-      # 3) Chrome deps для Puppeteer
       - name: Install Chrome system deps
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y \
-            libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 \
-            libxfixes3 libxi6 libxrandr2 libxtst6 libnss3 libatk1.0-0 \
-            libgtk-3-0 libpangocairo-1.0-0
+            libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 \
+            libxext6 libxfixes3 libxi6 libxrandr2 libxtst6 \
+            libnss3 libatk1.0-0 libgtk-3-0 libpangocairo-1.0-0
 
-      # 4) Генерация диаграмм с --no-sandbox
       - name: Generate Mermaid diagrams
+        # передаём Chrome-флаги через puppeteer-args
         run: |
-          npx @mermaid-js/mermaid-cli --no-sandbox \
+          npx @mermaid-js/mermaid-cli \
+            --puppeteer-args="--no-sandbox --disable-setuid-sandbox" \
             -i docs/architecture/key_lifecycle.mmd \
             -o docs/_static/key_lifecycle.svg
 
-      # 5) Сборка HTML-документации
-      - name: Build docs
+      - name: Build HTML docs
         working-directory: docs
         run: make html
 
@@ -127,9 +121,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
+        with: { python-version: "3.13" }
 
       - name: Install build deps
         run: pip install -e .[dev] build pyyaml
@@ -137,9 +131,17 @@ jobs:
       - name: Build wheels
         run: python tools/build_pq_wheels.py
 
-      - uses: actions/upload-artifact@v4
+      - name: Prepare threats for Whitepaper
+        # gen_whitepaper.py ждёт docs/THREATS.md, у вас THREATS.rst → копируем
+        run: cp docs/THREATS.rst docs/THREATS.md
+
+      - name: Generate Whitepaper
+        run: python tools/gen_whitepaper.py
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
         with:
           name: wheels
           path: dist/*.whl
 
-      # — далее шаги по Whitepaper и ISO SoA (как у тебя были) —
+      # … здесь остались ваши шаги по ISO/SoA, если нужны …
