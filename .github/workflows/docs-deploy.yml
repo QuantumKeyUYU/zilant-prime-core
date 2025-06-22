@@ -19,11 +19,11 @@ jobs:
       - name: Install dependencies
         run: |
           pip install sphinx sphinx-rtd-theme
-      - name: Build docs
+      - name: Build docs (strict)
         run: |
           cd docs
           make mermaid
-          make html
+          make html SPHINXOPTS="-W"
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

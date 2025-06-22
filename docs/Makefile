@@ -28,7 +28,8 @@ mermaid: $(DIAGRAM_OUT)
 
 # ----------------------- Sphinx build ------------------------------
 html: mermaid
-	$(SPHINXBUILD) -M html $(SOURCEDIR) $(BUILDDIR) $(SPHINXOPTS)
+	# -W: treat warnings as errors
+	$(SPHINXBUILD) -M html $(SOURCEDIR) $(BUILDDIR) "-W $(SPHINXOPTS)"
 
 clean:
 	rm -rf $(BUILDDIR) $(DIAGRAM_OUT)

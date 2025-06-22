@@ -17,8 +17,8 @@ jobs:
       - name: Install mermaid-cli
         run: npm install -g @mermaid-js/mermaid-cli@8.9.1
       - run: pip install -e .[docs]
-      - name: Build docs
-        run: make docs
+      - name: Build docs (strict)
+        run: make html SPHINXOPTS="-W"
       - name: Verify docs files
         run: |
           test -f SECURITY.md
