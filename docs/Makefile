@@ -7,7 +7,7 @@ SPHINXOPTS    ?=
 SOURCEDIR     ?= .
 BUILDDIR      ?= _build
 
-MERMAID       ?= npx -y @mermaid-js/mermaid-cli
+MERMAID       ?= npx -y @mermaid-js/mermaid-cli@8.9.1
 MERMAID_OPTS  ?= --no-sandbox
 DIAGRAM_SRC    = architecture/key_lifecycle.mmd
 DIAGRAM_OUT    = _static/key_lifecycle.svg
