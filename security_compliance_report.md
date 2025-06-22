@@ -20,6 +20,10 @@ No blocked licenses.
 
 # Python security report
 
+- src/audit_ledger.py:19 **low**: open() for writing
+  - Ensure paths are validated
+- src/key_lifecycle.py:73 **low**: open() for writing
+  - Ensure paths are validated
 - src/streaming_aead.py:63 **low**: open() for writing
   - Ensure paths are validated
 - src/streaming_aead.py:87 **low**: open() for writing
@@ -27,12 +31,6 @@ No blocked licenses.
 - src/streaming_aead.py:130 **low**: open() for writing
   - Ensure paths are validated
 - src/streaming_aead.py:168 **low**: open() for writing
-  - Ensure paths are validated
-- src/audit_ledger.py:19 **low**: open() for writing
-  - Ensure paths are validated
-- src/key_lifecycle.py:73 **low**: open() for writing
-  - Ensure paths are validated
-- src/utils/file_utils.py:15 **low**: open() for writing
   - Ensure paths are validated
 - src/zilant_prime_core/cli.py:325 **medium**: subprocess.run call
   - Validate input and avoid shell=True
@@ -42,11 +40,13 @@ No blocked licenses.
   - Validate input and avoid shell=True
 - src/zilant_prime_core/cli.py:232 **low**: open() for writing
   - Ensure paths are validated
+- src/utils/file_utils.py:15 **low**: open() for writing
+  - Ensure paths are validated
+- src/zilant_prime_core/utils/honeyfile.py:17 **low**: open() for writing
+  - Ensure paths are validated
 - src/zilant_prime_core/utils/secure_logging.py:44 **low**: open() for writing
   - Ensure paths are validated
 - src/zilant_prime_core/utils/secure_logging.py:77 **low**: open() for writing
-  - Ensure paths are validated
-- src/zilant_prime_core/utils/honeyfile.py:17 **low**: open() for writing
   - Ensure paths are validated
 
 
@@ -54,11 +54,10 @@ No blocked licenses.
 
 # TODO/FIXME report
 
-- tools/gen_cli_docs.py:80 `suggestion = lines[i].rstrip() + "  # TODO add help"`
 - tools/todo_report.py:36 `fh.write("# TODO/FIXME report\n\n")`
+- tools/gen_cli_docs.py:80 `suggestion = lines[i].rstrip() + "  # TODO add help"`
 
 
 ## Supply chain – warning
 
 pip-audit not installed
-
