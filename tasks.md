@@ -28,3 +28,6 @@ This file contains tasks from the "Сделай-ка, Codex!" package.
 - SEC-1: no workflow secrets echoed
 - SEC-2: no tempfile.mkdtemp usage
 - CI-1: unified matrix workflow running tests and linters
+- CI-2: nightly fuzz job uploads atheris-report.html artifacts
+- CI-3: Codecov uploads coverage and comments on PRs
+- CI-4: Trivy SCA scan runs on push and pull_request

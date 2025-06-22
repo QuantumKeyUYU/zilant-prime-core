@@ -30,9 +30,12 @@ jobs:
           PYTHONPATH=src python -m pytest tests/fuzz \
             --maxfail=1 --disable-warnings --exitfirst \
             --junitxml=tests/fuzz/artifacts/fuzz-${{ matrix.python-version }}.xml
+          pip install junit2html
+          junit2html tests/fuzz/artifacts/fuzz-${{ matrix.python-version }}.xml \
+            tests/fuzz/artifacts/atheris-report-${{ matrix.python-version }}.html
 
       - name: Upload fuzz artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: fuzz-artifacts-${{ matrix.python-version }}
-          path: tests/fuzz/artifacts/
+          name: atheris-report-${{ matrix.python-version }}
+          path: tests/fuzz/artifacts/atheris-report-${{ matrix.python-version }}.html
