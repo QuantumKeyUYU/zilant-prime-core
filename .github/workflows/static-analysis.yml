@@ -27,3 +27,5 @@ jobs:
             ./.semgrep/custom
           generateSarif: true
           publishSarif: true
+          comment: true
+          autofix: true
