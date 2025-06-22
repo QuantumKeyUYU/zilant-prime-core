@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import subprocess
 import sys
-from pathlib import Path
-
 import yaml
+from pathlib import Path
 
 POLICY = Path(".github/policies/policy.yaml")
 REPORT = Path("policy_report.md")

@@ -35,3 +35,9 @@
 - Introduced integration tests for packing and unpacking files.
 ## 0.7.2 - 2025-06-07
 - Maintenance updates.
+
+## 0.8.0 - 2025-06-22
+- Add unified security compliance suite and workflow.
+- Enable automated crypto threat model generation.
+- Introduce policy enforcement validator with auto-fix helper.
+- Document new CI badges in README.

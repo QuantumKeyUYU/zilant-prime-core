@@ -2,9 +2,8 @@
 """Generate simple policy auto-fix suggestions."""
 from __future__ import annotations
 
-from pathlib import Path
-
 import yaml
+from pathlib import Path
 
 POLICY = Path(".github/policies/policy.yaml")
 FIX = Path("policy_autofix.md")
