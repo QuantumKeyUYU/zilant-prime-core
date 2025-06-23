@@ -79,6 +79,7 @@ dev = [
   "atheris>=2.1; python_version < '3.12'",
   "pyinstaller>=6.0",
   "types-PyYAML>=6.0",
+  "types-tabulate",
   "PyYAML>=6.0,<7.0",
   "zstandard>=0.23.0",
   "tqdm>=4.66.0",

@@ -39,10 +39,17 @@ jobs:
         run: python -m build -w -o dist/
 
       # 4) Генерируем диаграмму с флагами для отключения sandbox
+      - name: Create puppeteer-config.json
+        run: |
+          mkdir -p docs
+          cat > docs/puppeteer-config.json <<'EOF'
+          { "args": ["--no-sandbox", "--disable-setuid-sandbox"] }
+          EOF
+
       - name: Generate Mermaid diagram
         run: |
-          npx @mermaid-js/mermaid-cli \
-            --puppeteer-args="--no-sandbox --disable-setuid-sandbox" \
+          npx mmdc \
+            -p docs/puppeteer-config.json \
             -i docs/architecture/key_lifecycle.mmd \
             -o docs/_static/key_lifecycle.svg
 
