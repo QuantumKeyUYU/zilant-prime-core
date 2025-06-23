@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
-import json
 import time
-from pathlib import Path
 from click.testing import CliRunner
+from pathlib import Path
 
 from zilant_prime_core.cli import cli
 from zilant_prime_core.utils.decoy import generate_decoy_files, sweep_expired_decoys

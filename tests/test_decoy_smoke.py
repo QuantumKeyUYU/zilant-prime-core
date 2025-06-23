@@ -2,13 +2,13 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 from __future__ import annotations
 
+import pytest
 import time
+from click.testing import CliRunner
+from cryptography.exceptions import InvalidTag
 from threading import Thread
 
-import pytest
-from click.testing import CliRunner
-
-from container import pack_file, get_metadata, unpack_file
+from container import get_metadata, pack_file, unpack_file
 from zilant_prime_core.cli import cli
 from zilant_prime_core.utils.decoy import generate_decoy_files
 
@@ -29,7 +29,7 @@ def test_decoy_and_real_indistinguishable(tmp_path, monkeypatch):
     base_msg = None
     for idx, p in enumerate(real + decoys):
         assert set(get_metadata(p).keys()) == base_keys
-        with pytest.raises(Exception) as exc:
+        with pytest.raises(InvalidTag) as exc:
             unpack_file(p, tmp_path / f"out_{idx}", b"b" * 32)
         msg = str(exc.value)
         if base_msg is None:

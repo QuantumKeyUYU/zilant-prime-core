@@ -6,13 +6,13 @@ from __future__ import annotations
 
 import os
 import secrets
+import threading
+import time
 from pathlib import Path
 from typing import Dict, List
 
-from container import pack_file
 from audit_ledger import record_decoy_purged, record_decoy_removed_early
-import threading
-import time
+from container import pack_file
 
 __all__ = ["generate_decoy_files", "sweep_expired_decoys"]
 
@@ -52,10 +52,11 @@ def generate_decoy_files(
             _DECOY_EXPIRY[out] = time.time() + expire_seconds
 
     if expire_seconds:
+
         def _cleanup() -> None:
             time.sleep(expire_seconds)
             for p in paths:
-                exp = _DECOY_EXPIRY.pop(p, None)
+                _DECOY_EXPIRY.pop(p, None)
                 if p.exists():
                     try:
                         p.unlink()

@@ -2,10 +2,9 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 from click.testing import CliRunner
-from pathlib import Path
 
-from zilant_prime_core.cli import cli
 from container import pack_file
+from zilant_prime_core.cli import cli
 
 
 def test_cli_pack_decoy(tmp_path, monkeypatch):

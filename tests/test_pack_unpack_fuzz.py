@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
-from hypothesis import given, strategies as st, settings, HealthCheck
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
+
 from container import pack_file, unpack_file
-from pathlib import Path
 
 
 @settings(suppress_health_check=(HealthCheck.function_scoped_fixture,))

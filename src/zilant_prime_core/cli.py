@@ -239,7 +239,9 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
     try:
         start = time.perf_counter()
         with metrics.track("pack"):
-            extras = {"owner": "anonymous", "timestamp": "1970-01-01T00:00:00Z", "origin": "N/A"} if fake_metadata else None
+            extras = (
+                {"owner": "anonymous", "timestamp": "1970-01-01T00:00:00Z", "origin": "N/A"} if fake_metadata else None
+            )
             if pq_pub or fake_metadata:
                 pack_file(
                     source,
@@ -272,8 +274,8 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
     metrics.files_processed_total.inc()
     _emit(ctx, {"path": str(dest)})
     if decoy > 0:
-        from zilant_prime_core.utils.decoy import generate_decoy_files
         from audit_ledger import record_action
+        from zilant_prime_core.utils.decoy import generate_decoy_files
 
         files = generate_decoy_files(dest.parent, decoy, expire_seconds=decoy_expire or None)
         record_action("decoy_created", {"count": decoy, "files": [f.name for f in files]})
@@ -327,15 +329,17 @@ def cmd_unpack(
         _abort("Destination path already exists")
     except Exception as exc:
         if honeypot_test:
-            from zilant_prime_core.utils.decoy import generate_decoy_files
             from audit_ledger import record_decoy_event
+            from zilant_prime_core.utils.decoy import generate_decoy_files
 
             decoy_file = generate_decoy_files(out_dir, 1, expire_seconds=decoy_expire or None)[0]
             record_decoy_event({"honeypot": str(decoy_file)})
             click.echo(str(decoy_file))
             return
         _abort(
-            "Container too small" if isinstance(exc, ValueError) and "too small" in str(exc).lower() else f"Unpack error: {exc}"
+            "Container too small"
+            if isinstance(exc, ValueError) and "too small" in str(exc).lower()
+            else f"Unpack error: {exc}"
         )
 
     try:
@@ -549,6 +553,7 @@ def cmd_verify_integrity(container: Path) -> None:
 @click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 def cmd_show_metadata(container: Path) -> None:
     from container import get_metadata
+
     click.echo(json.dumps(get_metadata(container)))
 
 

@@ -2,14 +2,15 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 from __future__ import annotations
-from pathlib import Path
-import secrets
-from threading import Thread
 
 import pytest
+import secrets
 from click.testing import CliRunner
+from cryptography.exceptions import InvalidTag
+from pathlib import Path
+from threading import Thread
 
-from container import get_metadata, unpack_file, get_open_attempts
+from container import get_metadata, get_open_attempts, unpack_file
 from zilant_prime_core.cli import cli
 
 
@@ -39,11 +40,11 @@ def test_decoy_wrong_key_and_truncate(tmp_path):
     from zilant_prime_core.utils.decoy import generate_decoy_files
 
     decoy = generate_decoy_files(tmp_path, 1)[0]
-    with pytest.raises(Exception):
+    with pytest.raises(InvalidTag):
         unpack_file(decoy, tmp_path / "out", b"y" * 32)
     truncated = decoy.read_bytes()[:-5]
     decoy.write_bytes(truncated)
-    with pytest.raises(Exception):
+    with pytest.raises(InvalidTag):
         unpack_file(decoy, tmp_path / "out2", b"y" * 32)
 
 
@@ -53,7 +54,7 @@ def test_decoy_parallel_attempts(tmp_path):
     decoy = generate_decoy_files(tmp_path, 1)[0]
 
     def _try_unpack():
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidTag):
             unpack_file(decoy, tmp_path / Path(f"o_{secrets.token_hex(2)}"), b"k" * 32)
 
     threads = [Thread(target=_try_unpack) for _ in range(5)]

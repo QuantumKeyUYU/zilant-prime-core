@@ -3,8 +3,8 @@
 
 from click.testing import CliRunner
 
-from zilant_prime_core.cli import cli
 from container import pack_file
+from zilant_prime_core.cli import cli
 
 
 def test_honeypot_mode(tmp_path, monkeypatch):
@@ -25,12 +25,10 @@ def test_honeypot_mode(tmp_path, monkeypatch):
             "--honeypot-test",
             "--pq-sk",
             str(sk),
-        ]
+        ],
     )
     assert result.exit_code == 0
     decoys = list(tmp_path.glob("decoy_*.zil"))
     assert decoys
     ledger = (tmp_path / "audit-ledger.jsonl").read_text().strip().splitlines()
     assert any("decoy_event" in line for line in ledger)
-
-
