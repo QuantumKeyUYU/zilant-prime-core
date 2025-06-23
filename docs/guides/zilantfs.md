@@ -47,3 +47,27 @@ tmutil startbackup --destination /Volumes/Secure
 
 - Containers are integrity checked on mount. On failure the filesystem is mounted read‑only and a warning is logged.
 - Decoy mode (`--decoy-profile minimal`) exposes fake files without touching the real container.
+
+## Snapshots
+
+Create a new snapshot:
+
+```bash
+zilant snapshot data.zil --label v1 --password mypwd
+```
+
+Show diff between two snapshots:
+
+```bash
+zilant diff data_v1.zil data_v2.zil --password mypwd
+```
+
+## Remote mount and tray
+
+Mount container via SSH:
+
+```bash
+zilant mount data.zil mnt --remote user@host:/remote/data.zil -p mypwd
+```
+
+The `zilant tray` command launches a small system tray helper showing active mounts.

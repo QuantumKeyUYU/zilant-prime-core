@@ -269,11 +269,19 @@ rsync -av mnt/ backup/
 zilant umount mnt
 ```
 
+![Demo](docs/assets/zilfs_demo.gif)
+
 Use a decoy profile:
 
 ```bash
 zilant mount secret.zil mnt -p mypwd --decoy-profile minimal
 ```
+
+| Feature | ZilantFS | VeraCrypt | CryFS |
+|---------|---------|-----------|-------|
+| Snapshots | ✅ | ❌ | ✅ |
+| Decoy / honeypot | ✅ | ❌ | ❌ |
+| PQ-crypto | ✅ | ❌ | ❌ |
 
 ## Development
 

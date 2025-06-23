@@ -53,7 +53,12 @@ from zilant_prime_core.utils.device_fp import SALT_CONST, collect_hw_factors, co
 from zilant_prime_core.utils.pq_crypto import Dilithium2Signature, Kyber768KEM
 from zilant_prime_core.utils.recovery import DESTRUCTION_KEY_BUFFER, self_destruct
 from zilant_prime_core.utils.screen_guard import ScreenGuardError, guard
-from zilant_prime_core.zilfs import mount_fs, umount_fs
+from zilant_prime_core.zilfs import (
+    diff_snapshots,
+    mount_fs,
+    snapshot_container,
+    umount_fs,
+)
 
 
 # ────────────────────────── helpers ──────────────────────────
@@ -432,11 +437,27 @@ def cmd_gen_sig_keys(out_pk: Path, out_sk: Path) -> None:
 @click.argument("mountpoint", type=click.Path(file_okay=False, path_type=Path))
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
 @click.option("--decoy-profile", type=str, help="Mount predefined decoy profile")
-def cmd_mount(container: Path, mountpoint: Path, password: str | None, decoy_profile: str | None) -> None:
+@click.option("--remote", type=str, help="Remote path user@host:/path/container")
+@click.option("--force", is_flag=True, help="Ignore anti-rollback check")
+def cmd_mount(
+    container: Path,
+    mountpoint: Path,
+    password: str | None,
+    decoy_profile: str | None,
+    remote: str | None,
+    force: bool,
+) -> None:
     """Mount CONTAINER at MOUNTPOINT via FUSE."""
     pwd = _ask_pwd() if password == "-" else password or _ask_pwd()
     try:
-        mount_fs(container, mountpoint, pwd, decoy_profile=decoy_profile)
+        mount_fs(
+            container,
+            mountpoint,
+            pwd,
+            decoy_profile=decoy_profile,
+            remote=remote,
+            force=force,
+        )
     except Exception as exc:  # pragma: no cover - runtime errors
         click.echo(f"Mount error: {exc}", err=True)
         raise click.Abort()
@@ -462,6 +483,35 @@ def cmd_bench(bench_fs: bool) -> None:
 
         mb_s = run()
         click.echo(f"{mb_s:.2f} MB/s")
+
+
+@cli.command("snapshot")
+@click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--label", required=True, type=str)
+@click.password_option("--password", prompt=True, confirmation_prompt=False)
+def cmd_snapshot(container: Path, label: str, password: str) -> None:
+    """Create snapshot of container."""
+    out = snapshot_container(container, password.encode(), label)
+    click.echo(str(out))
+
+
+@cli.command("diff")
+@click.argument("snap_a", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument("snap_b", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.password_option("--password", prompt=True, confirmation_prompt=False)
+def cmd_diff(snap_a: Path, snap_b: Path, password: str) -> None:
+    """Show diff between snapshots."""
+    diff = diff_snapshots(snap_a, snap_b, password.encode())
+    for name, pair in diff.items():
+        click.echo(f"{name}: {pair[0]} -> {pair[1]}")
+
+
+@cli.command("tray")
+def cmd_tray() -> None:
+    """Launch system tray helper."""
+    from zilant_prime_core.tray import run_tray
+
+    run_tray()
 
 
 # ───────── secure register / login (Argon2id) ─────────

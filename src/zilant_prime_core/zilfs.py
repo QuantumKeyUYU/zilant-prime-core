@@ -4,9 +4,11 @@ import errno
 import os
 import subprocess
 import tarfile
+import time
+import hashlib
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 try:  # pragma: no cover - optional dependency may be missing
     from fuse import FUSE, FuseOSError, Operations  # type: ignore
@@ -19,7 +21,7 @@ except Exception:  # pragma: no cover - optional dependency may be missing
 
     Operations = _Operations
 
-from container import pack_file, unpack_file
+from container import get_metadata, pack_file, unpack_file
 from utils.logging import get_logger
 
 
@@ -46,15 +48,79 @@ def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
             tar.extractall(dest)
 
 
+def _rewrite_metadata(container: Path, extra: dict[str, Any], key: bytes) -> None:
+    """Rewrite header of *container* with updated ``extra`` metadata."""
+    with TemporaryDirectory() as tmp:
+        plain = Path(tmp) / "plain"
+        unpack_file(container, plain, key)
+        pack_file(plain, container, key, extra_meta=extra)
+
+
+def snapshot_container(container: Path, key: bytes, label: str) -> Path:
+    """Create a new snapshot of CONTAINER labeled LABEL."""
+    base_meta = get_metadata(container)
+    snapshots = cast(Dict[str, str], base_meta.get("snapshots", {}))
+    with TemporaryDirectory() as tmp:
+        tmp_dir = Path(tmp)
+        unpack_dir(container, tmp_dir, key)
+        out = container.with_name(f"{container.stem}_{label}{container.suffix}")
+        extra = {
+            "label": label,
+            "latest_snapshot_id": label,
+            "snapshots": {**snapshots, label: str(int(time.time()))},
+        }
+        pack_dir(tmp_dir, out, key)
+        _rewrite_metadata(out, extra, key)
+
+    # update base container anti-rollback token
+    update = {
+        "latest_snapshot_id": label,
+        "snapshots": {**snapshots, label: str(int(time.time()))},
+    }
+    _rewrite_metadata(container, update, key)
+    return out
+
+
+def diff_snapshots(path_a: Path, path_b: Path, key: bytes) -> dict[str, tuple[str, str]]:
+    """Return hash differences between two snapshot containers."""
+
+    def _hash_tree(base: Path) -> dict[str, str]:
+        res: dict[str, str] = {}
+        for p in sorted(base.rglob("*")):
+            if p.is_file():
+                res[str(p.relative_to(base))] = hashlib.sha256(p.read_bytes()).hexdigest()
+        return res
+
+    with TemporaryDirectory() as tmp1, TemporaryDirectory() as tmp2:
+        d1 = Path(tmp1)
+        d2 = Path(tmp2)
+        unpack_dir(path_a, d1, key)
+        unpack_dir(path_b, d2, key)
+        h1 = _hash_tree(d1)
+        h2 = _hash_tree(d2)
+
+    out: dict[str, tuple[str, str]] = {}
+    for name in sorted(set(h1) | set(h2)):
+        if h1.get(name) != h2.get(name):
+            out[name] = (h1.get(name, ""), h2.get(name, ""))
+    return out
+
+
 class ZilantFS(Operations):
     """Simple FUSE filesystem exposing a directory tree."""
 
-    def __init__(self, container: Path, password: bytes, *, decoy_profile: str | None = None) -> None:
+    def __init__(
+        self, container: Path, password: bytes, *, decoy_profile: str | None = None, force: bool = False
+    ) -> None:
         self.container = Path(container)
         self.password = password
         self.ro = False
         self._tmp = TemporaryDirectory()
         self.root = Path(self._tmp.name)
+        meta = get_metadata(self.container) if self.container.exists() else {}
+        if not force and meta.get("latest_snapshot_id") and meta.get("label") != meta["latest_snapshot_id"]:
+            raise RuntimeError("rollback detected: mount with --force")
+
         if decoy_profile:
             self.ro = True
             self._populate_decoy(decoy_profile)
@@ -83,6 +149,16 @@ class ZilantFS(Operations):
     def destroy(self, path: str) -> None:  # pragma: no cover - called on unmount
         if not self.ro:
             pack_dir(self.root, self.container, self.password)
+        if os.environ.get("ZILANT_SHRED") == "1":
+            for p in self.root.rglob("*"):
+                if p.is_file():
+                    try:
+                        if os.name == "nt":
+                            subprocess.run(["sdelete", "-q", str(p)], check=True)
+                        else:
+                            subprocess.run(["shred", "-uz", str(p)], check=True)
+                    except Exception as exc:  # pragma: no cover - best effort
+                        logger.warning("shred_failed:%s", exc)
         self._tmp.cleanup()
 
     def getattr(self, path: str, fh: int | None = None) -> dict[str, Any]:
@@ -151,14 +227,29 @@ class ZilantFS(Operations):
 
 
 def mount_fs(
-    container: Path, mountpoint: Path, password: str, *, foreground: bool = True, decoy_profile: str | None = None
+    container: Path,
+    mountpoint: Path,
+    password: str,
+    *,
+    foreground: bool = True,
+    decoy_profile: str | None = None,
+    remote: str | None = None,
+    force: bool = False,
 ) -> None:
     """Mount CONTAINER on MOUNTPOINT."""
     if FUSE is None:
         raise RuntimeError("fusepy is not installed")
     mountpoint.mkdir(parents=True, exist_ok=True)
-    fs = ZilantFS(container, password.encode(), decoy_profile=decoy_profile)
+    remote_mp: Path | None = None
+    if remote:
+        remote_mp = mountpoint / ".remote"
+        remote_mp.mkdir(exist_ok=True)
+        subprocess.run(["sshfs", remote, str(remote_mp)], check=True)
+        container = remote_mp / Path(remote).name
+    fs = ZilantFS(container, password.encode(), decoy_profile=decoy_profile, force=force)
     FUSE(fs, str(mountpoint), foreground=foreground)
+    if remote_mp:
+        umount_fs(remote_mp)
 
 
 def umount_fs(mountpoint: Path) -> None:

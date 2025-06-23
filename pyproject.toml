@@ -122,6 +122,9 @@ zilfs = [
   "fusepy; sys_platform != 'win32'",
   "pywinfspy; sys_platform == 'win32'",
 ]
+tray = [
+  "PySide6",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
