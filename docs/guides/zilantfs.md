@@ -71,3 +71,11 @@ zilant mount data.zil mnt --remote user@host:/remote/data.zil -p mypwd
 ```
 
 The `zilant tray` command launches a small system tray helper showing active mounts.
+
+The adaptive decoy profile generates random fake files:
+
+```bash
+zilant mount data.zil mnt --decoy-profile adaptive -p mypwd
+```
+
+Large directories can be packed in streaming mode (set `ZILANT_STREAM=1`).

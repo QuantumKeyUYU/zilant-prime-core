@@ -6,6 +6,7 @@ import subprocess
 import tarfile
 import time
 import hashlib
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, cast
@@ -22,12 +23,16 @@ except Exception:  # pragma: no cover - optional dependency may be missing
     Operations = _Operations
 
 from container import get_metadata, pack_file, unpack_file
+from streaming_aead import pack_stream, unpack_stream
+
 from utils.logging import get_logger
 
 
 logger = get_logger("zilfs")
 
 _DECOY_PROFILES: Dict[str, Dict[str, str]] = {"minimal": {"dummy.txt": "lorem ipsum", "pics/kitten.jpg": "PLACEHOLDER"}}
+
+ACTIVE_FS: list["ZilantFS"] = []
 
 
 def pack_dir(src: Path, dest: Path, key: bytes) -> None:
@@ -39,13 +44,41 @@ def pack_dir(src: Path, dest: Path, key: bytes) -> None:
         pack_file(tar_path, dest, key)
 
 
+def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
+    """Pack directory using a streaming TAR writer."""
+    with TemporaryDirectory() as tmp:
+        fifo = Path(tmp) / "pipe"
+        os.mkfifo(fifo)
+        proc = subprocess.Popen(["tar", "-C", str(src), "-cf", str(fifo), "."])
+        pack_stream(fifo, dest, key)
+        proc.wait()
+
+
 def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
     """Unpack encrypted container *container* into directory *dest*."""
-    with TemporaryDirectory() as tmp:
-        tar_path = Path(tmp) / "data.tar"
-        unpack_file(container, tar_path, key)
-        with tarfile.open(tar_path, "r") as tar:
-            tar.extractall(dest)
+    with open(container, "rb") as fh:
+        header = bytearray()
+        while not header.endswith(b"\n\n") and len(header) < 1024:
+            b = fh.read(1)
+            if not b:
+                break
+            header.extend(b)
+        try:
+            meta = json.loads(header[:-2].decode("utf-8"))
+        except Exception:
+            meta = {}
+    if meta.get("magic") == "ZSTR":
+        with TemporaryDirectory() as tmp:
+            tar_path = Path(tmp) / "data.tar"
+            unpack_stream(container, tar_path, key)
+            with tarfile.open(tar_path, "r") as tar:
+                tar.extractall(dest)
+    else:
+        with TemporaryDirectory() as tmp:
+            tar_path = Path(tmp) / "data.tar"
+            unpack_file(container, tar_path, key)
+            with tarfile.open(tar_path, "r") as tar:
+                tar.extractall(dest)
 
 
 def _rewrite_metadata(container: Path, extra: dict[str, Any], key: bytes) -> None:
@@ -115,6 +148,8 @@ class ZilantFS(Operations):
         self.container = Path(container)
         self.password = password
         self.ro = False
+        self._bytes_rw = 0
+        self._start = time.time()
         self._tmp = TemporaryDirectory()
         self.root = Path(self._tmp.name)
         meta = get_metadata(self.container) if self.container.exists() else {}
@@ -136,6 +171,7 @@ class ZilantFS(Operations):
                     pass
         else:
             self.root.mkdir(parents=True, exist_ok=True)
+        ACTIVE_FS.append(self)
 
     # ------------------------- helpers -------------------------
     def _full_path(self, path: str) -> str:
@@ -145,10 +181,21 @@ class ZilantFS(Operations):
         if self.ro:
             raise FuseOSError(errno.EACCES)
 
+    def throughput_mb_s(self) -> float:
+        """Return throughput since last call in MB/s."""
+        dur = max(time.time() - self._start, 0.001)
+        mb = self._bytes_rw / (1024 * 1024)
+        self._bytes_rw = 0
+        self._start = time.time()
+        return mb / dur
+
     # ------------------------- FUSE API -------------------------
     def destroy(self, path: str) -> None:  # pragma: no cover - called on unmount
         if not self.ro:
-            pack_dir(self.root, self.container, self.password)
+            if os.environ.get("ZILANT_STREAM", "0") != "0":
+                pack_dir_stream(self.root, self.container, self.password)
+            else:
+                pack_dir(self.root, self.container, self.password)
         if os.environ.get("ZILANT_SHRED") == "1":
             for p in self.root.rglob("*"):
                 if p.is_file():
@@ -160,6 +207,8 @@ class ZilantFS(Operations):
                     except Exception as exc:  # pragma: no cover - best effort
                         logger.warning("shred_failed:%s", exc)
         self._tmp.cleanup()
+        if self in ACTIVE_FS:
+            ACTIVE_FS.remove(self)
 
     def getattr(self, path: str, fh: int | None = None) -> dict[str, Any]:
         st = os.lstat(self._full_path(path))
@@ -181,12 +230,16 @@ class ZilantFS(Operations):
 
     def read(self, path: str, size: int, offset: int, fh: int) -> bytes:
         os.lseek(fh, offset, os.SEEK_SET)
-        return os.read(fh, size)
+        data = os.read(fh, size)
+        self._bytes_rw += len(data)
+        return data
 
     def write(self, path: str, data: bytes, offset: int, fh: int) -> int:
         self._check_rw()
         os.lseek(fh, offset, os.SEEK_SET)
-        return os.write(fh, data)
+        n = os.write(fh, data)
+        self._bytes_rw += n
+        return n
 
     def truncate(self, path: str, length: int) -> None:
         self._check_rw()
@@ -217,9 +270,14 @@ class ZilantFS(Operations):
 
     # ----------------------- decoy helpers -----------------------
     def _populate_decoy(self, profile: str) -> None:
-        data = _DECOY_PROFILES.get(profile)
-        if data is None:
-            raise ValueError(f"Unknown decoy profile: {profile}")
+        if profile == "adaptive":
+            from .decoy_gen import generate
+
+            data = {name: "" for name in generate().keys()}
+        else:
+            data = _DECOY_PROFILES.get(profile) or {}
+            if not data:
+                raise ValueError(f"Unknown decoy profile: {profile}")
         for name, content in data.items():
             p = self.root / name
             p.parent.mkdir(parents=True, exist_ok=True)

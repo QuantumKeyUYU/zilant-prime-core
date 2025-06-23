@@ -270,6 +270,7 @@ zilant umount mnt
 ```
 
 ![Demo](docs/assets/zilfs_demo.gif)
+![Beta](docs/assets/zilfs_beta.gif)
 
 Use a decoy profile:
 
@@ -282,6 +283,7 @@ zilant mount secret.zil mnt -p mypwd --decoy-profile minimal
 | Snapshots | ✅ | ❌ | ✅ |
 | Decoy / honeypot | ✅ | ❌ | ❌ |
 | PQ-crypto | ✅ | ❌ | ❌ |
+| Mobile (Android) | ✅ | ❌ | ❌ |
 
 ## Development
 
