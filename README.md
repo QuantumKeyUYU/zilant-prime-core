@@ -269,6 +269,12 @@ rsync -av mnt/ backup/
 zilant umount mnt
 ```
 
+Use a decoy profile:
+
+```bash
+zilant mount secret.zil mnt -p mypwd --decoy-profile minimal
+```
+
 ## Development
 
 ### Code Owners & Static Analysis

@@ -431,11 +431,12 @@ def cmd_gen_sig_keys(out_pk: Path, out_sk: Path) -> None:
 @click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.argument("mountpoint", type=click.Path(file_okay=False, path_type=Path))
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
-def cmd_mount(container: Path, mountpoint: Path, password: str | None) -> None:
+@click.option("--decoy-profile", type=str, help="Mount predefined decoy profile")
+def cmd_mount(container: Path, mountpoint: Path, password: str | None, decoy_profile: str | None) -> None:
     """Mount CONTAINER at MOUNTPOINT via FUSE."""
     pwd = _ask_pwd() if password == "-" else password or _ask_pwd()
     try:
-        mount_fs(container, mountpoint, pwd)
+        mount_fs(container, mountpoint, pwd, decoy_profile=decoy_profile)
     except Exception as exc:  # pragma: no cover - runtime errors
         click.echo(f"Mount error: {exc}", err=True)
         raise click.Abort()
@@ -450,6 +451,17 @@ def cmd_umount_cli(mountpoint: Path) -> None:
     except Exception as exc:  # pragma: no cover - runtime errors
         click.echo(f"Umount error: {exc}", err=True)
         raise click.Abort()
+
+
+@cli.command("bench")
+@click.option("--fs", "bench_fs", is_flag=True, help="Benchmark ZilantFS")
+def cmd_bench(bench_fs: bool) -> None:
+    """Run benchmarks."""
+    if bench_fs:
+        from zilant_prime_core.bench_zfs import bench_fs as run
+
+        mb_s = run()
+        click.echo(f"{mb_s:.2f} MB/s")
 
 
 # ───────── secure register / login (Argon2id) ─────────
