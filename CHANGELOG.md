@@ -69,3 +69,22 @@
 - `sweep_expired_decoys` utility cleans up stale bait files.
 - Property-based fuzz tests verify pack/unpack stability.
 - README includes "Decoy lifecycle & safety FAQ".
+
+## [0.8.6] - 2025-06-25
+
+### Added
+- Full test coverage for `zilant_prime_core/utils/decoy.py` (including edge-cases, expired and sweep logic)
+- New tests: `test_decoy.py`, `test_expired_decoy.py`
+- Thorough validation of decoy lifecycle and expiry edge cases
+
+### Changed
+- Improved `decoy.py` sweep expiry logic for better reliability and maintainability
+
+### Fixed
+- Minor bugs in decoy expiry sweep (now triggers as expected on edge cases)
+- Edge-case issues in decoy lifecycle logic
+
+### Coverage
+- All core files at 100% coverage, including decoy, sweep, and edge flows
+
+---
