@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, cast, DefaultDict
+from collections import defaultdict
 
 from aead import PQAEAD, decrypt, encrypt
 from crypto_core import hash_sha3
@@ -18,12 +19,26 @@ HEADER_SEPARATOR = b"\n\n"
 
 logger = get_logger("container")
 
+# in-memory counter of unpack attempts per container path
+_ATTEMPTS: DefaultDict[str, int] = defaultdict(int)
+
+
+def _record_attempt(path: Path) -> None:
+    _ATTEMPTS[str(path)] += 1
+
+
+def get_open_attempts(path: Path) -> int:
+    """Return number of times ``unpack_file`` was called for this container."""
+    return _ATTEMPTS.get(str(path), 0)
+
 
 def pack_file(
     input_path: Path,
     output_path: Path,
     key: bytes,
     pq_public_key: bytes | None = None,
+    *,
+    extra_meta: dict[str, Any] | None = None,
 ) -> None:
     if not isinstance(input_path, Path):
         raise TypeError("input_path must be a pathlib.Path")
@@ -49,6 +64,8 @@ def pack_file(
             "orig_size": len(plaintext),
             "checksum_hex": checksum.hex(),
         }
+        if extra_meta:
+            meta_pq.update(extra_meta)
         header_bytes = json.dumps(meta_pq, ensure_ascii=False).encode("utf-8")
         container_data = header_bytes + HEADER_SEPARATOR + payload
     else:
@@ -61,6 +78,8 @@ def pack_file(
             "orig_size": len(plaintext),
             "checksum_hex": checksum.hex(),
         }
+        if extra_meta:
+            meta_classic.update(extra_meta)
         header_bytes = json.dumps(meta_classic, ensure_ascii=False).encode("utf-8")
         container_data = header_bytes + HEADER_SEPARATOR + ciphertext
 
@@ -90,49 +109,62 @@ def unpack_file(
     if len(key) != 32:
         raise ValueError("key must be 32 bytes long")
 
-    data = input_path.read_bytes()
-    sep_idx = data.find(HEADER_SEPARATOR)
-    if sep_idx == -1:
-        raise ValueError("Invalid ZIL container format")
+    _record_attempt(input_path)
 
-    header_bytes = data[:sep_idx]
-    payload = data[sep_idx + len(HEADER_SEPARATOR) :]
-    meta: dict[str, Any] = json.loads(header_bytes.decode("utf-8"))
+    try:
+        data = input_path.read_bytes()
+        sep_idx = data.find(HEADER_SEPARATOR)
+        if sep_idx == -1:
+            raise ValueError("Invalid ZIL container format")
 
-    if meta.get("magic") != ZIL_MAGIC.decode("ascii"):
-        raise ValueError("Invalid ZIL magic value")
-    if meta.get("version") != ZIL_VERSION:
-        raise ValueError("Unsupported ZIL version")
+        header_bytes = data[:sep_idx]
+        payload = data[sep_idx + len(HEADER_SEPARATOR) :]
+        meta: dict[str, Any] = json.loads(header_bytes.decode("utf-8"))
 
-    mode = meta.get("mode", "classic")
-    orig_size = meta["orig_size"]
-    checksum_hex = meta["checksum_hex"]
+        if meta.get("magic") != ZIL_MAGIC.decode("ascii"):
+            raise ValueError("Invalid ZIL magic value")
+        if meta.get("version") != ZIL_VERSION:
+            raise ValueError("Unsupported ZIL version")
 
-    if mode == "pq":
-        if not isinstance(pq_private_key, (bytes, bytearray)):
-            raise TypeError("pq_private_key must be bytes")
-        kem_len = meta["kem_ct_len"]
-        kem_ct = payload[:kem_len]
-        nonce = payload[kem_len : kem_len + PQAEAD._NONCE_LEN]
-        ct = payload[kem_len + PQAEAD._NONCE_LEN :]
-        from zilant_prime_core.utils.pq_crypto import Kyber768KEM, derive_key_pq
+        mode = meta.get("mode", "classic")
+        orig_size = meta["orig_size"]
+        checksum_hex = meta["checksum_hex"]
 
-        kem = Kyber768KEM()
-        shared = kem.decapsulate(pq_private_key, kem_ct)
-        key_dec = derive_key_pq(shared)
-        plaintext = decrypt(key_dec, nonce, ct, aad=b"")
-    else:
-        nonce = bytes.fromhex(meta["nonce_hex"])
-        plaintext = decrypt(key, nonce, payload, aad=b"")
+        if mode == "pq":
+            if not isinstance(pq_private_key, (bytes, bytearray)):
+                raise TypeError("pq_private_key must be bytes")
+            kem_len = meta["kem_ct_len"]
+            kem_ct = payload[:kem_len]
+            nonce = payload[kem_len : kem_len + PQAEAD._NONCE_LEN]
+            ct = payload[kem_len + PQAEAD._NONCE_LEN :]
+            from zilant_prime_core.utils.pq_crypto import Kyber768KEM, derive_key_pq
 
-    actual_checksum = cast(bytes, hash_sha3(plaintext)).hex()
-    if actual_checksum != checksum_hex:
-        raise ValueError("Integrity check failed")
-    if len(plaintext) != orig_size:
-        raise ValueError("Original size mismatch")
+            kem = Kyber768KEM()
+            shared = kem.decapsulate(pq_private_key, kem_ct)
+            key_dec = derive_key_pq(shared)
+            plaintext = decrypt(key_dec, nonce, ct, aad=b"")
+        else:
+            nonce = bytes.fromhex(meta["nonce_hex"])
+            plaintext = decrypt(key, nonce, payload, aad=b"")
 
-    atomic_write(output_path, plaintext)
-    logger.info("Unpacked '%s' -> '%s'", input_path.name, output_path.name)
+        actual_checksum = cast(bytes, hash_sha3(plaintext)).hex()
+        if actual_checksum != checksum_hex:
+            raise ValueError("Integrity check failed")
+        if len(plaintext) != orig_size:
+            raise ValueError("Original size mismatch")
+
+        atomic_write(output_path, plaintext)
+        logger.info("Unpacked '%s' -> '%s'", input_path.name, output_path.name)
+    except ValueError:
+        try:
+            from audit_ledger import record_action
+            from zilant_prime_core.notify import Notifier
+
+            record_action("tamper_detected", {"file": str(input_path)})
+            Notifier().notify(f"Tamper detected in {input_path.name}")
+        except Exception:
+            pass
+        raise
 
 
 def pack(meta: dict[str, Any], payload: bytes, key: bytes) -> bytes:
@@ -171,4 +203,43 @@ def unpack(blob: bytes, key: bytes) -> tuple[dict[str, Any], bytes]:
     return meta, plaintext
 
 
-__all__ = ["pack_file", "unpack_file", "pack", "unpack", "ZIL_MAGIC", "ZIL_VERSION", "HEADER_SEPARATOR"]
+def get_metadata(path: Path) -> dict[str, Any]:
+    """Extract container metadata without decrypting payload."""
+    data = path.read_bytes()
+    sep_idx = data.find(HEADER_SEPARATOR)
+    if sep_idx == -1:
+        raise ValueError("Invalid ZIL container format")
+    header_bytes = data[:sep_idx]
+    return json.loads(header_bytes.decode("utf-8"))
+
+
+def verify_integrity(path: Path) -> bool:
+    """Quickly check container header structure without decrypting."""
+    data = path.read_bytes()
+    sep_idx = data.find(HEADER_SEPARATOR)
+    if sep_idx == -1:
+        return False
+    try:
+        meta = json.loads(data[:sep_idx].decode("utf-8"))
+    except Exception:
+        return False
+    if meta.get("magic") != ZIL_MAGIC.decode("ascii"):
+        return False
+    if meta.get("version") != ZIL_VERSION:
+        return False
+    payload = data[sep_idx + len(HEADER_SEPARATOR) :]
+    return len(payload) >= meta.get("orig_size", 0)
+
+
+__all__ = [
+    "pack_file",
+    "unpack_file",
+    "pack",
+    "unpack",
+    "get_metadata",
+    "get_open_attempts",
+    "verify_integrity",
+    "ZIL_MAGIC",
+    "ZIL_VERSION",
+    "HEADER_SEPARATOR",
+]

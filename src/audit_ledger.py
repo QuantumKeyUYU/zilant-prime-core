@@ -18,3 +18,18 @@ def record_action(action: str, params: dict[str, Any]) -> None:
     entry["sha256"] = digest
     with open("audit-ledger.jsonl", "a", encoding="utf-8") as fh:
         fh.write(json.dumps(entry) + "\n")
+
+
+def record_decoy_event(info: dict[str, Any]) -> None:
+    """Shortcut to log a decoy-related event."""
+    record_action("decoy_event", info)
+
+
+def record_decoy_purged(path: str) -> None:
+    """Log that a decoy file was purged automatically."""
+    record_action("decoy_purged", {"file": path})
+
+
+def record_decoy_removed_early(path: str) -> None:
+    """Log that a decoy disappeared before its expiration."""
+    record_action("decoy_removed_early", {"file": path})
