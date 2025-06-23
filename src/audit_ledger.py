@@ -33,3 +33,13 @@ def record_decoy_purged(path: str) -> None:
 def record_decoy_removed_early(path: str) -> None:
     """Log that a decoy disappeared before its expiration."""
     record_action("decoy_removed_early", {"file": path})
+
+
+def record_self_heal_triggered(info: dict[str, Any]) -> None:
+    """Log that self-heal was triggered."""
+    record_action("self_heal_triggered", info)
+
+
+def record_self_heal_done(info: dict[str, Any]) -> None:
+    """Log that self-heal completed successfully."""
+    record_action("self_heal_done", info)

@@ -1,0 +1,8 @@
+rules:
+  - id: large-wheel
+    message: Binary wheel larger than 15 MB detected
+    severity: ERROR
+    languages: [generic]
+    paths:
+      include: ["dist/*.whl"]
+    pattern: ""

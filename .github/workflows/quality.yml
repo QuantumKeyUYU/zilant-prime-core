@@ -19,7 +19,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install dev-deps
-        run: pip install -e .[dev]
+        run: pip install -e ".[dev,cli]"
 
       - name: Pre-commit
         run: pre-commit run --all-files
@@ -56,7 +56,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - run: pip install -e .[dev]
+      - run: pip install -e ".[dev,cli]"
 
       - run: SKIP_FUZZ=1 ZILANT_ALLOW_ROOT=1 pytest -q -m perf --disable-warnings --maxfail=1
 
@@ -72,7 +72,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - run: pip install -e .[dev]
+      - run: pip install -e ".[dev,cli]"
 
       - run: pytest -q tests/test_stream_large.py tests/test_stream_resume.py
 
@@ -87,7 +87,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - run: pip install -e .[dev]
+      - run: pip install -e ".[dev,cli]"
 
       - run: pytest -q tests/test_cli_observability.py
 
@@ -151,7 +151,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install build deps
-        run: pip install -e .[dev] build pyyaml
+        run: pip install -e ".[dev,cli]" build pyyaml
 
       - name: Build PQ wheels
         run: python tools/build_pq_wheels.py

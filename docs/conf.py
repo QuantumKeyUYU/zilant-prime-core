@@ -17,16 +17,25 @@ release = "0.1.0"
 
 # -- General configuration ---------------------------------------------------
 
+CI = os.environ.get("CI") == "true"
+
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx_autodoc_typehints",
     "m2r2",
-    "sphinxcontrib.mermaid",
 ]
+if not CI and "sphinx.ext.intersphinx" not in extensions:
+    extensions.append("sphinx.ext.intersphinx")
+
+try:  # optional Mermaid
+    pass  # type: ignore
+except Exception:  # pragma: no cover - skip if unavailable
+    pass
+else:
+    extensions.append("sphinxcontrib.mermaid")
 
 # Автоматически генерить заглушки для модулей
 autosummary_generate = True
@@ -38,9 +47,10 @@ autodoc_default_options = {
     "show-inheritance": True,
 }
 
-intersphinx_mapping = {
-    "python": ("https://docs.python.org/3", None),
-}
+if not CI:
+    intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
+else:  # pragma: no cover - offline
+    intersphinx_mapping = {}
 
 # Mermaid (если нужна встроенная диаграмма)
 mermaid_cmd = "npx -y @mermaid-js/mermaid-cli"
@@ -48,8 +58,14 @@ mermaid_output_format = "png"
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+nitpicky = not CI
 
 # -- HTML output -------------------------------------------------------------
 
-html_theme = "alabaster"
+try:  # optional theme
+    import furo  # type: ignore  # noqa: F401
+
+    html_theme = "furo"
+except Exception:  # pragma: no cover - fallback
+    html_theme = "alabaster"
 html_static_path = ["_static"]

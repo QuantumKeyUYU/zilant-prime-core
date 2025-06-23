@@ -69,6 +69,16 @@ CLI использует эти функции при старте, что за�
 ```bash
 pip install zilant-prime-core
 
+# optional: ZKP features
+pip install "zilant-prime-core[zkp]"
+
+# CLI utilities
+pip install "zilant-prime-core[cli]"
+
+# legacy Python (<=3.10)
+pip install "zilant-prime-core[legacy]"
+# (only needed on Python 3.10 and below)
+
 # опционально: автодополнение
 source completions/zilant.bash  # bash
 ```
@@ -240,6 +250,13 @@ CLI registration and login via OPAQUE:
 ```bash
 zilctl register --server https://auth.example --username alice
 zilctl login --server https://auth.example --username alice
+```
+
+### Self-healing Example
+
+```bash
+zilctl heal-scan secret.zil --auto
+zilctl heal-verify secret.zil
 ```
 
 ## Development
