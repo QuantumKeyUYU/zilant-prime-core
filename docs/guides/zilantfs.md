@@ -79,3 +79,16 @@ zilant mount data.zil mnt --decoy-profile adaptive -p mypwd
 ```
 
 Large directories can be packed in streaming mode (set `ZILANT_STREAM=1`).
+
+## Android Usage
+
+The proof-of-concept Android app demonstrates unpacking `.zil` containers using JNI.
+Install the debug build on an emulator:
+
+```bash
+adb install -r mobile/android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Open the app to view files extracted from `sample.zil`.
+
+![android](../assets/android_poc.png)

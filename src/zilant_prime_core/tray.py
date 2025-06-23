@@ -7,7 +7,8 @@ from .zilfs import ACTIVE_FS
 
 try:
     from PySide6.QtGui import QIcon
-    from PySide6.QtWidgets import QApplication, QMenu, QAction, QSystemTrayIcon
+    from PySide6.QtWidgets import QApplication, QMenu, QAction, QSystemTrayIcon  # type: ignore[attr-defined]
+    from PySide6.QtCore import QTimer
 except Exception:  # pragma: no cover - optional GUI
     QApplication = None  # type: ignore
 
@@ -48,6 +49,9 @@ def run_tray() -> None:
         menu.addAction(quit_act)
         tray.setContextMenu(menu)
 
+    timer = QTimer()
+    timer.timeout.connect(refresh)
+    timer.start(2000)
     tray.activated.connect(lambda _: refresh())
     refresh()
     tray.show()

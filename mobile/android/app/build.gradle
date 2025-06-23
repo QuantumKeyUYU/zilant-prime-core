@@ -1,5 +1,6 @@
 plugins {
     id 'com.android.application'
+    id 'com.chaquo.python' apply false
 }
 android {
     compileSdkVersion 34
@@ -10,4 +11,17 @@ android {
         versionCode 1
         versionName '0.1'
     }
+    buildTypes {
+        debug {}
+        chaquopyDebug {
+            initWith debug
+            python {
+                pip {
+                }
+            }
+        }
+    }
+}
+dependencies {
+    implementation project(':zilantjni')
 }

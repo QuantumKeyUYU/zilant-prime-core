@@ -22,7 +22,7 @@ def generate(seed: int | None = None, schema: str | None = None) -> Dict[str, by
     rnd = random.Random(seed)
     count = rnd.randint(5, 8)
     paths: Dict[str, bytes] = {}
-    for i in range(count):
+    for _ in range(count):
         base = rnd.choice(_FAKE_NAMES)
         name = f"{rnd.randint(1000,9999)}_{base}"
         paths[name] = b"\0" * 4096
