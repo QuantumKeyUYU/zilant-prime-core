@@ -30,7 +30,13 @@ jobs:
         with:
           python-version: '3.13'
       - name: Install docs-deps
-        run: pip install -e .[docs]
+        run: pip install -r docs/requirements.txt
+
+      - name: Install build tool
+        run: pip install build
+
+      - name: Build wheel
+        run: python -m build -w -o dist/
 
       # 4) Генерируем диаграмму с флагами для отключения sandbox
       - name: Generate Mermaid diagram

@@ -87,4 +87,46 @@
 ### Coverage
 - All core files at 100% coverage, including decoy, sweep, and edge flows
 
+## 0.9.0 – Self-healing containers
+
+### Added
+- Experimental fractal KDF and ZKP placeholder modules.
+- `heal-scan` CLI example in README.
+- Basic self-healing container reaction helpers.
+
+## 0.9.1 – Self-heal core
+
+### Added
+- Integrated self-heal routine into container unpack logic.
+- Fractal KDF and reaction helpers moved to stable modules.
+
+## 0.9.2 – ZKP integration
+
+### Added
+- Proof generation and verification helpers with optional PySNARK.
+- CLI commands `heal-scan` and `heal-verify`.
+
+## 0.9.3 – Recovery key & concurrency lock
+
+### Added
+- `heal_container` now writes `recovery_key_hex` and uses a `.lock` file.
+- `heal-scan` CLI prints the saved key location.
+- Docs build steps install requirements file.
+
+## 0.9.4 – Metadata defaults & extras
+
+### Added
+- Optional `legacy` extras for Python <3.11.
+- Docs build offline mode and theme fallback.
+- `get_metadata` now includes `recovery_key_hex` by default.
+- Semgrep rule to warn about large wheel files.
+
+## 0.9.5 – CLI extras & docs cleanup
+
+### Added
+- Optional `cli` extras with `tabulate` and `watchdog`.
+- Docs build now disables `nitpicky` in CI and avoids duplicate `intersphinx`.
+- Workflow builds wheel before running Semgrep.
+- Shim for `tomli` is conditional to avoid conflicts.
+
 ---
