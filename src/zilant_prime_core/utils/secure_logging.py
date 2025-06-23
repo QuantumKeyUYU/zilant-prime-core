@@ -11,10 +11,13 @@ import secrets
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from typing import Any, Optional, Tuple, Union
 
-__all__ = ["SecureLogger", "get_secure_logger"]
+__all__ = ["SecureLogger", "get_secure_logger", "get_decryption_attempts"]
 
 
 DEFAULT_LOG_PATH = "logs/zilant.log"
+
+# global statistic of decryption attempts
+DECRYPTION_ATTEMPTS = 0
 
 
 class SecureLogger:
@@ -55,6 +58,8 @@ class SecureLogger:
             return out
         with open(self.log_path, "rb") as f:
             for line in f:
+                global DECRYPTION_ATTEMPTS
+                DECRYPTION_ATTEMPTS += 1
                 try:
                     nonce_b64, ct_b64 = line.rstrip(b"\n").split(b"|")
                     pt = self._aesgcm.decrypt(base64.b64decode(nonce_b64), base64.b64decode(ct_b64), None)
@@ -102,3 +107,8 @@ def zeroize() -> None:  # pragma: no cover - integration point
         Notifier().notify("logs zeroized")
     except Exception:
         pass
+
+
+def get_decryption_attempts() -> int:
+    """Return the number of decryption attempts for secure logs."""
+    return DECRYPTION_ATTEMPTS

@@ -112,7 +112,7 @@ def _cleanup_old_file(container: Path) -> None:
 
 
 # ──────────────────────────────── CLI root ────────────────────────────────
-@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+@click.group(context_settings={"help_option_names": ["-h", "--help"]}, invoke_without_command=True)
 @click.option("--metrics-port", type=int, metavar="PORT", help="Expose metrics on PORT")
 @click.option("--vault-key", type=binascii.unhexlify, metavar="HEX", help="AES key for Vault")
 @click.option(
@@ -122,12 +122,16 @@ def _cleanup_old_file(container: Path) -> None:
     show_default=True,
     help="Output format",
 )
+@click.option("--decoy-sweep", is_flag=True, help="Remove expired decoys and exit")
+@click.option("--paranoid", is_flag=True, help="Report decoy cleanup count")
 @click.pass_context
 def cli(
     ctx: click.Context,
     metrics_port: int | None,
     vault_key: bytes | None,
     output: str,
+    decoy_sweep: bool,
+    paranoid: bool,
 ) -> None:
     """Zilant Prime command‑line interface.
 
@@ -143,6 +147,15 @@ def cli(
         from zilant_prime_core.health import start_server
 
         start_server(metrics_port)
+
+    from zilant_prime_core.utils.decoy import sweep_expired_decoys
+
+    removed = sweep_expired_decoys(Path.cwd())
+    if paranoid and removed:
+        click.echo(f"purged {removed} decoy files", err=True)
+    if decoy_sweep:
+        click.echo(f"removed {removed} expired decoy files")
+        ctx.exit()
 
     ctx.obj = {"vault_key": vault_key, "output": output}
 
@@ -174,6 +187,15 @@ def cmd_key_rotate(ctx: click.Context, days: int, in_key: Path, out_key: Path) -
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
 @click.option("--vault-path", metavar="VAULT_PATH", help="Path in HashiCorp Vault")
 @click.option("--pq-pub", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--fake-metadata", is_flag=True, help="Include dummy metadata")
+@click.option("--decoy", type=int, default=0, metavar="N", help="Generate N decoy files")
+@click.option(
+    "--decoy-expire",
+    type=int,
+    metavar="SEC",
+    default=0,
+    help="Auto remove decoys after SEC seconds",
+)
 @click.option("--overwrite/--no-overwrite", default=False, show_default=True)
 @click.pass_context
 @metrics.record_cli("pack")
@@ -184,6 +206,9 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
     password: str | None,
     vault_path: str | None,
     pq_pub: Path | None,
+    fake_metadata: bool,
+    decoy: int,
+    decoy_expire: int,
     overwrite: bool,
 ) -> None:
     from zilant_prime_core.metrics import metrics
@@ -214,8 +239,17 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
     try:
         start = time.perf_counter()
         with metrics.track("pack"):
-            if pq_pub:
-                pack_file(source, dest, pwd.encode(), pq_public_key=pq_pub.read_bytes())
+            extras = (
+                {"owner": "anonymous", "timestamp": "1970-01-01T00:00:00Z", "origin": "N/A"} if fake_metadata else None
+            )
+            if pq_pub or fake_metadata:
+                pack_file(
+                    source,
+                    dest,
+                    pwd.encode(),
+                    pq_public_key=pq_pub.read_bytes() if pq_pub else None,
+                    extra_meta=extras,
+                )
                 blob: bytes | None = None
             else:
                 blob = _pack_bytes(source, pwd, dest, overwrite)
@@ -239,6 +273,12 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
 
     metrics.files_processed_total.inc()
     _emit(ctx, {"path": str(dest)})
+    if decoy > 0:
+        from audit_ledger import record_action
+        from zilant_prime_core.utils.decoy import generate_decoy_files
+
+        files = generate_decoy_files(dest.parent, decoy, expire_seconds=decoy_expire or None)
+        record_action("decoy_created", {"count": decoy, "files": [f.name for f in files]})
 
 
 # ────────────────────────────── unpack ──────────────────────────────
@@ -247,6 +287,14 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
 @click.option("-d", "--dest", metavar="DIR", type=click.Path(file_okay=False, path_type=Path))
 @click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
 @click.option("--pq-sk", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--honeypot-test", is_flag=True, help="Return decoy on failure")
+@click.option(
+    "--decoy-expire",
+    type=int,
+    metavar="SEC",
+    default=0,
+    help="Auto remove decoys after SEC seconds",
+)
 @click.pass_context
 @metrics.record_cli("unpack")
 def cmd_unpack(
@@ -255,6 +303,8 @@ def cmd_unpack(
     dest: Path | None,
     password: str | None,
     pq_sk: Path | None,
+    honeypot_test: bool,
+    decoy_expire: int,
 ) -> None:
     from zilant_prime_core.metrics import metrics
 
@@ -277,10 +327,20 @@ def cmd_unpack(
         metrics.encryption_duration_seconds.observe(time.perf_counter() - start)
     except FileExistsError:
         _abort("Destination path already exists")
-    except ValueError as ve:
-        _abort("Container too small" if "too small" in str(ve).lower() else f"Unpack error: {ve}")
-    except Exception as exc:  # pragma: no cover
-        _abort(f"Unpack error: {exc}")
+    except Exception as exc:
+        if honeypot_test:
+            from audit_ledger import record_decoy_event
+            from zilant_prime_core.utils.decoy import generate_decoy_files
+
+            decoy_file = generate_decoy_files(out_dir, 1, expire_seconds=decoy_expire or None)[0]
+            record_decoy_event({"honeypot": str(decoy_file)})
+            click.echo(str(decoy_file))
+            return
+        _abort(
+            "Container too small"
+            if isinstance(exc, ValueError) and "too small" in str(exc).lower()
+            else f"Unpack error: {exc}"
+        )
 
     try:
         os.chmod(out, 0o600)
@@ -473,6 +533,28 @@ def cmd_attest_simulate(ctx: click.Context, in_file: Path) -> None:
 
     info = simulate_tpm_attestation(in_file.read_bytes())
     _emit(ctx, info, "json")
+
+
+@cli.group(name="uyi")
+def uyi_group() -> None:
+    """Utility verification commands."""
+
+
+@uyi_group.command("verify-integrity")
+@click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+def cmd_verify_integrity(container: Path) -> None:
+    from container import verify_integrity
+
+    ok = verify_integrity(container)
+    click.echo("valid" if ok else "invalid")
+
+
+@uyi_group.command("show-metadata")
+@click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+def cmd_show_metadata(container: Path) -> None:
+    from container import get_metadata
+
+    click.echo(json.dumps(get_metadata(container)))
 
 
 @cli.command("install-completion")

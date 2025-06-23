@@ -83,6 +83,9 @@ pip install zilant-prime-core
 # Шифрование файла:
 zilctl pack secret.txt secret.zil
 
+# С генерацией фейковых данных и метаданных:
+zilctl pack secret.txt --fake-metadata --decoy 2 -p mypass
+
 # Или через HashiCorp Vault (поле `password`):
 export VAULT_ADDR="https://vault.example.com"
 export VAULT_TOKEN="s.1a2b3c4d"
@@ -90,6 +93,57 @@ zilctl pack secret.txt --vault-path secret/data/zilant/password
 
 # Расшифровка:
 zilctl unpack secret.zil --output-dir ./out
+
+# Honeypot-режим (выдаст приманку при ошибке пароля):
+zilctl unpack secret.zil -p wrong --honeypot-test
+
+Пример сравнения метаданных настоящего и фейкового контейнера:
+
+```bash
+zilctl uyi show-metadata secret.zil
+{"magic":"ZILANT","version":1,"mode":"classic","nonce_hex":"...","orig_size":5,
+"checksum_hex":"...","owner":"anonymous","timestamp":"1970-01-01T00:00:00Z","origin":"N/A"}
+
+zilctl uyi show-metadata decoy_abcd.zil
+{"magic":"ZILANT","version":1,"mode":"classic","nonce_hex":"...","orig_size":1024,
+"checksum_hex":"...","owner":"anonymous","timestamp":"1970-01-01T00:00:00Z","origin":"N/A"}
+```
+
+Возможные атаки и ожидаемое поведение:
+
+| Атака | Результат |
+|-------|-----------|
+| Неверный пароль в honeypot‑режиме | Создается decoy‑контейнер, запись в журнале `decoy_event` |
+| Повреждение контейнера | Ошибка integrity, данные не раскрываются |
+| Параллельное вскрытие | Счётчик `get_open_attempts` отражает все попытки |
+
+## Anti-Forensics & Real-World Attacks
+
+Decoy containers help mislead forensic analysts. Use `--decoy` and `--decoy-expire`
+to create bait files that disappear after a delay. When honeypot mode is active,
+a decoy is returned for invalid passwords and logged via `decoy_event`.
+
+Potential attack vectors remain:
+
+- Side‑channel traffic if decoys are not removed quickly.
+- Correlation of access times when decoy cleanup is delayed.
+
+### Parallel brute-force / mass attack
+
+Track open attempts with `get_open_attempts`. Spawning many unpack processes
+increments this counter, making brute‑force attempts detectable. Honeypot traps
+can be triggered in parallel; each creates its own decoy container.
+
+## Decoy lifecycle & safety FAQ
+
+Decoy files are temporary bait containers. When created with `--decoy-expire`,
+they disappear automatically after the given delay. If a decoy vanishes before
+its expiration, the audit ledger records a `decoy_removed_early` event. When
+cleanup occurs (either automatically or via sweep), a `decoy_purged` entry is
+added.
+
+Run `zilctl --decoy-sweep` to remove expired decoys manually. With the
+`--paranoid` flag the CLI prints how many stale decoys were removed at startup.
 
 ### Shamir Secret Sharing
 
@@ -114,6 +168,13 @@ zilctl key shard import --input-dir shards --output-file master.key
 
 ```bash
 zilctl stream verify big.zst --key master.key
+```
+
+Проверить заголовок контейнера без распаковки можно так:
+
+```bash
+zilctl uyi verify-integrity secret.zil
+zilctl uyi show-metadata secret.zil
 ```
 
 Изменение хотя бы одного байта приведёт к ошибке «MAC mismatch».

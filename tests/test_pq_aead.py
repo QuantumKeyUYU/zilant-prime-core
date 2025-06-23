@@ -1,4 +1,5 @@
 import pytest
+from cryptography.exceptions import InvalidTag
 
 from aead import PQAEAD
 from zilant_prime_core.utils import pq_crypto
@@ -22,5 +23,5 @@ def test_pq_aead_bad_key():
     bad_sk = bytearray(sk)
     if bad_sk:
         bad_sk[0] ^= 0x01
-    with pytest.raises(Exception):  # noqa: B017 - any error acceptable
+    with pytest.raises(InvalidTag):
         PQAEAD.decrypt(bytes(bad_sk), data, b"")
