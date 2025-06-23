@@ -53,6 +53,7 @@ from zilant_prime_core.utils.device_fp import SALT_CONST, collect_hw_factors, co
 from zilant_prime_core.utils.pq_crypto import Dilithium2Signature, Kyber768KEM
 from zilant_prime_core.utils.recovery import DESTRUCTION_KEY_BUFFER, self_destruct
 from zilant_prime_core.utils.screen_guard import ScreenGuardError, guard
+from zilant_prime_core.zilfs import mount_fs, umount_fs
 
 
 # ────────────────────────── helpers ──────────────────────────
@@ -424,6 +425,31 @@ def cmd_gen_sig_keys(out_pk: Path, out_sk: Path) -> None:
     out_pk.write_bytes(pk)
     out_sk.write_bytes(sk)
     click.echo("Signature keypair generated.")
+
+
+@cli.command("mount")
+@click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument("mountpoint", type=click.Path(file_okay=False, path_type=Path))
+@click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
+def cmd_mount(container: Path, mountpoint: Path, password: str | None) -> None:
+    """Mount CONTAINER at MOUNTPOINT via FUSE."""
+    pwd = _ask_pwd() if password == "-" else password or _ask_pwd()
+    try:
+        mount_fs(container, mountpoint, pwd)
+    except Exception as exc:  # pragma: no cover - runtime errors
+        click.echo(f"Mount error: {exc}", err=True)
+        raise click.Abort()
+
+
+@cli.command("umount")
+@click.argument("mountpoint", type=click.Path(file_okay=False, path_type=Path))
+def cmd_umount_cli(mountpoint: Path) -> None:
+    """Unmount previously mounted ZilantFS."""
+    try:
+        umount_fs(mountpoint)
+    except Exception as exc:  # pragma: no cover - runtime errors
+        click.echo(f"Umount error: {exc}", err=True)
+        raise click.Abort()
 
 
 # ───────── secure register / login (Argon2id) ─────────

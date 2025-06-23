@@ -118,6 +118,10 @@ notify = [
   "slack-sdk",
   "python-telegram-bot",
 ]
+zilfs = [
+  "fusepy; sys_platform != 'win32'",
+  "pywinfspy; sys_platform == 'win32'",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

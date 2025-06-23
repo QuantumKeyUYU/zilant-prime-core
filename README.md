@@ -259,6 +259,16 @@ zilctl heal-scan secret.zil --auto
 zilctl heal-verify secret.zil
 ```
 
+## ZilantFS
+
+Mount encrypted containers as a regular directory.
+
+```bash
+zilant mount secret.zil mnt -p -
+rsync -av mnt/ backup/
+zilant umount mnt
+```
+
 ## Development
 
 ### Code Owners & Static Analysis
