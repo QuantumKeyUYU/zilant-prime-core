@@ -177,7 +177,7 @@ def pack(meta: dict[str, Any], payload: bytes, key: bytes) -> bytes:
     if len(key) != 32:
         raise ValueError("key must be 32 bytes long")
 
-    header_bytes = json.dumps(meta, ensure_ascii=False).encode("utf-8") + HEADER_SEPARATOR
+    header_bytes: bytes = json.dumps(meta, ensure_ascii=False).encode("utf-8") + HEADER_SEPARATOR
     nonce, ciphertext = encrypt(key, payload, aad=b"")
     return header_bytes + nonce + ciphertext
 
@@ -210,7 +210,7 @@ def get_metadata(path: Path) -> dict[str, Any]:
     if sep_idx == -1:
         raise ValueError("Invalid ZIL container format")
     header_bytes = data[:sep_idx]
-    return json.loads(header_bytes.decode("utf-8"))
+    return cast(dict[str, Any], json.loads(header_bytes.decode("utf-8")))
 
 
 def verify_integrity(path: Path) -> bool:
@@ -220,7 +220,7 @@ def verify_integrity(path: Path) -> bool:
     if sep_idx == -1:
         return False
     try:
-        meta = json.loads(data[:sep_idx].decode("utf-8"))
+        meta = cast(dict[str, Any], json.loads(data[:sep_idx].decode("utf-8")))
     except Exception:
         return False
     if meta.get("magic") != ZIL_MAGIC.decode("ascii"):
@@ -228,7 +228,8 @@ def verify_integrity(path: Path) -> bool:
     if meta.get("version") != ZIL_VERSION:
         return False
     payload = data[sep_idx + len(HEADER_SEPARATOR) :]
-    return len(payload) >= meta.get("orig_size", 0)
+    orig_size = cast(int, meta.get("orig_size", 0))
+    return len(payload) >= orig_size
 
 
 __all__ = [
