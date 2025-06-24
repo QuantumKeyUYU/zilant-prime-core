@@ -24,6 +24,9 @@ Since pre-mass-edit-
 - Fix license audit workflow
 - fix: auto-format by pre-commit
 
+## Docs
+- docs: pass linkcheck with pinned deps
+
 ## Chore
 - chore(ci): fix FUSE install and sshfs path
 - chore: fix CI (Mermaid sandbox, add THREATS placeholder, build wheels)
@@ -52,4 +55,3 @@ Since pre-mass-edit-
 - Add license audit and import graph tools
 - Add secret scanner and auto changelog
 - Full project update
-

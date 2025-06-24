@@ -97,4 +97,6 @@ Open the app to view files extracted from `sample.zil`.
 
 Create a container using the guided wizard:
 
-![wizard demo](../assets/zilfs_demo.gif)
+```{figure} ../assets/zilfs_demo.gif
+:alt: wizard demo
+```

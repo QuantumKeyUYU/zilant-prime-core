@@ -60,6 +60,13 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 nitpicky = not CI
 
+# Ignore unreachable or offline docs when validating links
+linkcheck_ignore = [
+    r"https://docs\.python\.org/3/library/typing.*",
+    r"https://winfsp\.dev/.*",
+    r"../api/.*",
+]
+
 # -- HTML output -------------------------------------------------------------
 
 try:  # optional theme

@@ -117,3 +117,7 @@ jobs:
         run: pip install -e .[cli]
       - name: Run wizard test (pty)
         run: pytest -q -m wizard
+      - name: Install docs deps
+        run: pip install -r docs/requirements.txt
+      - name: Linkcheck docs
+        run: make -C docs linkcheck
