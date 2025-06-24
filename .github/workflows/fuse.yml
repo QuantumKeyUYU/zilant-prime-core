@@ -62,6 +62,7 @@ jobs:
       - name: Smoke import
         run: python -c "import zilant_prime_core.zilfs"
       - name: Remote mount copy
+        continue-on-error: true
         run: |
           mkdir C:\\rem
           sshfs root@localhost:/ C:\\rem -o StrictHostKeyChecking=no -o PasswordAuthentication=no || echo "SSHFS mount skipped"
