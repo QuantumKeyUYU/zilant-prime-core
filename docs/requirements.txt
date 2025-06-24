@@ -1,2 +1,6 @@
 sphinx==7.2.6
 sphinx-inline-tabs
+
+sphinx-autodoc-typehints
+m2r2
+furo

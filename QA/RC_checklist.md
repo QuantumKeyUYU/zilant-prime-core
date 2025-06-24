@@ -7,4 +7,3 @@
 ## Windows
 - Install WinFSP and sshfs-win.
 - Mount container, copy files, ensure read-only fallback works.
-

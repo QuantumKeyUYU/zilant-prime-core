@@ -1,5 +1,6 @@
-from pathlib import Path
 import pytest
+from pathlib import Path
+
 from zilant_prime_core.zilfs import ZilantFS, snapshot_container
 
 pytestmark = pytest.mark.zilfs

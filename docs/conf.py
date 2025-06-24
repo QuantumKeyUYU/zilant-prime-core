@@ -31,7 +31,7 @@ if not CI and "sphinx.ext.intersphinx" not in extensions:
     extensions.append("sphinx.ext.intersphinx")
 
 try:  # optional Mermaid
-    pass  # type: ignore
+    import sphinxcontrib.mermaid  # type: ignore  # noqa: F401
 except Exception:  # pragma: no cover - skip if unavailable
     pass
 else:

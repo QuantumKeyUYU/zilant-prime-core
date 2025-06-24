@@ -26,7 +26,7 @@ mermaid: $(DIAGRAM_OUT)
 
 # ----------------------- Sphinx build ------------------------------
 html: mermaid
-        $(SPHINXBUILD) -n -W -M html $(SOURCEDIR) $(BUILDDIR) $(SPHINXOPTS)
+	$(SPHINXBUILD) -n -W -b html $(SOURCEDIR) $(BUILDDIR)/html $(SPHINXOPTS)
 
 clean:
 	rm -rf $(BUILDDIR) $(DIAGRAM_OUT)
