@@ -42,4 +42,3 @@ zstandard>=0.23.0
 tqdm>=4.66.0
 psutil>=5.9.0
 requests>=2.32.0
-pysnark-libsnark>=0.1.0

@@ -33,7 +33,13 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
       - name: Install deps
-        run: pip install -e .${{ inputs.extras }}
+        run: |
+          extras="${{ inputs.extras }}"
+          if [ -n "$extras" ]; then
+            pip install -e ".[$extras]"
+          else
+            pip install -e .
+          fi
       - name: Pre-commit
         run: pre-commit run --all-files
       - name: Pytest

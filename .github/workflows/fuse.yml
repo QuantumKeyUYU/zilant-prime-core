@@ -66,12 +66,11 @@ jobs:
       - name: Smoke import
         run: python -c "import zilant_prime_core.zilfs"
       - name: Remote mount copy
-        continue-on-error: true
         shell: pwsh
+        continue-on-error: true
         run: |
-          New-Item -ItemType Directory -Force -Path C:\rem
-          sshfs-win.exe root@localhost:/ C:\rem -o StrictHostKeyChecking=no -o PasswordAuthentication=no || echo "SSHFS mount skipped"
-          Get-ChildItem C:\rem
+          mkdir C:\rem -ErrorAction SilentlyContinue
+          sshfs-win.exe root@localhost:/ C:\rem -o workaround || echo "SSHFS skipped"
 
   android-build:
     runs-on: ubuntu-latest

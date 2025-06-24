@@ -101,8 +101,9 @@ docs = [
   "m2r2",
   "sphinxcontrib-mermaid",
 ]
-zkp = [
-  "pysnark-libsnark>=0.1.0",
+zkp = []
+snark = [
+  "pysnark-libsnark>=0.1.0 ; python_version < '3.13'",
 ]
 legacy = [
   "tomli; python_version<'3.11'",
