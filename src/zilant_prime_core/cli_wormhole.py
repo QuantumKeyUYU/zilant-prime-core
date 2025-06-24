@@ -1,12 +1,21 @@
+import asyncio  # noqa: F401
 import click
-import wormhole._code as _cc
-import wormhole._nameplate as _np
 from pathlib import Path
 from twisted.internet import reactor
 from wormhole import create
+from wormhole.errors import KeyFormatError  # noqa: F401
 
-_np.validate_nameplate = lambda nameplate: None
-_cc.validate_code = lambda code: None
+# ---------------------------------------------------------------------------
+# Allow non-numeric codes like "root" by disabling wormhole's validator
+try:  # pragma: no cover - optional internals may change
+    import wormhole._nameplate as _np
+
+    _np.validate_nameplate = lambda nameplate: None
+    import wormhole._code as _cc
+
+    _cc.validate_code = lambda code: None
+except Exception:
+    pass
 
 
 @click.group()
