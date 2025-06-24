@@ -45,7 +45,7 @@ dependencies = [
 zilant = "zilant_prime_core.cli:cli"
 zilctl = "zilant_prime_core.cli:cli"
 [project.entry-points.zilctl]
-wormhole = "zilant_prime_core.cli.wormhole:cli"
+wormhole = "zilant_prime_core.cli_wormhole:cli"
 
 [project.urls]
 Homepage      = "https://github.com/QuantumKeyUYU/zilant-prime-core"

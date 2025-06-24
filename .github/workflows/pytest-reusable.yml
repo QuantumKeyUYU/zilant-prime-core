@@ -42,6 +42,7 @@ jobs:
             pip install -e .
           fi
       - name: Pre-commit
+        if: ${{ inputs.os == 'ubuntu-latest' }}
         run: pre-commit run --all-files --hook-stage manual
       - name: Pytest
         run: pytest -q -m "not slow"

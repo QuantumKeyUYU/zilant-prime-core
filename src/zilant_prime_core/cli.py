@@ -780,6 +780,12 @@ cli.add_command(pq_genkeypair_cmd)
 key.add_command(shard_cmd)
 cli.add_command(stream_cmd)
 cli.add_command(hpke_cmd)
+try:  # pragma: no cover - optional dependency
+    from .cli_wormhole import cli as wormhole_cmd
+except Exception:  # pragma: no cover - wormhole optional
+    wormhole_cmd = None
+if wormhole_cmd:
+    cli.add_command(wormhole_cmd, name="wormhole")
 
 add_complete_flag()
 

@@ -11,6 +11,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, cast
 
+from .utils import fs as _fs_patch  # noqa: F401  # ensure mkfifo/sync stubs on Windows
+
 try:  # pragma: no cover - optional dependency may be missing
     from fuse import FUSE, FuseOSError, Operations  # type: ignore
 except Exception:  # pragma: no cover - optional dependency may be missing
