@@ -3,13 +3,8 @@
 
 # Architecture Overview
 
-```mermaid
-flowchart TD
-    CLI["CLI\n(zilctl)"] --> Core
-    Core["Core Library"] --> Logger["Secure Logger"]
-    Core --> Vault["Vault/Pseudo‑HSM"]
-    Core --> SBOM["SBOM tools"]
-```
+.. image:: assets/logo.svg
+   :alt: Architecture diagram
 
 - **CLI** – user facing commands.
 - **Core Library** – cryptography and container logic.

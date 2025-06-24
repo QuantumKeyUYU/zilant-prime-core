@@ -50,6 +50,7 @@ def run_tray() -> None:
         tray.setContextMenu(menu)
 
     timer = QTimer()
+    timer.setSingleShot(False)
     timer.timeout.connect(refresh)
     timer.start(2000)
     tray.activated.connect(lambda _: refresh())
