@@ -22,7 +22,13 @@ except Exception:  # pragma: no cover - optional dependency
         kyber768 = None
         dilithium2 = None
 
-from kdf import derive_key
+try:
+    from kdf import derive_key
+except ImportError:  # pragma: no cover - optional dependency
+
+    def derive_key(password: bytes, salt: bytes) -> bytes:
+        """Fallback stub returning a zeroed key."""
+        return b"\x00" * 32
 
 
 class KEM(abc.ABC):

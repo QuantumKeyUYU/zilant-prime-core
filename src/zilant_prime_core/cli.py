@@ -665,7 +665,12 @@ def cmd_show_metadata(container: Path) -> None:
 @click.option("--recursive", is_flag=True, help="Scan directories recursively")
 @click.option("--report", type=click.Choice(["json", "table"]), default="table")
 def cmd_heal_scan(path: Path, auto: bool, recursive: bool, report: str) -> None:
-    from tabulate import tabulate  # type: ignore
+    try:
+        from tabulate import tabulate  # type: ignore
+    except Exception:  # pragma: no cover - optional dependency
+
+        def tabulate(rows: list[list[str | int]], headers: list[str]) -> str:
+            return "\n".join("\t".join(map(str, row)) for row in rows)
 
     try:
         from zilant_prime_core.container import get_metadata, verify_integrity
@@ -750,7 +755,25 @@ def install_completion(ctx: click.Context, shell: str) -> None:
 def cmd_wizard() -> None:
     """Interactive container creation wizard."""
     import hashlib
-    import questionary
+
+    try:
+        import questionary
+
+        def _ask_password(prompt: str) -> str | None:
+            return cast(str | None, questionary.password(prompt).ask())
+
+        def _ask_confirm(prompt: str, *, default: bool = False) -> bool:
+            return bool(questionary.confirm(prompt, default=default).ask())
+
+    except Exception:  # pragma: no cover - optional dependency
+
+        def _ask_password(prompt: str) -> str | None:
+            print(prompt)
+            return sys.stdin.readline().strip()
+
+        def _ask_confirm(prompt: str, *, default: bool = False) -> bool:
+            print(prompt)
+            return sys.stdin.readline().strip().lower() in {"y", "yes"}
 
     try:
         import qrcode  # type: ignore
@@ -764,16 +787,16 @@ def cmd_wizard() -> None:
     if not path_str:
         raise click.Abort()
     path = Path(path_str)
-    pwd = questionary.password("New password").ask()
+    pwd = _ask_password("New password")
     if pwd is None:
         raise click.Abort()
-    confirm = questionary.password("Confirm password").ask()
+    confirm = _ask_password("Confirm password")
     if confirm != pwd:
         click.echo("Passwords do not match", err=True)
         raise click.Abort()
     strength = "strong" if len(pwd) >= 8 else "weak"
     click.echo(f"Password strength: {strength}")
-    if questionary.confirm("Generate QR backup", default=False).ask():
+    if _ask_confirm("Generate QR backup", default=False):
         if qrcode:
             img = qrcode.make(pwd)
             img.save(path.with_name("qr.png"))
@@ -783,7 +806,7 @@ def cmd_wizard() -> None:
         tmp.write(b"zilant-wizard")
         tmp.flush()
         pack_file(Path(tmp.name), path, hashlib.sha256(pwd.encode()).digest())
-    if questionary.confirm("Mount now?", default=False).ask():
+    if _ask_confirm("Mount now?", default=False):
         mount_fs(path, path.with_suffix(".mnt"), pwd)
 
 
