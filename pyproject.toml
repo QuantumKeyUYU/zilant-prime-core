@@ -110,6 +110,7 @@ legacy = [
 cli = [
   "tabulate>=0.9",
   "watchdog>=4.0",
+  "pexpect>=4.8",
   "questionary>=2.0",
   "qrcode[pil]>=7.4",
 ]

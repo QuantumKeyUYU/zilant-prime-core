@@ -96,7 +96,6 @@ jobs:
   wormhole-e2e:
     needs: [fuse-test]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4

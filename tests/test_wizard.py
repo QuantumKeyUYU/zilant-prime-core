@@ -1,7 +1,9 @@
 import hashlib
 import pathlib
-import pexpect
 import pytest
+
+pytest.importorskip("pexpect")
+import pexpect
 
 pytestmark = pytest.mark.wizard
 
