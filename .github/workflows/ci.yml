@@ -5,7 +5,7 @@ on:
   pull_request:
 jobs:
   tests:
-    uses: ./.github/workflows/pytest.yml
+    uses: ./.github/workflows/pytest-reusable.yml@main
     strategy:
       fail-fast: false
       matrix:

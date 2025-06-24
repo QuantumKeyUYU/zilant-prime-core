@@ -67,10 +67,11 @@ jobs:
         run: python -c "import zilant_prime_core.zilfs"
       - name: Remote mount copy
         continue-on-error: true
+        shell: pwsh
         run: |
-          mkdir C:\\rem
-          sshfs root@localhost:/ C:\\rem -o StrictHostKeyChecking=no -o PasswordAuthentication=no || echo "SSHFS mount skipped"
-          dir C:\\rem
+          New-Item -ItemType Directory -Force -Path C:\rem
+          sshfs-win.exe root@localhost:/ C:\rem -o StrictHostKeyChecking=no -o PasswordAuthentication=no || echo "SSHFS mount skipped"
+          Get-ChildItem C:\rem
 
   android-build:
     runs-on: ubuntu-latest
@@ -107,14 +108,14 @@ jobs:
           echo "WORM_PORT=$(docker port relay 4003 | cut -d: -f2)" >> $GITHUB_ENV
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.x'
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e .[dev]
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pytest
       - name: Run e2e
-        run: pytest -q tests/test_wormhole_e2e.py
+        run: python -m pytest tests/test_wormhole_e2e.py
 
   wizard-e2e:
     needs: [wormhole-e2e]
@@ -126,17 +127,19 @@ jobs:
           lfs: true
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.x'
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e .[dev,cli]
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pytest
+          pip install .[cli]
       - name: Run wizard test (pty)
-        run: pytest -q -m wizard
+        run: python -m pytest -m wizard
       - name: Install docs deps
         run: |
           pip install -r docs/requirements.txt
-          pip install 'sphinx>=6.0.0'
       - name: Linkcheck docs
-        run: sphinx-build -M linkcheck docs docs/_build
+        run: |
+          export CI=1
+          make -C docs linkcheck SPHINXOPTS='-q'

@@ -3,5 +3,6 @@ rules:
     message: requests calls should set timeout
     severity: WARNING
     languages: [python]
-    pattern: requests.$FUNC(...)
-    pattern-not: requests.$FUNC(..., timeout=$TIMEOUT, ...)
+    patterns:
+      - pattern: requests.$FUNC(...)
+      - pattern-not: requests.$FUNC(..., timeout=$TIMEOUT, ...)

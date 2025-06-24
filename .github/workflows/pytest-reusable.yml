@@ -8,6 +8,7 @@ on:
       extras:
         required: false
         type: string
+        default: ""
       os:
         required: true
         type: string
@@ -32,7 +33,7 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
       - name: Install deps
-        run: pip install -e .${{ inputs.extras && '[' + inputs.extras + ']' || '' }}
+        run: pip install -e .${{ inputs.extras }}
       - name: Pre-commit
         run: pre-commit run --all-files
       - name: Pytest
