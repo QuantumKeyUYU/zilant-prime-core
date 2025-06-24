@@ -57,19 +57,6 @@ Asset / Threat / Control
 Mermaid Diagram
 ---------------
 
-.. mermaid::
-
-   graph LR
-     A[Акторы] -->|атакуют| B[CLI]
-     B -->|шифрует| C[AEAD Core]
-     C --> D[Контейнер]
-     C --> E[Watchdog]
-     A -->|саботаж| E
-     A -->|перехват| F[Журналы]
-     F -->|шифруются| G[SecureLogger]
-
-Static Diagram
----------------
 
 .. image:: assets/threat_diagram.svg
    :alt: Threat Diagram

@@ -3,7 +3,7 @@
 
 # Architecture Overview
 
-```mermaid
+```
 flowchart TD
     CLI["CLI\n(zilctl)"] --> Core
     Core["Core Library"] --> Logger["Secure Logger"]

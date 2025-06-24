@@ -1,2 +1,4 @@
-#!/bin/bash
-echo "Gradle wrapper placeholder" && exit 0
+#!/usr/bin/env sh
+DIR="$(cd "$(dirname "$0")" && pwd)"
+JAVA_EXE="$(command -v java)"
+exec "$JAVA_EXE" -classpath "$DIR/gradle/wrapper/gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain "$@"

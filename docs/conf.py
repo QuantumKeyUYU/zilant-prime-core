@@ -47,18 +47,28 @@ autodoc_default_options = {
     "show-inheritance": True,
 }
 
+autodoc_mock_imports = [
+    "zilant_prime_core.utils.qal",
+    "zilant_prime_core.utils.qvpn",
+    "zilant_prime_core.utils.pq_ring",
+    "zilant_prime_core.utils.zkqp",
+]
 if not CI:
     intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 else:  # pragma: no cover - offline
     intersphinx_mapping = {}
 
 # Mermaid (если нужна встроенная диаграмма)
-mermaid_cmd = "npx -y @mermaid-js/mermaid-cli"
+mermaid_cmd = "true" if CI else "npx -y @mermaid-js/mermaid-cli"
 mermaid_output_format = "png"
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 nitpicky = not CI
+linkcheck_ignore = [
+    r"https://check.torproject.org",
+    r"https://winfsp.dev",
+]
 
 # -- HTML output -------------------------------------------------------------
 

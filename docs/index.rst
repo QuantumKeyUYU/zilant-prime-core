@@ -8,10 +8,6 @@ Welcome to the Zilant Prime Core documentation!
    :maxdepth: 2
    :caption: API Reference:
 
-   api/qal
-   api/pq_ring
-   api/qvpn
-   api/zkqp
 
 .. toctree::
    :maxdepth: 2

@@ -68,3 +68,4 @@ docs/_static/key_lifecycle.png
 .zilant_log
 docs/.zilant_log
 ui/dist/
+mobile/android/gradle/wrapper/gradle-wrapper.jar

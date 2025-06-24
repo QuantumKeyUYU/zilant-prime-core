@@ -130,3 +130,12 @@
 - Shim for `tomli` is conditional to avoid conflicts.
 
 ---
+
+## 0.9.9b2 – RC polish
+
+### Changed
+- Docs build now uses Sphinx 7.2.6 and fails on warnings.
+- Real Gradle wrapper scripts for Android module.
+- README badges show version 0.9.9b2 and Android CI status.
+- Removed Chaquopy placeholders.
+- Tray timer explicitly non-single-shot.
