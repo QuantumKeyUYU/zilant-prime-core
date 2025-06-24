@@ -13,15 +13,14 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.4.4
     hooks:
-      - id: ruff
-        name: Ruff (lint)
-        args: ["--unsafe-fixes"]
+      - id: ruff-format
+        name: Ruff (format)
         stages: [commit]
         language_version: python3
 
   # isort – проверка и сортировка импортов
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.10.1
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
     hooks:
       - id: isort
         name: isort (check imports)

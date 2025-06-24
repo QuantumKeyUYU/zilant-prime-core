@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: MIT
 
 __version__ = "0.9.9-rc1"
+from .crypto_core import hash_sha3
 
-__all__ = ["__version__"]
+__all__ = ["__version__", "hash_sha3"]
 
 import os
 
