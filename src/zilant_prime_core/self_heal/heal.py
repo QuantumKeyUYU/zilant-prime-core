@@ -14,17 +14,18 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - dev
     from audit_ledger import record_action
 try:
-    from zilant_prime_core.container import HEADER_SEPARATOR, pack  # type: ignore[attr-defined]
+    from zilant_prime_core.container import HEADER_SEPARATOR
+    from zilant_prime_core.container import pack as container_pack  # type: ignore[attr-defined]
 except ModuleNotFoundError:  # pragma: no cover - dev
-    from container import HEADER_SEPARATOR, pack
-try:
-    from zilant_prime_core.crypto_core import hash_sha3
-except ModuleNotFoundError:  # pragma: no cover - dev
-    from crypto_core import hash_sha3
+    from container import HEADER_SEPARATOR
+    from container import pack as container_pack
+from zilant_prime_core.crypto_core import hash_sha3
+
 try:
     from zilant_prime_core.utils.file_utils import atomic_write
 except ModuleNotFoundError:  # pragma: no cover - dev
     from utils.file_utils import atomic_write
+
 from zilant_prime_core.crypto.fractal_kdf import fractal_kdf
 from zilant_prime_core.zkp import prove_intact
 
@@ -71,7 +72,7 @@ def heal_container(path: Path, key: bytes, *, rng_seed: bytes) -> bool:
     hist.append(hashlib.sha256(blob).hexdigest())
     meta["heal_history"] = hist
 
-    new_blob = pack(meta, payload, new_key)
+    new_blob = container_pack(meta, payload, new_key)
     atomic_write(path, new_blob)
 
     record_action("self_heal_triggered", {"file": str(path), "level": level + 1})

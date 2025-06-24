@@ -12,10 +12,8 @@ import time
 import uuid
 from typing import Dict, cast
 
-try:
-    from crypto_core import hash_sha3
-except ModuleNotFoundError:  # pragma: no cover - installed package path
-    from zilant_prime_core.crypto_core import hash_sha3
+from zilant_prime_core.crypto_core import hash_sha3
+
 try:
     from zilant_prime_core.utils.secure_memory import wipe_bytes
 except ModuleNotFoundError:  # pragma: no cover - dev mode

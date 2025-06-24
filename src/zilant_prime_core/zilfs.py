@@ -33,11 +33,13 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - dev
     from streaming_aead import pack_stream, unpack_stream
 try:
-    from zilant_prime_core.utils.logging import get_logger
+    from zilant_prime_core.utils.logging import get_logger as _get_logger
 except ModuleNotFoundError:  # pragma: no cover - dev
-    from utils.logging import get_logger
+    from utils.logging import get_logger as _get_logger
 
-logger = get_logger("zilfs")
+from logging import Logger
+
+logger = cast(Logger, _get_logger("zilfs"))
 
 _DECOY_PROFILES: Dict[str, Dict[str, str]] = {"minimal": {"dummy.txt": "lorem ipsum", "pics/kitten.jpg": "PLACEHOLDER"}}
 

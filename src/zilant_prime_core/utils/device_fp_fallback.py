@@ -8,10 +8,7 @@ import time
 from pathlib import Path
 from typing import cast
 
-try:
-    from crypto_core import hash_sha3
-except ModuleNotFoundError:  # pragma: no cover - installed package path
-    from zilant_prime_core.crypto_core import hash_sha3
+from zilant_prime_core.crypto_core import hash_sha3
 
 __all__ = ["device_fp_fallback"]
 

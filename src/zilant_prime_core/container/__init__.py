@@ -4,7 +4,7 @@
 # src/zilant_prime_core/container/__init__.py
 
 try:
-    from container import get_metadata, pack_file, unpack_file, verify_integrity
+    from container import HEADER_SEPARATOR, get_metadata, pack_file, unpack_file, verify_integrity
 except ModuleNotFoundError:  # pragma: no cover - installed as package
     from . import pack_file, unpack_file  # circular placeholder - not expected
 
@@ -14,6 +14,7 @@ from .unpack import unpack
 
 __all__ = [
     "MetadataError",
+    "HEADER_SEPARATOR",
     "pack",
     "unpack",
     "pack_file",
