@@ -12,8 +12,7 @@ except ModuleNotFoundError:  # pragma: no cover - installed as package
     from .metadata import get_metadata  # type: ignore
     from .pack import pack as _pack
     from .pack import pack_file
-    from .unpack import unpack_file  # type: ignore  # placeholder
-    from .unpack import verify_integrity  # type: ignore
+    from .unpack import unpack_file, verify_integrity  # type: ignore
 else:
     from container import unpack as _unused_unpack  # noqa: F401
 

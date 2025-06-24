@@ -758,7 +758,8 @@ def cmd_wizard() -> None:
         qrcode = None
     import tempfile
 
-    path_str = questionary.text("Path to container").ask()
+    click.echo("Path to container: ", nl=False)
+    path_str = input().strip()
     if not path_str:
         raise click.Abort()
     path = Path(path_str)
