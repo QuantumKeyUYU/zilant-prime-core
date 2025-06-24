@@ -18,13 +18,13 @@ Install optional dependencies with:
 pip install "zilant-prime-core[zilfs]"
 ```
 
-The implementation relies on **fusepy** on Unix and **pywinfspy** on Windows.
+The implementation relies on **fusepy** on Unix and **winfspy** on Windows.
 
 ## Requirements
 
 - **Linux**: install `fuse3` and `libfuse3-dev` packages.
-- **macOS**: install `macfuse` and `fusepy` via Homebrew.
-- **Windows**: install [WinFSP](https://winfsp.dev/) and the Python package `pywinfspy`.
+- **macOS**: install `macfuse` via Homebrew.
+- **Windows**: install [WinFSP](https://winfsp.dev/) and the Python package `winfspy`.
 
 ## Examples
 

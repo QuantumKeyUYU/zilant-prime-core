@@ -1,13 +1,8 @@
 import hashlib
+import pytest
 from pathlib import Path
 
-import pytest
-
-from zilant_prime_core.zilfs import (
-    ZilantFS,
-    diff_snapshots,
-    snapshot_container,
-)
+from zilant_prime_core.zilfs import ZilantFS, diff_snapshots, snapshot_container
 
 pytestmark = pytest.mark.zilfs
 

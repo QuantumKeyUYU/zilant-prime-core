@@ -28,3 +28,21 @@ int zil_unpack_dir(const char *in, const char *out, const uint8_t *key32) {
     Py_DECREF(module);
     return ret;
 }
+
+static struct PyModuleDef zil_mobile_api_module = {
+    PyModuleDef_HEAD_INIT,
+    "zil_mobile_api",
+    NULL,
+    -1,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
+PyMODINIT_FUNC
+PyInit_zil_mobile_api(void)
+{
+    return PyModule_Create(&zil_mobile_api_module);
+}

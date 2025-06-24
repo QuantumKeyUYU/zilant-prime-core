@@ -119,7 +119,10 @@ _dummy_dir = Path(".")
 d1 = generate_decoy_files(_dummy_dir, 1, size=1, expire_seconds=0)[0]
 # decoy #2: we remove it first → hits the removed-early branch
 d2 = generate_decoy_files(_dummy_dir, 1, size=1, expire_seconds=0)[0]
-d2.unlink()
+try:
+    d2.unlink()
+except FileNotFoundError:
+    pass
 # give the two threads a moment to run
 time.sleep(0.01)
 

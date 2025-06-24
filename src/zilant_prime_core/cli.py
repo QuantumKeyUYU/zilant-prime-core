@@ -53,12 +53,7 @@ from zilant_prime_core.utils.device_fp import SALT_CONST, collect_hw_factors, co
 from zilant_prime_core.utils.pq_crypto import Dilithium2Signature, Kyber768KEM
 from zilant_prime_core.utils.recovery import DESTRUCTION_KEY_BUFFER, self_destruct
 from zilant_prime_core.utils.screen_guard import ScreenGuardError, guard
-from zilant_prime_core.zilfs import (
-    diff_snapshots,
-    mount_fs,
-    snapshot_container,
-    umount_fs,
-)
+from zilant_prime_core.zilfs import diff_snapshots, mount_fs, snapshot_container, umount_fs
 
 
 # ────────────────────────── helpers ──────────────────────────

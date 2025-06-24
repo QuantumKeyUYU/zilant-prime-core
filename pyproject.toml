@@ -120,7 +120,7 @@ notify = [
 ]
 zilfs = [
   "fusepy; sys_platform != 'win32'",
-  "pywinfspy; sys_platform == 'win32'",
+  "winfspy; sys_platform == 'win32'",
 ]
 tray = [
   "PySide6",
