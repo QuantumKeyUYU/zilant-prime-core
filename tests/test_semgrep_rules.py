@@ -1,9 +1,8 @@
 import json
 import os
+import pytest
 import subprocess
 from pathlib import Path
-
-import pytest
 
 if os.getenv("NO_SEMGREP_TEST"):
     pytest.skip("semgrep tests disabled", allow_module_level=True)

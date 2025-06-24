@@ -44,6 +44,8 @@ dependencies = [
 [project.scripts]
 zilant = "zilant_prime_core.cli:cli"
 zilctl = "zilant_prime_core.cli:cli"
+[project.entry-points.zilctl]
+wormhole = "zilant_prime_core.cli.wormhole:cli"
 
 [project.urls]
 Homepage      = "https://github.com/QuantumKeyUYU/zilant-prime-core"
@@ -114,6 +116,7 @@ cli = [
   "pexpect>=4.8",
   "questionary>=2.0",
   "qrcode[pil]>=7.4",
+  "magic-wormhole>=0.19",
 ]
 metrics = [
   "prometheus-client>=0.16.0,<1.0",
