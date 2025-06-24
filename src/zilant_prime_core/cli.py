@@ -12,7 +12,18 @@ import yaml  # type: ignore
 from pathlib import Path
 from typing import Any, NoReturn, cast
 
-from crypto_core import hash_sha3
+try:
+    from crypto_core import hash_sha3
+except ModuleNotFoundError:  # pragma: no cover - installed package path
+    try:
+        from zilant_prime_core.crypto_core import hash_sha3  # type: ignore
+    except Exception:  # pragma: no cover - fallback to stdlib
+        import hashlib
+
+        def hash_sha3(data: bytes) -> bytes:  # type: ignore
+            return hashlib.sha3_256(data).digest()
+
+
 from zilant_prime_core.container import pack_file, unpack_file
 from zilant_prime_core.crypto.password_hash import hash_password, verify_password
 from zilant_prime_core.metrics import metrics
