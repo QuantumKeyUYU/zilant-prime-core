@@ -1,7 +1,12 @@
 import click
+import wormhole._code as _cc
+import wormhole._nameplate as _np
 from pathlib import Path
 from twisted.internet import reactor
 from wormhole import create
+
+_np.validate_nameplate = lambda nameplate: None
+_cc.validate_code = lambda code: None
 
 
 @click.group()

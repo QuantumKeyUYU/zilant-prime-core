@@ -48,7 +48,11 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
     """Pack directory using a streaming TAR writer."""
     with TemporaryDirectory() as tmp:
         fifo = Path(tmp) / "pipe"
-        os.mkfifo(fifo)
+        try:
+            os.mkfifo(fifo)
+        except (AttributeError, NotImplementedError, OSError):
+            pack_dir(src, dest, key)
+            return
         proc = subprocess.Popen(["tar", "-C", str(src), "-cf", str(fifo), "."])
         pack_stream(fifo, dest, key)
         proc.wait()
