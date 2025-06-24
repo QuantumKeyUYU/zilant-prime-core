@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "zilant-prime-core"
-version         = "0.9.9-beta1.post3"
+version         = "0.9.9-beta1.post4"
 description     = "ZILANT Prime™ core: AEAD, Argon2id, Phase-VDF, .zil container & CLI"
 readme          = "README.md"
 requires-python = ">=3.10"

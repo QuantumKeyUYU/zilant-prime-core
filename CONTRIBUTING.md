@@ -18,3 +18,6 @@ style for commit messages.
 ## Pull Requests
 Open a PR against the `main` branch. At least one reviewer must approve
 before merge.
+
+### Large files
+Use Git LFS for binaries larger than a few megabytes. Run `git lfs install` once and track files via `git lfs track`. GitHub limits: 1 GB per file, 5 GB total repo. Avoid committing generated artifacts.

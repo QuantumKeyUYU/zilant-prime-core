@@ -25,6 +25,7 @@ Since pre-mass-edit-
 - fix: auto-format by pre-commit
 
 ## Docs
+- docs: enable Git LFS & slim history
 - docs: pass linkcheck with pinned deps
 
 ## Chore

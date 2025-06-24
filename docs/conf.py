@@ -62,6 +62,7 @@ nitpicky = not CI
 
 # Ignore unreachable or offline docs when validating links
 linkcheck_ignore = [
+    r"https://raw.githubusercontent.com/.*",
     r"https://docs\.python\.org/3/library/typing.*",
     r"https://winfsp\.dev/.*",
     r"../api/.*",
