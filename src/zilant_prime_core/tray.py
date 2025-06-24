@@ -3,12 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from container import get_metadata
+
 from .zilfs import ACTIVE_FS
 
 try:
-    from PySide6.QtGui import QIcon
-    from PySide6.QtWidgets import QApplication, QMenu, QAction, QSystemTrayIcon  # type: ignore[attr-defined]
     from PySide6.QtCore import QTimer
+    from PySide6.QtGui import QIcon
+    from PySide6.QtWidgets import QAction, QApplication, QMenu, QSystemTrayIcon  # type: ignore[attr-defined]
 except Exception:  # pragma: no cover - optional GUI
     QApplication = None  # type: ignore
 

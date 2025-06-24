@@ -1,8 +1,7 @@
 import hashlib
+import pytest
 import shutil
 from pathlib import Path
-
-import pytest
 
 from zilant_prime_core.zilfs import ZilantFS, unpack_dir
 

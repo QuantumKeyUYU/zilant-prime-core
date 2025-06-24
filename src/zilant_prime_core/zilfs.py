@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import errno
+import hashlib
+import json
 import os
 import subprocess
 import tarfile
 import time
-import hashlib
-import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, cast
@@ -24,9 +24,7 @@ except Exception:  # pragma: no cover - optional dependency may be missing
 
 from container import get_metadata, pack_file, unpack_file
 from streaming_aead import pack_stream, unpack_stream
-
 from utils.logging import get_logger
-
 
 logger = get_logger("zilfs")
 

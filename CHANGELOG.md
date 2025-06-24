@@ -129,4 +129,12 @@
 - Workflow builds wheel before running Semgrep.
 - Shim for `tomli` is conditional to avoid conflicts.
 
+## 0.9.9b2 — 2025-06-28
+
+- Исправлена сборка Android JNI unpacker (stream-API).
+- Добавлен таймер авто-обновления трэя.
+- Прописан ZSTR-header для streaming-контейнеров.
+- Обновлена документация Android usage.
+- CI: исправлены brew-инсталлы и extras.
+
 ---
