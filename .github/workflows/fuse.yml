@@ -135,8 +135,8 @@ jobs:
       - name: Run wizard test (pty)
         run: pytest -q -m wizard
       - name: Install docs deps
-        run: pip install -r docs/requirements.txt
-      - name: Linkcheck docs
         run: |
-          export CI=1
-          make -C docs linkcheck SPHINXOPTS='--nitpick-ignore docs/_linkcheck_ignore.txt'
+          pip install -r docs/requirements.txt
+          pip install 'sphinx>=6.0.0'
+      - name: Linkcheck docs
+        run: sphinx-build -M linkcheck docs docs/_build
