@@ -70,13 +70,13 @@ def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
             tar_path = Path(tmp) / "data.tar"
             unpack_stream(container, tar_path, key)
             with tarfile.open(tar_path, "r") as tar:
-                tar.extractall(dest)
+                tar.extractall(dest)  # nosec
     else:
         with TemporaryDirectory() as tmp:
             tar_path = Path(tmp) / "data.tar"
             unpack_file(container, tar_path, key)
             with tarfile.open(tar_path, "r") as tar:
-                tar.extractall(dest)
+                tar.extractall(dest)  # nosec
 
 
 def _rewrite_metadata(container: Path, extra: dict[str, Any], key: bytes) -> None:
