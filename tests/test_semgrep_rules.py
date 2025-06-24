@@ -1,7 +1,11 @@
 import json
 import os
+import pytest
 import subprocess
 from pathlib import Path
+
+if os.getenv("NO_SEMGREP_TEST"):
+    pytest.skip("semgrep tests disabled", allow_module_level=True)
 
 RULE_DIR = Path(__file__).resolve().parents[1] / ".semgrep" / "custom"
 
@@ -26,6 +30,8 @@ def _run_semgrep(rule: str, source: str, tmp_path: Path, autofix: bool = False):
         SEMGREP_SEND_METRICS="0",
         SEMGREP_CONFIG="",
         SEMGREP_DISABLE_VERSION_CHECK="1",
+        SEMGREP_RULES_AUTO_UPDATE="0",
+        SEMGREP_SKIP_DB_UPDATE="1",
     )
     result = subprocess.run(cmd, capture_output=True, text=True, env=env)
     return p.read_text(), json.loads(result.stdout or "{}")

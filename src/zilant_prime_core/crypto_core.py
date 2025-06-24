@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import argon2.low_level as a2
+import hashlib
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 from typing import cast
 
@@ -13,6 +14,7 @@ __all__ = [
     "decrypt_chacha20_poly1305",
     "derive_key_argon2id",
     "derive_key_double",
+    "hash_sha3",
 ]
 
 
@@ -66,3 +68,9 @@ def derive_key_double(password: bytes, salt: bytes) -> bytes:
     alt_salt = kdf.derive(password)
     decoy = derive_key_argon2id(password, alt_salt)
     return bytes(a ^ b for a, b in zip(real, decoy, strict=False))
+
+
+def hash_sha3(data: bytes, *, hex_output: bool = False) -> str | bytes:
+    """Return SHA3-256 digest of *data*."""
+    digest = hashlib.sha3_256(data).digest()
+    return digest.hex() if hex_output else digest

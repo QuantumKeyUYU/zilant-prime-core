@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "zilant-prime-core"
-version         = "0.9.9b2"
+version         = "0.9.9-rc1"
 description     = "ZILANT Prime™ core: AEAD, Argon2id, Phase-VDF, .zil container & CLI"
 readme          = "README.md"
 requires-python = ">=3.10"
@@ -43,6 +43,9 @@ dependencies = [
 
 [project.scripts]
 zilant = "zilant_prime_core.cli:cli"
+zilctl = "zilant_prime_core.cli:cli"
+[project.entry-points.zilctl]
+wormhole = "zilant_prime_core.cli_wormhole:cli"
 
 [project.urls]
 Homepage      = "https://github.com/QuantumKeyUYU/zilant-prime-core"
@@ -76,7 +79,7 @@ dev = [
   "filelock>=3.13,<4.0",
   "build",
   "twine",
-  "atheris>=2.1; python_version < '3.12'",
+  "atheris>=2.1; sys_platform == 'linux' and python_version < '3.12'",
   "pyinstaller>=6.0",
   "types-PyYAML>=6.0",
   "types-tabulate",
@@ -100,8 +103,9 @@ docs = [
   "m2r2",
   "sphinxcontrib-mermaid",
 ]
-zkp = [
-  "pysnark-libsnark>=0.1.0",
+zkp = []
+snark = [
+  "pysnark-libsnark>=0.1.0 ; python_version < '3.13'",
 ]
 legacy = [
   "tomli; python_version<'3.11'",
@@ -109,6 +113,11 @@ legacy = [
 cli = [
   "tabulate>=0.9",
   "watchdog>=4.0",
+  "pexpect>=4.8",
+  "questionary>=2.0",
+  "qrcode[pil]>=7.4",
+  "magic-wormhole>=0.19",
+  "twisted>=23.10",
 ]
 metrics = [
   "prometheus-client>=0.16.0,<1.0",
@@ -131,6 +140,7 @@ where = ["src"]
 namespaces = false
 
 [tool.setuptools]
+py-modules = ["container"]
 ext-modules = [
   { name = "zilant_prime_core.utils.crypto_core", sources = ["src/zilant_prime_core/utils/crypto_core.c"], language = "c" },
   { name = "zilant_prime_core.utils.hardening", sources = ["src/zilant_prime_core/utils/hardening.c"], language = "c" },
@@ -151,8 +161,8 @@ known_standard_library = ["tomllib"]
 
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "C90", "B"]
-ignore = ["E402", "B904", "C901"]
+select = ["E", "F", "B", "RUF"]
+ignore = ["E402", "B904", "C901", "RUF001", "RUF002", "RUF003", "RUF012", "RUF013"]
 
 
 

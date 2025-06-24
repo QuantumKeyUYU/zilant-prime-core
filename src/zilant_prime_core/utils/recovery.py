@@ -9,10 +9,23 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from aead import encrypt
-from utils.file_utils import atomic_write
-from utils.logging import get_logger
-from utils.secure_memory import wipe_bytes
+try:
+    from zilant_prime_core.aead import encrypt
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from aead import encrypt
+try:
+    from zilant_prime_core.utils.file_utils import atomic_write
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from utils.file_utils import atomic_write
+try:
+    from zilant_prime_core.utils.logging import get_logger
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from utils.logging import get_logger
+_get_logger = get_logger
+try:
+    from zilant_prime_core.utils.secure_memory import wipe_bytes
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from utils.secure_memory import wipe_bytes
 
 LOG_FILE = Path.home() / ".zilant_log.json"
 LOG_ENC_FILE = Path.home() / ".zilant_log.enc"
@@ -20,7 +33,10 @@ DECOY_FILE = Path(__file__).resolve().parents[2] / "dist" / "decoy_template.bin"
 
 DESTRUCTION_KEY_BUFFER: bytearray = bytearray(b"0123456789ABCDEF0123456789ABCDEF")
 
-logger = get_logger("recovery")
+from logging import Logger
+from typing import cast
+
+logger = cast(Logger, _get_logger("recovery"))
 
 
 def self_destruct(reason: str, key_buffer: bytearray) -> Optional[bytes]:

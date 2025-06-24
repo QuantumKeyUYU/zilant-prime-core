@@ -34,6 +34,6 @@ def get_storage_backend() -> Any:
 
         return ipfs_backend
 
-    from backends import local_backend  # noqa: WPS404
+    from backends import local_backend
 
     return local_backend

@@ -1,5 +1,9 @@
 import pytest
+import sys
 from pathlib import Path
+
+if sys.platform == "win32":
+    pytest.skip("mkfifo/NamedPipe отсутствует под Windows", allow_module_level=True)
 
 from zilant_prime_core.zilfs import ZilantFS, unpack_dir
 
