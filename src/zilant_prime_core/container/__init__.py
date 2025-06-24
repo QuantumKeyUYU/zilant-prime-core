@@ -9,23 +9,27 @@ try:
     from container import pack_file, unpack_file, verify_integrity
 except ModuleNotFoundError:  # pragma: no cover - installed as package
     HEADER_SEPARATOR = b"\n\n"
-    from .pack import pack as _pack
+    try:
+        from .metadata import get_metadata  # type: ignore
+        from .pack import pack as _pack  # type: ignore
+        from .pack import pack_file  # type: ignore
+        from .unpack import unpack_file, verify_integrity  # type: ignore
+    except Exception:  # pragma: no cover - optional dependency missing
 
-    def pack_file(*_a: object, **_kw: object) -> None:
-        """Stub for pack_file when standalone module is unavailable."""
-        raise NotImplementedError("pack_file is unavailable")
+        def _pack(*_a: object, **_kw: object) -> bytes:
+            raise NotImplementedError("pack is unavailable")
 
-    def unpack_file(*_a: object, **_kw: object) -> None:
-        """Stub for unpack_file when standalone module is unavailable."""
-        raise NotImplementedError("unpack_file is unavailable")
+        def pack_file(*_a: object, **_kw: object) -> None:
+            raise NotImplementedError("pack_file is unavailable")
 
-    def get_metadata(*_a: object, **_kw: object) -> dict[str, object]:
-        """Stub for get_metadata when standalone module is unavailable."""
-        raise NotImplementedError("get_metadata is unavailable")
+        def unpack_file(*_a: object, **_kw: object) -> None:
+            raise NotImplementedError("unpack_file is unavailable")
 
-    def verify_integrity(*_a: object, **_kw: object) -> bool:
-        """Stub for verify_integrity when standalone module is unavailable."""
-        raise NotImplementedError("verify_integrity is unavailable")
+        def get_metadata(*_a: object, **_kw: object) -> dict[str, object]:
+            raise NotImplementedError("get_metadata is unavailable")
+
+        def verify_integrity(*_a: object, **_kw: object) -> bool:
+            raise NotImplementedError("verify_integrity is unavailable")
 
 else:
     from container import unpack as _unused_unpack  # noqa: F401

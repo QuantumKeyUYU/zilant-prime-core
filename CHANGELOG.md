@@ -1,5 +1,6 @@
 ## Unreleased
 - Fix container pack_file export, logger imports, wizard prompt and policy enforcement
+- Stub wizard dependencies and print prompt before imports
 
 ## 0.9.9-rc1 - 2025-06-24
 ### Changed

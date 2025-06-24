@@ -756,6 +756,13 @@ def cmd_wizard() -> None:
     """Interactive container creation wizard."""
     import hashlib
 
+    click.echo("Path to container: ", nl=False)
+    sys.stdout.flush()
+    path_str = sys.stdin.readline().strip()
+    if not path_str:
+        raise click.Abort()
+    path = Path(path_str)
+
     try:
         import questionary
 
@@ -779,14 +786,9 @@ def cmd_wizard() -> None:
         import qrcode  # type: ignore
     except Exception:  # pragma: no cover - optional dep
         qrcode = None
+
     import tempfile
 
-    click.echo("Path to container: ", nl=False)
-    sys.stdout.flush()
-    path_str = sys.stdin.readline().strip()
-    if not path_str:
-        raise click.Abort()
-    path = Path(path_str)
     pwd = _ask_password("New password")
     if pwd is None:
         raise click.Abort()
