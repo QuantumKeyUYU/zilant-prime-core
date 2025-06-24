@@ -759,7 +759,8 @@ def cmd_wizard() -> None:
     import tempfile
 
     click.echo("Path to container: ", nl=False)
-    path_str = input().strip()
+    sys.stdout.flush()
+    path_str = sys.stdin.readline().strip()
     if not path_str:
         raise click.Abort()
     path = Path(path_str)

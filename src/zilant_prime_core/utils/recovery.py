@@ -18,10 +18,9 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - dev
     from utils.file_utils import atomic_write
 try:
-    from zilant_prime_core.utils.logging import get_logger
+    from zilant_prime_core.utils.logging import get_logger as _get_logger
 except ModuleNotFoundError:  # pragma: no cover - dev
-    from utils.logging import get_logger
-_get_logger = get_logger
+    from utils.logging import get_logger as _get_logger
 try:
     from zilant_prime_core.utils.secure_memory import wipe_bytes
 except ModuleNotFoundError:  # pragma: no cover - dev

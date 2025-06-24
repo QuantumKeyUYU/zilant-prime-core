@@ -11,7 +11,11 @@ except ModuleNotFoundError:  # pragma: no cover - installed as package
     HEADER_SEPARATOR = b"\n\n"
     from .metadata import get_metadata  # type: ignore
     from .pack import pack as _pack
-    from .pack import pack_file
+
+    def pack_file(*_a: object, **_kw: object) -> None:
+        """Stub for pack_file when standalone module is unavailable."""
+        raise NotImplementedError("pack_file is unavailable")
+
     from .unpack import unpack_file, verify_integrity  # type: ignore
 else:
     from container import unpack as _unused_unpack  # noqa: F401
