@@ -16,6 +16,23 @@ jobs:
       os: ${{ matrix.os }}
       extras: dev
     secrets: inherit
+
+  docs:
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install docs deps
+        run: pip install -r docs/requirements.txt
+      - name: Linkcheck
+        run: |
+          export CI=1
+          make -C docs linkcheck SPHINXOPTS='-D linkcheck_ignore=docs/_linkcheck_ignore.txt -q'
   ci-durations:
     if: github.event_name == 'pull_request'
     needs: tests

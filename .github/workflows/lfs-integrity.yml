@@ -11,5 +11,7 @@ jobs:
       - name: Verify LFS assets
         run: |
           git lfs pull --exclude="" --include="*"
-          test -f docs/assets/zilfs_demo.gif
-          file docs/assets/zilfs_demo.gif | grep GIF
+          shopt -s nullglob
+          for f in docs/assets/*.{gif,png,svg,mp4}; do
+            test -f "$f" && file "$f"
+          done

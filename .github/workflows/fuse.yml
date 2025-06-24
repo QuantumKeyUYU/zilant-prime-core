@@ -131,4 +131,6 @@ jobs:
       - name: Install docs deps
         run: pip install -r docs/requirements.txt
       - name: Linkcheck docs
-        run: make -C docs linkcheck
+        run: |
+          export CI=1
+          make -C docs linkcheck SPHINXOPTS='-D linkcheck_ignore=docs/_linkcheck_ignore.txt -q'

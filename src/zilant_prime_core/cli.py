@@ -135,7 +135,7 @@ def cli(
     decoy_sweep: bool,
     paranoid: bool,
 ) -> None:
-    """Zilant Prime command‑line interface.
+    """Zilant Prime command-line interface.
 
     Use ``zilant install-completion bash`` to enable shell autocompletion.
     """
@@ -201,7 +201,7 @@ def cmd_key_rotate(ctx: click.Context, days: int, in_key: Path, out_key: Path) -
 @click.option("--overwrite/--no-overwrite", default=False, show_default=True)
 @click.pass_context
 @metrics.record_cli("pack")
-def cmd_pack(  # noqa: C901  (covered by extensive tests)
+def cmd_pack(
     ctx: click.Context,
     source: Path,
     output: Path | None,
@@ -261,11 +261,11 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
     except Exception as exc:  # pragma: no cover
         _abort(f"Pack error: {exc}")
 
-    # write container (non‑PQ branch)
+    # write container (non-PQ branch)
     if blob is not None:
         tmp = dest.with_suffix(dest.suffix + ".tmp")
         try:
-            with open(tmp, "wb") as fh:  # noqa: PTH123
+            with open(tmp, "wb") as fh:
                 fh.write(blob)
             os.replace(tmp, dest)
             os.chmod(dest, 0o600)
@@ -404,7 +404,7 @@ def cmd_check_snapshot() -> None:
 @click.argument("reason")
 def cmd_self_destruct_cli(reason: str) -> None:
     self_destruct(reason, DESTRUCTION_KEY_BUFFER)
-    click.echo("Self‑destruct completed. Decoy file generated.")
+    click.echo("Self-destruct completed. Decoy file generated.")
 
 
 @cli.command("gen_kem_keys")
@@ -560,7 +560,7 @@ def cmd_audit_verify(ctx: click.Context) -> None:
 
 @cli.group()
 def timelock() -> None:
-    """Time‑lock encryption helpers."""
+    """Time-lock encryption helpers."""
 
 
 @timelock.command("lock")
@@ -727,8 +727,12 @@ def install_completion(ctx: click.Context, shell: str) -> None:
 def cmd_wizard() -> None:
     """Interactive container creation wizard."""
     import hashlib
-    import qrcode  # type: ignore
     import questionary
+
+    try:
+        import qrcode  # type: ignore
+    except Exception:  # pragma: no cover - optional dep
+        qrcode = None
     import tempfile
 
     path_str = questionary.text("Path to container").ask()
@@ -745,8 +749,11 @@ def cmd_wizard() -> None:
     strength = "strong" if len(pwd) >= 8 else "weak"
     click.echo(f"Password strength: {strength}")
     if questionary.confirm("Generate QR backup", default=False).ask():
-        img = qrcode.make(pwd)
-        img.save(path.with_name("qr.png"))
+        if qrcode:
+            img = qrcode.make(pwd)
+            img.save(path.with_name("qr.png"))
+        else:  # pragma: no cover - optional dep missing
+            click.echo("qrcode package not installed", err=True)
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(b"zilant-wizard")
         tmp.flush()
@@ -755,7 +762,7 @@ def cmd_wizard() -> None:
         mount_fs(path, path.with_suffix(".mnt"), pwd)
 
 
-# ───────── external sub‑commands (kdf, pw‑hash, …) ─────────
+# ───────── external sub-commands (kdf, pw-hash, …) ─────────
 from zilant_prime_core.cli_commands import (
     derive_key_cmd,
     hpke_cmd,

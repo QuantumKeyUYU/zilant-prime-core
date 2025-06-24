@@ -22,6 +22,13 @@ jobs:
         run: |
           python -m pip install --upgrade build
           python -m build
+      - name: Build Windows installer
+        run: iscc packaging/innosetup/setup.iss
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-installer
+          path: ZilantSetup.exe
       - name: Upload Python dists
         uses: actions/upload-artifact@v4
         with:

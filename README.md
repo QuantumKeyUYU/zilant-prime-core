@@ -93,6 +93,7 @@ pip install "zilant-prime-core[legacy]"
 
 # опционально: автодополнение
 source completions/zilant.bash  # bash
+# For Fish shell, copy to ~/.config/fish/completions/
 ```
 
 ---
