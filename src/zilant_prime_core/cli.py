@@ -12,8 +12,8 @@ import yaml  # type: ignore
 from pathlib import Path
 from typing import Any, NoReturn, cast
 
-from container import pack_file, unpack_file
 from crypto_core import hash_sha3
+from zilant_prime_core.container import pack_file, unpack_file
 from zilant_prime_core.crypto.password_hash import hash_password, verify_password
 from zilant_prime_core.metrics import metrics
 from zilant_prime_core.utils import VaultClient

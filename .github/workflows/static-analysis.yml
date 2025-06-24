@@ -23,6 +23,5 @@ jobs:
       - name: Run Semgrep
         uses: returntocorp/semgrep-action@v1
         with:
-          entryPoint: ./src
           config: .semgrep/
           publishToken: ${{ secrets.SEMGREP_TOKEN }}
