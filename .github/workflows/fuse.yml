@@ -103,7 +103,7 @@ jobs:
           lfs: true
       - name: Start relay
         run: |
-          docker run -d -p 0:4003 --name relay mazzolino/magic-wormhole-relay
+          docker run -d -p 0:4003 --name relay leastauthority/magic-wormhole-relay
           echo "WORM_PORT=$(docker port relay 4003 | cut -d: -f2)" >> $GITHUB_ENV
       - uses: actions/setup-python@v5
         with:
