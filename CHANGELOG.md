@@ -136,5 +136,6 @@
 - Прописан ZSTR-header для streaming-контейнеров.
 - Обновлена документация Android usage.
 - CI: исправлены brew-инсталлы и extras.
+- CI: установка FUSE-пакетов на Linux и инициализация `zil_mobile_api`.
 
 ---
