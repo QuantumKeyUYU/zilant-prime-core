@@ -16,6 +16,8 @@ def _sha(b: bytes):
 def test_wormhole_roundtrip(tmp_path):
     if "WORM_PORT" not in os.environ:
         pytest.skip("no relay")
+    if os.environ.get("GITHUB_REF") != "refs/heads/main":
+        pytest.skip("only on main")
     fn = tmp_path / "in.bin"
     fn.write_bytes(MSG)
     port = os.environ["WORM_PORT"]

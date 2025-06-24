@@ -13,4 +13,3 @@ jobs:
           git lfs pull --exclude="" --include="*"
           test -f docs/assets/zilfs_demo.gif
           file docs/assets/zilfs_demo.gif | grep GIF
-

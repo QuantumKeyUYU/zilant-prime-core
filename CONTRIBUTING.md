@@ -21,3 +21,6 @@ before merge.
 
 ### Large files
 Use Git LFS for binaries larger than a few megabytes. Run `git lfs install` once and track files via `git lfs track`. GitHub limits: 1 GB per file, 5 GB total repo. Avoid committing generated artifacts.
+
+### Reusable workflows & cache keys
+CI jobs rely on reusable workflows under `.github/workflows/reusable/` and use cache keys based on `pyproject.toml` or `package-lock.json`.

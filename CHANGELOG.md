@@ -1,5 +1,8 @@
 ## Unreleased
 
+### Infra
+- unify CI workflows, add cache & commitlint
+
 ### Feat
 
 - prepare ZilantFS v0.4 RC

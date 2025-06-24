@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
 
-__version__ = "0.9.9b1.post4"
+__version__ = "0.9.9rc1"
 
 __all__ = ["__version__"]
 

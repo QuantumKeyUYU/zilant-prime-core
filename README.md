@@ -1,6 +1,9 @@
 # Zilant Prime Core
 
-[![Coverage](https://img.shields.io/codecov/c/github/QuantumKeyUYU/zilant-prime-core?branch=main)](https://codecov.io/gh/QuantumKeyUYU/zilant-prime-core) [![Security](https://img.shields.io/badge/security-scan-passed-success.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/security) [![Docs](https://img.shields.io/badge/docs-available-blue.svg)](./docs/ARCH.md) ![ISO 27001](https://img.shields.io/badge/ISO27001-compliant-brightgreen.svg) [![Secrets](https://img.shields.io/badge/secrets-clean-brightgreen.svg)](./secret_leak_report.md) [![Changelog](https://img.shields.io/badge/changelog-up--to--date-blue.svg)](./CHANGELOG_AUTO.md) [![Licenses](https://img.shields.io/badge/licenses-open--source-brightgreen.svg)](./licenses_report.md) [![Compliance](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/security-compliance-suite.yml/badge.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/security-compliance-suite.yml) [![Threat Model](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/crypto-threat-model.yml/badge.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/crypto-threat-model.yml) [![Policy](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/policy-enforcement.yml/badge.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/policy-enforcement.yml)
+
+| Build Matrix | Docs | Security |
+|--------------|------|----------|
+| [![CI](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/ci.yml) | [![Docs](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/lint-docs.yml/badge.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/lint-docs.yml) | [![Security](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/security-compliance-suite.yml/badge.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/security-compliance-suite.yml) |
 
 CI status
 

@@ -1,0 +1,39 @@
+name: pytest
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        required: true
+        type: string
+      extras:
+        required: false
+        type: string
+      os:
+        required: true
+        type: string
+jobs:
+  run-tests:
+    runs-on: ${{ inputs.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Disable LFS smudge
+        run: echo "GIT_LFS_SKIP_SMUDGE=1" >> $GITHUB_ENV
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+      - name: Install deps
+        run: pip install -e .${{ inputs.extras && '[' + inputs.extras + ']' || '' }}
+      - name: Pre-commit
+        run: pre-commit run --all-files
+      - name: Pytest
+        run: pytest -q -m "not slow"
