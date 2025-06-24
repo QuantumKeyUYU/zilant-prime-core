@@ -259,6 +259,32 @@ zilctl heal-scan secret.zil --auto
 zilctl heal-verify secret.zil
 ```
 
+## ZilantFS
+
+Mount encrypted containers as a regular directory.
+
+```bash
+zilant mount secret.zil mnt -p -
+rsync -av mnt/ backup/
+zilant umount mnt
+```
+
+![Demo](docs/assets/zilfs_demo.gif)
+![Beta](docs/assets/zilfs_beta.gif)
+
+Use a decoy profile:
+
+```bash
+zilant mount secret.zil mnt -p mypwd --decoy-profile minimal
+```
+
+| Feature | ZilantFS | VeraCrypt | CryFS |
+|---------|---------|-----------|-------|
+| Snapshots | ✅ | ❌ | ✅ |
+| Decoy / honeypot | ✅ | ❌ | ❌ |
+| PQ-crypto | ✅ | ❌ | ❌ |
+| Mobile (Android) | ✅ | ❌ | ❌ |
+
 ## Development
 
 ### Code Owners & Static Analysis

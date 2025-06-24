@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "zilant-prime-core"
-version         = "0.1.0"
+version         = "0.9.9b2"
 description     = "ZILANT Prime™ core: AEAD, Argon2id, Phase-VDF, .zil container & CLI"
 readme          = "README.md"
 requires-python = ">=3.10"
@@ -118,6 +118,13 @@ notify = [
   "slack-sdk",
   "python-telegram-bot",
 ]
+zilfs = [
+  "fusepy; sys_platform != 'win32'",
+  "pywinfspy; sys_platform == 'win32'",
+]
+tray = [
+  "PySide6",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -126,7 +133,8 @@ namespaces = false
 [tool.setuptools]
 ext-modules = [
   { name = "zilant_prime_core.utils.crypto_core", sources = ["src/zilant_prime_core/utils/crypto_core.c"], language = "c" },
-  { name = "zilant_prime_core.utils.hardening", sources = ["src/zilant_prime_core/utils/hardening.c"], language = "c" }
+  { name = "zilant_prime_core.utils.hardening", sources = ["src/zilant_prime_core/utils/hardening.c"], language = "c" },
+  { name = "zilant_prime_core.zil_mobile_api", sources = ["src/zilant_prime_core/zil_mobile_api.c"], language = "c" }
 ]
 
 [tool.black]

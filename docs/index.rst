@@ -21,6 +21,7 @@ Welcome to the Zilant Prime Core documentation!
    architecture/index
    guides/tor_proxy_qvpn
    guides/ring_signature_example
+   guides/zilantfs
    ARCH
    ANONYMITY
    QUANTUM_SECURITY
