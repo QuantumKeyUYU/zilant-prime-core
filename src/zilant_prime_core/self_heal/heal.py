@@ -9,10 +9,22 @@ import os
 from pathlib import Path
 from typing import cast
 
-from audit_ledger import record_action
-from container import HEADER_SEPARATOR, pack
-from crypto_core import hash_sha3
-from utils.file_utils import atomic_write
+try:
+    from zilant_prime_core.audit_ledger import record_action
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from audit_ledger import record_action
+try:
+    from zilant_prime_core.container import HEADER_SEPARATOR, pack  # type: ignore[attr-defined]
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from container import HEADER_SEPARATOR, pack
+try:
+    from zilant_prime_core.crypto_core import hash_sha3
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from crypto_core import hash_sha3
+try:
+    from zilant_prime_core.utils.file_utils import atomic_write
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from utils.file_utils import atomic_write
 from zilant_prime_core.crypto.fractal_kdf import fractal_kdf
 from zilant_prime_core.zkp import prove_intact
 

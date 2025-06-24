@@ -638,7 +638,10 @@ def uyi_group() -> None:
 @uyi_group.command("verify-integrity")
 @click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 def cmd_verify_integrity(container: Path) -> None:
-    from container import verify_integrity
+    try:
+        from zilant_prime_core.container import verify_integrity
+    except ModuleNotFoundError:  # pragma: no cover - dev
+        from container import verify_integrity
 
     ok = verify_integrity(container)
     click.echo("valid" if ok else "invalid")
@@ -647,7 +650,10 @@ def cmd_verify_integrity(container: Path) -> None:
 @uyi_group.command("show-metadata")
 @click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 def cmd_show_metadata(container: Path) -> None:
-    from container import get_metadata
+    try:
+        from zilant_prime_core.container import get_metadata
+    except ModuleNotFoundError:  # pragma: no cover - dev
+        from container import get_metadata
 
     click.echo(json.dumps(get_metadata(container)))
 
@@ -661,7 +667,10 @@ def cmd_show_metadata(container: Path) -> None:
 def cmd_heal_scan(path: Path, auto: bool, recursive: bool, report: str) -> None:
     from tabulate import tabulate  # type: ignore
 
-    from container import get_metadata, verify_integrity
+    try:
+        from zilant_prime_core.container import get_metadata, verify_integrity
+    except ModuleNotFoundError:  # pragma: no cover - dev
+        from container import get_metadata, verify_integrity
     from zilant_prime_core.self_heal import heal_container
 
     paths: list[Path] = []
@@ -700,7 +709,10 @@ def cmd_heal_scan(path: Path, auto: bool, recursive: bool, report: str) -> None:
 @cli.command("heal-verify")
 @click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 def cmd_heal_verify(container: Path) -> None:
-    from container import get_metadata
+    try:
+        from zilant_prime_core.container import get_metadata
+    except ModuleNotFoundError:  # pragma: no cover - dev
+        from container import get_metadata
     from zilant_prime_core.zkp import verify_intact
 
     meta = get_metadata(container)

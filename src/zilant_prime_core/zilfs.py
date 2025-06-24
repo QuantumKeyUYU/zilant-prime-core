@@ -24,9 +24,18 @@ except Exception:  # pragma: no cover - optional dependency may be missing
 
     Operations = _Operations
 
-from container import get_metadata, pack_file, unpack_file
-from streaming_aead import pack_stream, unpack_stream
-from utils.logging import get_logger
+try:
+    from zilant_prime_core.container import get_metadata, pack_file, unpack_file
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from container import get_metadata, pack_file, unpack_file
+try:
+    from zilant_prime_core.streaming_aead import pack_stream, unpack_stream
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from streaming_aead import pack_stream, unpack_stream
+try:
+    from zilant_prime_core.utils.logging import get_logger
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from utils.logging import get_logger
 
 logger = get_logger("zilfs")
 

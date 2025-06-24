@@ -3,7 +3,10 @@
 
 # src/zilant_prime_core/container/__init__.py
 
-from container import get_metadata, pack_file, unpack_file, verify_integrity
+try:
+    from container import get_metadata, pack_file, unpack_file, verify_integrity
+except ModuleNotFoundError:  # pragma: no cover - installed as package
+    from . import pack_file, unpack_file  # circular placeholder - not expected
 
 from .metadata import MetadataError
 from .pack import pack

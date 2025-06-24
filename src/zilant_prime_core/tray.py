@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from container import get_metadata
+try:
+    from zilant_prime_core.container import get_metadata
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from container import get_metadata
 
 from .zilfs import ACTIVE_FS
 

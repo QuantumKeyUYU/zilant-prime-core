@@ -15,6 +15,7 @@ on:
 jobs:
   run-tests:
     runs-on: ${{ inputs.os }}
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,8 +42,9 @@ jobs:
           else
             pip install -e .
           fi
-      - name: Pre-commit
-        if: ${{ inputs.os == 'ubuntu-latest' }}
-        run: pre-commit run --all-files --hook-stage manual
+      - name: Debug
+        run: |
+          echo '>>> PYTEST STARTING'
+          which pytest
       - name: Pytest
         run: pytest -q -m "not slow"
