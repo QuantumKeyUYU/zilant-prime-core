@@ -10,24 +10,35 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - installed as package
     HEADER_SEPARATOR = b"\n\n"
     from .metadata import get_metadata  # type: ignore
-    from .pack import pack as _pack
-    from .pack import pack_file
-    from .unpack import unpack_file, verify_integrity  # type: ignore
+    from .pack import pack as _pack  # type: ignore[assignment]
 else:
     from container import unpack as _unused_unpack  # noqa: F401
 
 from .metadata import MetadataError
 from .unpack import unpack
 
+if "pack_file" not in globals():
+    from typing import Any
+
+    def pack_file(*args: Any, **kwargs: Any) -> None:
+        raise NotImplementedError("pack_file is unavailable")
+
+    def unpack_file(*args: Any, **kwargs: Any) -> None:
+        raise NotImplementedError("unpack_file is unavailable")
+
+    def verify_integrity(*args: Any, **kwargs: Any) -> bool:
+        raise NotImplementedError("verify_integrity is unavailable")
+
+
 pack = _pack
 
 __all__ = [
-    "MetadataError",
     "HEADER_SEPARATOR",
-    "pack",
-    "unpack",
-    "pack_file",
-    "unpack_file",
+    "MetadataError",
     "get_metadata",
+    "pack",
+    "pack_file",
+    "unpack",
+    "unpack_file",
     "verify_integrity",
 ]

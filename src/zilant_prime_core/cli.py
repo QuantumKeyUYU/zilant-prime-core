@@ -665,7 +665,15 @@ def cmd_show_metadata(container: Path) -> None:
 @click.option("--recursive", is_flag=True, help="Scan directories recursively")
 @click.option("--report", type=click.Choice(["json", "table"]), default="table")
 def cmd_heal_scan(path: Path, auto: bool, recursive: bool, report: str) -> None:
-    from tabulate import tabulate  # type: ignore
+    try:
+        from tabulate import tabulate  # type: ignore
+    except ModuleNotFoundError:  # pragma: no cover - optional dependency
+
+        def tabulate(rows: list[list[str]], headers: list[str]) -> str:
+            lines = [" | ".join(headers)]
+            for row in rows:
+                lines.append(" | ".join(row))
+            return "\n".join(lines)
 
     try:
         from zilant_prime_core.container import get_metadata, verify_integrity
