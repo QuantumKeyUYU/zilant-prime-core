@@ -117,6 +117,7 @@ cli = [
   "questionary>=2.0",
   "qrcode[pil]>=7.4",
   "magic-wormhole>=0.19",
+  "twisted>=23.10",
 ]
 metrics = [
   "prometheus-client>=0.16.0,<1.0",
