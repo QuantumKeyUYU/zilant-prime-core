@@ -33,9 +33,10 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - dev
     from streaming_aead import pack_stream, unpack_stream
 try:
-    from zilant_prime_core.utils.logging import get_logger as _get_logger
+    from zilant_prime_core.utils.logging import get_logger
 except ModuleNotFoundError:  # pragma: no cover - dev
-    from utils.logging import get_logger as _get_logger
+    from utils.logging import get_logger
+_get_logger = get_logger
 
 from logging import Logger
 
