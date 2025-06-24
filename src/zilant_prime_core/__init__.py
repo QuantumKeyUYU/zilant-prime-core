@@ -8,7 +8,11 @@ __all__ = ["__version__", "hash_sha3"]
 
 import os
 
-from .cli import _abort  # NoReturn
+
+def _abort(msg: str, code: int = 1) -> None:
+    """Abort import early with a clear message."""
+    raise RuntimeError(msg)
+
 
 if os.environ.get("ZILANT_CI_IMPORT_HOOK"):
     _abort("Unsafe import before guard!", code=99)  # pragma: no cover
