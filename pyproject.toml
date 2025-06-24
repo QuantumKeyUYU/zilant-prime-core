@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name            = "zilant-prime-core"
-version         = "0.9.9-beta1.post1"
+version         = "0.9.9-beta1.post2"
 description     = "ZILANT Prime™ core: AEAD, Argon2id, Phase-VDF, .zil container & CLI"
 readme          = "README.md"
 requires-python = ">=3.10"
@@ -43,6 +43,7 @@ dependencies = [
 
 [project.scripts]
 zilant = "zilant_prime_core.cli:cli"
+zilctl = "zilant_prime_core.cli:cli"
 
 [project.urls]
 Homepage      = "https://github.com/QuantumKeyUYU/zilant-prime-core"
@@ -109,6 +110,8 @@ legacy = [
 cli = [
   "tabulate>=0.9",
   "watchdog>=4.0",
+  "questionary>=2.0",
+  "qrcode[pil]>=7.4",
 ]
 metrics = [
   "prometheus-client>=0.16.0,<1.0",

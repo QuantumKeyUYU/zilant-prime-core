@@ -4,6 +4,8 @@
 # tests/test_vdf_property.py
 
 import pytest
+
+pytest.importorskip("hypothesis")
 from hypothesis import given
 from hypothesis import strategies as st
 

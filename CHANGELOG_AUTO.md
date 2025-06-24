@@ -4,6 +4,7 @@ Generated: 2025-06-24
 Since pre-mass-edit-
 
 ## Feat
+- feat(cli): interactive wizard & TTY e2e
 - feat: prepare ZilantFS v0.4 RC
 - feat: ZilantFS v0.4 beta prep
 - feat: ZilantFS v0.3 snapshots and tray
@@ -33,7 +34,7 @@ Since pre-mass-edit-
 - chore: fix CI (Mermaid sandbox, add THREATS placeholder, build wheels)
 
 ## Other
-- ci: add wormhole e2e workflow
+- Applying previous commit.
 - Merge pull request #111 from QuantumKeyUYU/codex/исправить-ci--обновить-changelog-и-зависимые-файлы
 - ci: ignore SSHFS mount failures
 - CI: ensure libfuse available on Linux
@@ -51,3 +52,4 @@ Since pre-mass-edit-
 - Add license audit and import graph tools
 - Add secret scanner and auto changelog
 - Full project update
+

@@ -5,6 +5,7 @@
 CI status
 
 [![Wormhole e2e](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/fuse.yml/badge.svg?label=wormhole-e2e)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/fuse.yml)
+[![Wizard e2e](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/fuse.yml/badge.svg?label=wizard-e2e)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/fuse.yml)
 
 Универсальная CLI и библиотека для создания безопасных контейнеров, шифрования логов, VDF-доказательств и полной DevSecOps-цепочки.
 

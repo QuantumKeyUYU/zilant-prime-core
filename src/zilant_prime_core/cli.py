@@ -723,6 +723,38 @@ def install_completion(ctx: click.Context, shell: str) -> None:
     click.echo(res.stdout)
 
 
+@cli.command("wizard")
+def cmd_wizard() -> None:
+    """Interactive container creation wizard."""
+    import hashlib
+    import qrcode  # type: ignore
+    import questionary
+    import tempfile
+
+    path_str = questionary.text("Path to container").ask()
+    if not path_str:
+        raise click.Abort()
+    path = Path(path_str)
+    pwd = questionary.password("New password").ask()
+    if pwd is None:
+        raise click.Abort()
+    confirm = questionary.password("Confirm password").ask()
+    if confirm != pwd:
+        click.echo("Passwords do not match", err=True)
+        raise click.Abort()
+    strength = "strong" if len(pwd) >= 8 else "weak"
+    click.echo(f"Password strength: {strength}")
+    if questionary.confirm("Generate QR backup", default=False).ask():
+        img = qrcode.make(pwd)
+        img.save(path.with_name("qr.png"))
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        tmp.write(b"zilant-wizard")
+        tmp.flush()
+        pack_file(Path(tmp.name), path, hashlib.sha256(pwd.encode()).digest())
+    if questionary.confirm("Mount now?", default=False).ask():
+        mount_fs(path, path.with_suffix(".mnt"), pwd)
+
+
 # ───────── external sub‑commands (kdf, pw‑hash, …) ─────────
 from zilant_prime_core.cli_commands import (
     derive_key_cmd,
