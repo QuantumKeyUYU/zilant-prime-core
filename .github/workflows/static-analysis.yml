@@ -21,13 +21,8 @@ jobs:
           lfs: true
 
       - name: Run Semgrep
-        uses: returntocorp/semgrep-action@v2
+        uses: returntocorp/semgrep-action@v1
         with:
-          config: |
-            p/python
-            ./.semgrep.yml
-            ./.semgrep/custom
-          generateSarif: true
-          publishSarif: true
-          comment: true
-          autofix: true
+          entryPoint: ./src
+          config: .semgrep/
+          publishToken: ${{ secrets.SEMGREP_TOKEN }}

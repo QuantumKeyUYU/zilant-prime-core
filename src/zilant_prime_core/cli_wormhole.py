@@ -46,6 +46,9 @@ def receive(code: str, relay: str, directory: str) -> None:
     w.set_code(code)
     msg = w.get_message()
     w.close()
-    name, data = msg.split(b"\n", 1)
-    out = Path(directory) / name.decode()
-    out.write_bytes(data)
+    try:
+        name, data = msg.split(b"\n", 1)
+        out = Path(directory) / name.decode()
+        out.write_bytes(data)
+    except Exception:
+        return
