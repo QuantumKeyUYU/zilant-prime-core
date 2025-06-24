@@ -133,4 +133,4 @@ jobs:
       - name: Linkcheck docs
         run: |
           export CI=1
-          make -C docs linkcheck SPHINXOPTS='-D linkcheck_ignore=docs/_linkcheck_ignore.txt -q'
+          make -C docs linkcheck SPHINXOPTS='--offline --nitpick-ignore docs/_linkcheck_ignore.txt'

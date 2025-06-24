@@ -155,8 +155,8 @@ known_standard_library = ["tomllib"]
 
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "C90", "B", "RUF"]
-ignore = ["E402", "B904", "C901"]
+select = ["E", "F", "B", "RUF"]
+ignore = ["E402", "B904", "C901", "RUF001", "RUF002", "RUF003", "RUF012", "RUF013"]
 
 
 

@@ -17,6 +17,7 @@ jobs:
         run: pip install -r docs/requirements.txt
       - name: Build docs
         run: |
+          export CI=1
           cd docs
           make mermaid
           make html

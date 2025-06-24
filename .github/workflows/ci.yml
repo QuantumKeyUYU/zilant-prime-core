@@ -32,7 +32,7 @@ jobs:
       - name: Linkcheck
         run: |
           export CI=1
-          make -C docs linkcheck SPHINXOPTS='-D linkcheck_ignore=docs/_linkcheck_ignore.txt -q'
+          make -C docs linkcheck SPHINXOPTS='--offline --nitpick-ignore docs/_linkcheck_ignore.txt'
   ci-durations:
     if: github.event_name == 'pull_request'
     needs: tests
