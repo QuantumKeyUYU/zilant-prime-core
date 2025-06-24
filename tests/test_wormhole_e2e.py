@@ -19,7 +19,7 @@ def test_wormhole_roundtrip(tmp_path):
     fn = tmp_path / "in.bin"
     fn.write_bytes(MSG)
     port = os.environ["WORM_PORT"]
-    code = "root"
+    code = "1234"
 
     snd = subprocess.Popen(
         ["zilctl", "wormhole", "send", str(fn), "--relay", f"ws://localhost:{port}"],
