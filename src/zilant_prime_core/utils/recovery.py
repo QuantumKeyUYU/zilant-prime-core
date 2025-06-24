@@ -17,11 +17,14 @@ try:
     from zilant_prime_core.utils.file_utils import atomic_write
 except ModuleNotFoundError:  # pragma: no cover - dev
     from utils.file_utils import atomic_write
+import importlib
+
 try:
-    from zilant_prime_core.utils.logging import get_logger
+    _logging_mod = importlib.import_module("zilant_prime_core.utils.logging")
 except ModuleNotFoundError:  # pragma: no cover - dev
-    from utils.logging import get_logger
-_get_logger = get_logger
+    _logging_mod = importlib.import_module("utils.logging")
+
+_get_logger = _logging_mod.get_logger
 try:
     from zilant_prime_core.utils.secure_memory import wipe_bytes
 except ModuleNotFoundError:  # pragma: no cover - dev

@@ -7,7 +7,21 @@ import hashlib
 import os
 import threading
 import time
-from filelock import FileLock
+
+try:  # pragma: no cover - optional dependency
+    from filelock import FileLock
+except Exception:  # pragma: no cover - optional dependency
+
+    class _FileLock:
+        def __init__(self, lock_file: str) -> None:
+            self.lock_file = lock_file
+
+        def acquire(self, timeout: float | None = None) -> None:  # noqa: D401
+            """Acquire the lock (stub)."""
+            pass
+
+    FileLock = _FileLock  # type: ignore[assignment]
+
 
 __all__ = ["compute_self_hash", "init_self_watchdog"]
 
