@@ -31,14 +31,21 @@ if not CI and "sphinx.ext.intersphinx" not in extensions:
     extensions.append("sphinx.ext.intersphinx")
 
 try:  # optional Mermaid
-    pass  # type: ignore
+    import sphinxcontrib.mermaid  # type: ignore
 except Exception:  # pragma: no cover - skip if unavailable
     pass
 else:
-    extensions.append("sphinxcontrib.mermaid")
+    if not CI:
+        extensions.append("sphinxcontrib.mermaid")
 
 # Автоматически генерить заглушки для модулей
 autosummary_generate = True
+autodoc_mock_imports = [
+    "zilant_prime_core.utils.qal",
+    "zilant_prime_core.utils.qvpn",
+    "zilant_prime_core.utils.pq_ring",
+    "zilant_prime_core.utils.zkqp",
+]
 
 # Опции по умолчанию для autodoc
 autodoc_default_options = {
@@ -59,6 +66,10 @@ mermaid_output_format = "png"
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 nitpicky = not CI
+linkcheck_ignore = [
+    r"https://winfsp\.dev",
+    r"https://check\.torproject\.org",
+]
 
 # -- HTML output -------------------------------------------------------------
 

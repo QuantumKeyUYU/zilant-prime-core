@@ -13,13 +13,6 @@ android {
     }
     buildTypes {
         debug {}
-        chaquopyDebug {
-            initWith debug
-            python {
-                pip {
-                }
-            }
-        }
     }
 }
 dependencies {

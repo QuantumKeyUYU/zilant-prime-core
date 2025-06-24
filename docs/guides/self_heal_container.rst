@@ -1,5 +1,7 @@
+:orphan:
+
 Self-Healing Containers
-======================
+=======================
 
 This experimental feature monitors ``.zil`` files and rotates encryption
 keys when a modification is detected. A tiny proof of integrity is
