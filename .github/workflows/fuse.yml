@@ -85,3 +85,21 @@ jobs:
         with:
           name: app-debug
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+
+  wormhole-e2e:
+    needs: [fuse-test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start relay
+        run: |
+          docker run -d -p 0:4003 --name relay mazzolino/magic-wormhole-relay
+          echo "WORM_PORT=$(docker port relay 4003 | cut -d: -f2)" >> $GITHUB_ENV
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install deps
+        run: pip install -e .[wormhole]
+      - name: Run e2e
+        run: pytest -q tests/test_wormhole_e2e.py
