@@ -28,13 +28,13 @@ except ModuleNotFoundError:  # pragma: no cover - installed package path
 
 
 try:
-    from zilant_prime_core.utils.file_utils import atomic_write
-except ModuleNotFoundError:  # pragma: no cover - local imports during dev
     from utils.file_utils import atomic_write
+except ModuleNotFoundError:  # pragma: no cover - package install path
+    from zilant_prime_core.utils.file_utils import atomic_write
 try:
-    from zilant_prime_core.utils.logging import get_logger
-except ModuleNotFoundError:  # pragma: no cover - local imports during dev
     from utils.logging import get_logger
+except ModuleNotFoundError:  # pragma: no cover - package install path
+    from zilant_prime_core.utils.logging import get_logger
 
 ZIL_MAGIC = b"ZILANT"
 ZIL_VERSION = 1
