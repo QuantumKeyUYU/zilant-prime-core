@@ -13,3 +13,5 @@ zstandard>=0.23.0
 tqdm>=4.66.0
 requests>=2.32.0
 hvac~=2.0
+filelock>=3.13.0
+tabulate>=0.9

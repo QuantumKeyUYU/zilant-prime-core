@@ -27,14 +27,17 @@ except ModuleNotFoundError:  # pragma: no cover - installed package path
             return hashlib.sha3_256(data).digest()
 
 
+# Avoid importing through the package to prevent circular imports during
+# local development when ``container`` is imported before the package
+# ``zilant_prime_core`` is fully initialized.
 try:
-    from zilant_prime_core.utils.file_utils import atomic_write
-except ModuleNotFoundError:  # pragma: no cover - local imports during dev
     from utils.file_utils import atomic_write
+except ModuleNotFoundError:  # pragma: no cover - installed package path
+    from zilant_prime_core.utils.file_utils import atomic_write
 try:
-    from zilant_prime_core.utils.logging import get_logger
-except ModuleNotFoundError:  # pragma: no cover - local imports during dev
     from utils.logging import get_logger
+except ModuleNotFoundError:  # pragma: no cover - installed package path
+    from zilant_prime_core.utils.logging import get_logger
 
 ZIL_MAGIC = b"ZILANT"
 ZIL_VERSION = 1
