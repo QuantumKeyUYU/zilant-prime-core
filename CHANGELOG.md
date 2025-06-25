@@ -1,5 +1,6 @@
 ## Unreleased
 - fix import of container.pack in self-heal logic
+- add "filelock" and "tabulate" to default requirements
 
 ## 0.9.9-rc1 - 2025-06-24
 ### Changed
