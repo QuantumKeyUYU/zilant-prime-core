@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
 """Generate skeleton tests for modules without tests."""
+
 from __future__ import annotations
 
 import pathlib

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate repository policies defined in .github/policies/policy.yaml."""
+
 from __future__ import annotations
 
 import subprocess

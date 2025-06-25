@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: MIT
 
 __all__ = [
-    "AEADError",
-    "AEADInvalidTagError",
     "DEFAULT_KEY_LENGTH",
     "DEFAULT_NONCE_LENGTH",
+    "AEADError",
+    "AEADInvalidTagError",
     "decrypt_aead",
     "encrypt_aead",
     "generate_nonce",

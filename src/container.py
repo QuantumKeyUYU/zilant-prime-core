@@ -264,14 +264,14 @@ def verify_integrity(path: Path) -> bool:
 
 
 __all__ = [
-    "pack_file",
-    "unpack_file",
-    "pack",
-    "unpack",
-    "get_metadata",
-    "get_open_attempts",
-    "verify_integrity",
+    "HEADER_SEPARATOR",
     "ZIL_MAGIC",
     "ZIL_VERSION",
-    "HEADER_SEPARATOR",
+    "get_metadata",
+    "get_open_attempts",
+    "pack",
+    "pack_file",
+    "unpack",
+    "unpack_file",
+    "verify_integrity",
 ]

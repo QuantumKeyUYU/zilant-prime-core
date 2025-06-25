@@ -10,17 +10,17 @@ class _Body:
 
 
 class _DummyClient:
-    def put_object(self, **kw):  # noqa: D401
+    def put_object(self, **kw):
         return {"ETag": "deadbeef"}
 
-    def get_object(self, **kw):  # noqa: D401
+    def get_object(self, **kw):
         return {"Body": _Body()}
 
 
-class Session:  # noqa: D401
+class Session:
     def create_client(self, service_name, *args, **kwargs):
         return _DummyClient()
 
 
-def get_session() -> Session:  # noqa: D401
+def get_session() -> Session:
     return Session()

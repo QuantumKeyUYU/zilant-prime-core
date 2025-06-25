@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
 """Update SPDX headers for all Python files."""
+
 from __future__ import annotations
 
 import pathlib

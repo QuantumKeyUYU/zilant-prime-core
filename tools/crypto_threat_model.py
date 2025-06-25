@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Automated crypto self-tests and threat model generation."""
+
 from __future__ import annotations
 
 import subprocess

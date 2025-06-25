@@ -8,7 +8,7 @@ from functools import wraps
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
 from typing import Any, Callable, Iterator, cast
 
-__all__ = ["metrics", "Metrics"]
+__all__ = ["Metrics", "metrics"]
 
 
 class Metrics:

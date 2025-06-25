@@ -6,6 +6,7 @@ This script performs a lightweight static analysis over the project sources to
 identify functions and classes that are never referenced. The resulting list is
 written to ``dead_code_report.md`` and can be used during code review.
 """
+
 from __future__ import annotations
 
 import argparse

@@ -2,4 +2,4 @@
 
 from .heal import SelfHealFrozen, heal_container
 
-__all__ = ["heal_container", "SelfHealFrozen"]
+__all__ = ["SelfHealFrozen", "heal_container"]

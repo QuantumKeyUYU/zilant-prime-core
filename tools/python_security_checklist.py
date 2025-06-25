@@ -6,6 +6,7 @@ The script scans ``src/`` and ``scripts/`` for risky Python constructs such as
 ``eval`` or ``subprocess`` usage. Results are written to
 ``python_security_report.md`` with a severity rating and remediation advice.
 """
+
 from __future__ import annotations
 
 import ast

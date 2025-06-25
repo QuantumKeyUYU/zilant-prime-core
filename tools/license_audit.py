@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 """Audit dependency licenses from requirement files and pyproject."""
+
 from __future__ import annotations
 
 import argparse

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 """Search the repository and git history for leaked secrets."""
+
 from __future__ import annotations
 
 import re

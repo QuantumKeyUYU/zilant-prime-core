@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 """Generate CHANGELOG_AUTO.md from git history."""
+
 from __future__ import annotations
 
 import subprocess

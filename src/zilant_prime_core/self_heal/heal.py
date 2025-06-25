@@ -88,4 +88,4 @@ def heal_container(path: Path, key: bytes, *, rng_seed: bytes) -> bool:
     return True
 
 
-__all__ = ["heal_container", "SelfHealFrozen"]
+__all__ = ["SelfHealFrozen", "heal_container"]

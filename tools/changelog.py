@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
 """Append a version entry to CHANGELOG.md."""
+
 from __future__ import annotations
 
 import datetime

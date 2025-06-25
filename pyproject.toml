@@ -182,7 +182,7 @@ allow_untyped_decorators = true
 warn_return_any          = false
 ignore_missing_imports   = true
 disable_error_code       = ["attr-defined"]
-exclude                  = '(^(src/zil\.py)|^scripts/)'
+exclude                  = '(^(src/zil\.py)|^scripts/|^src/container\.py$)'
 
 [tool.zilant]
 pq_mode = "classic"

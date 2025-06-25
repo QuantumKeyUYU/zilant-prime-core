@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core Contributors
 """Generate docstring templates for CLI and API functions."""
+
 from __future__ import annotations
 
 import ast

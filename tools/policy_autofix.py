@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Generate simple policy auto-fix suggestions."""
+
 from __future__ import annotations
 
 import yaml

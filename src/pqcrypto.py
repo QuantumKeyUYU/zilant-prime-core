@@ -31,7 +31,7 @@ def hybrid_encrypt(
     return b"".join((ct_pq, epk, nonce)), cipher
 
 
-def hybrid_decrypt(  # noqa: D401
+def hybrid_decrypt(
     recipient_sk: tuple[bytes, bytes],
     encapsulation: bytes,
     ciphertext: bytes,

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 """Collect TODO and FIXME comments from project."""
+
 from __future__ import annotations
 
 import argparse

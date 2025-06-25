@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Unified security and compliance audit suite."""
+
 from __future__ import annotations
 
 import json
