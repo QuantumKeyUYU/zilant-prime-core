@@ -1,4 +1,5 @@
 ## Unreleased
+- gracefully handle missing tabulate dependency in `heal-scan`
 
 ## 0.9.9-rc1 - 2025-06-24
 ### Changed
