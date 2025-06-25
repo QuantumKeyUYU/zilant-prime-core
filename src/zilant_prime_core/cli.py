@@ -666,7 +666,7 @@ def cmd_show_metadata(container: Path) -> None:
 @click.option("--report", type=click.Choice(["json", "table"]), default="table")
 def cmd_heal_scan(path: Path, auto: bool, recursive: bool, report: str) -> None:
     try:
-        from tabulate import tabulate  # type: ignore
+        from tabulate import tabulate  # type: ignore[import-untyped]
     except ModuleNotFoundError:  # pragma: no cover - optional dependency
 
         def tabulate(rows: list[list[str]], headers: list[str]) -> str:
