@@ -1,20 +1,20 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
 
-# src/zilant_prime_core/container/__init__.py
+"""Container helpers and fallbacks."""
 
 try:
     from container import HEADER_SEPARATOR, get_metadata
     from container import pack as _pack
     from container import pack_file, unpack_file, verify_integrity
-except ModuleNotFoundError:  # pragma: no cover - installed as package
+except Exception:  # pragma: no cover - fallback to bundled modules
     HEADER_SEPARATOR = b"\n\n"
     try:
         from .metadata import get_metadata  # type: ignore
         from .pack import pack as _pack  # type: ignore
         from .pack import pack_file  # type: ignore
         from .unpack import unpack_file, verify_integrity  # type: ignore
-    except Exception:  # pragma: no cover - optional dependency missing
+    except Exception:
 
         def _pack(*_a: object, **_kw: object) -> bytes:
             raise NotImplementedError("pack is unavailable")
