@@ -13,12 +13,9 @@ try:
     from zilant_prime_core.audit_ledger import record_action
 except ModuleNotFoundError:  # pragma: no cover - dev
     from audit_ledger import record_action
-try:
-    from zilant_prime_core.container import HEADER_SEPARATOR
-    from zilant_prime_core.container import pack as container_pack  # type: ignore[attr-defined]
-except ModuleNotFoundError:  # pragma: no cover - dev
-    from container import HEADER_SEPARATOR
-    from container import pack as container_pack  # type: ignore[no-redef]
+
+from container import HEADER_SEPARATOR
+from container import pack as container_pack  # type: ignore[no-redef]
 from zilant_prime_core.crypto_core import hash_sha3
 
 try:
