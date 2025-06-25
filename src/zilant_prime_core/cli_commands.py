@@ -19,12 +19,12 @@ from zilant_prime_core.metrics import metrics
 
 __all__: Final = [
     "derive_key_cmd",
+    "hpke_cmd",
+    "pq_genkeypair_cmd",
     "pw_hash_cmd",
     "pw_verify_cmd",
-    "pq_genkeypair_cmd",
     "shard_cmd",
     "stream_cmd",
-    "hpke_cmd",
 ]
 
 

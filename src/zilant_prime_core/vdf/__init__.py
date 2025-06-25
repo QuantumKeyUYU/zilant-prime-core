@@ -6,9 +6,9 @@
 from .phase_vdf import VDFVerificationError, generate_elc_vdf, generate_landscape, verify_elc_vdf, verify_landscape
 
 __all__ = [
-    "generate_elc_vdf",
-    "verify_elc_vdf",
-    "generate_landscape",
-    "verify_landscape",
     "VDFVerificationError",
+    "generate_elc_vdf",
+    "generate_landscape",
+    "verify_elc_vdf",
+    "verify_landscape",
 ]

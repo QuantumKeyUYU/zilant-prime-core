@@ -6,7 +6,7 @@ from __future__ import annotations
 import os
 from typing import List
 
-__all__ = ["split_secret", "recover_secret", "combine_signatures"]
+__all__ = ["combine_signatures", "recover_secret", "split_secret"]
 
 
 def split_secret(secret: bytes, *, parts: int = 1) -> List[bytes]:

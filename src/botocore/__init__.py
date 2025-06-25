@@ -17,13 +17,13 @@ from types import ModuleType
 from . import session as _session
 from . import stub as stub  # re-export для «from botocore.stub import Stubber»
 
-__all__ = ["get_session", "stub", "_session"]
+__all__ = ["_session", "get_session", "stub"]
 
 
 # --------------------------------------------------------------------- #
 # public helpers
 # --------------------------------------------------------------------- #
-def get_session() -> "_session.Session":  # noqa: D401 – простая обёртка
+def get_session() -> "_session.Session":
     """Имитация `botocore.session.get_session()`."""
     return _session.Session()
 

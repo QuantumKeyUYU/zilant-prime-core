@@ -16,7 +16,7 @@ from typing import Any, Iterable
 Process = _mp.Process
 Queue = _mp.Queue
 
-__all__ = ["Watchdog", "_hash_sources", "_zeroize", "Process", "Queue"]
+__all__ = ["Process", "Queue", "Watchdog", "_hash_sources", "_zeroize"]
 
 _DEF_DIR = Path(__file__).resolve().parent
 

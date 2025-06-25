@@ -3,18 +3,24 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, DefaultDict, cast
 
-try:
-    from zilant_prime_core.crypto.aead import PQAEAD, decrypt, encrypt
-except Exception:
+for _mod_name in ("aead", "zilant_prime_core.aead", "zilant_prime_core.crypto.aead"):
     try:
-        from zilant_prime_core.aead import PQAEAD, decrypt, encrypt
-    except Exception:  # pragma: no cover - local imports during dev
-        from aead import PQAEAD, decrypt, encrypt
+        _aead = importlib.import_module(_mod_name)
+        break
+    except Exception:  # pragma: no cover - keep trying
+        pass
+else:  # pragma: no cover - last resort
+    raise ImportError("Cannot import AEAD module")
+
+PQAEAD = _aead.PQAEAD
+decrypt = _aead.decrypt
+encrypt = _aead.encrypt
 try:
     from crypto_core import hash_sha3
 except ModuleNotFoundError:  # pragma: no cover - installed package path
@@ -30,20 +36,27 @@ except ModuleNotFoundError:  # pragma: no cover - installed package path
 # Avoid importing through the package to prevent circular imports during
 # local development when ``container`` is imported before the package
 # ``zilant_prime_core`` is fully initialized.
-try:
-    from utils.file_utils import atomic_write
-except ModuleNotFoundError:  # pragma: no cover - installed package path
-    from zilant_prime_core.utils.file_utils import atomic_write
-try:
-    from utils.logging import get_logger
-except ModuleNotFoundError:  # pragma: no cover - installed package path
-    from zilant_prime_core.utils.logging import get_logger
+for _fu_name in ("utils.file_utils", "zilant_prime_core.utils.file_utils"):
+    try:
+        _fu = importlib.import_module(_fu_name)
+        break
+    except ModuleNotFoundError:  # pragma: no cover
+        pass
+for _log_name in ("utils.logging", "zilant_prime_core.utils.logging"):
+    try:
+        _log_mod = importlib.import_module(_log_name)
+        break
+    except ModuleNotFoundError:  # pragma: no cover
+        pass
 
 ZIL_MAGIC = b"ZILANT"
 ZIL_VERSION = 1
 HEADER_SEPARATOR = b"\n\n"
 
-logger = get_logger("container")
+from logging import Logger
+
+logger = cast(Logger, _log_mod.get_logger("container"))
+atomic_write = _fu.atomic_write
 
 # in-memory counter of unpack attempts per container path
 _ATTEMPTS: DefaultDict[str, int] = defaultdict(int)
@@ -208,7 +221,7 @@ def pack(meta: dict[str, Any], payload: bytes, key: bytes) -> bytes:
         raise ValueError("key must be 32 bytes long")
 
     header_bytes: bytes = json.dumps(meta, ensure_ascii=False).encode("utf-8") + HEADER_SEPARATOR
-    nonce, ciphertext = encrypt(key, payload, aad=b"")
+    nonce, ciphertext = cast(tuple[bytes, bytes], encrypt(key, payload, aad=b""))
     return header_bytes + nonce + ciphertext
 
 
@@ -267,14 +280,14 @@ def verify_integrity(path: Path) -> bool:
 
 
 __all__ = [
-    "pack_file",
-    "unpack_file",
-    "pack",
-    "unpack",
-    "get_metadata",
-    "get_open_attempts",
-    "verify_integrity",
+    "HEADER_SEPARATOR",
     "ZIL_MAGIC",
     "ZIL_VERSION",
-    "HEADER_SEPARATOR",
+    "get_metadata",
+    "get_open_attempts",
+    "pack",
+    "pack_file",
+    "unpack",
+    "unpack_file",
+    "verify_integrity",
 ]

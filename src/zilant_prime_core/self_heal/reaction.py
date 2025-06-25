@@ -29,4 +29,4 @@ def maybe_self_destruct(path: Path) -> None:
         path.unlink()
 
 
-__all__ = ["rotate_key", "record_event", "maybe_self_destruct"]
+__all__ = ["maybe_self_destruct", "record_event", "rotate_key"]

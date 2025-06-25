@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Iterable
 
-__all__ = ["is_device_rooted", "assert_safe_or_die", "harden_linux"]
+__all__ = ["assert_safe_or_die", "harden_linux", "is_device_rooted"]
 
 _ROOT_INDICATORS: Iterable[str] = (
     "/system/xbin/su",

@@ -10,10 +10,10 @@ from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 from typing import cast
 
 __all__ = [
-    "encrypt_chacha20_poly1305",
     "decrypt_chacha20_poly1305",
     "derive_key_argon2id",
     "derive_key_double",
+    "encrypt_chacha20_poly1305",
     "hash_sha3",
 ]
 

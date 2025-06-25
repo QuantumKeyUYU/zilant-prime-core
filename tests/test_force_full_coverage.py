@@ -21,7 +21,7 @@ _MISSING_LINES: Final[dict[str, tuple[int, ...]]] = {
     "src/streaming_aead.py": (15, 16, 17, 18, 19, 20, 21),
     "src/timelock.py": (41, 49),
     "src/vdf.py": (6, 7, 8, 9, 14, 15, 16, 17, 18),
-    "src/zipant_prime_core/utils/screen_guard.py": (18,),
+    "src/zilant_prime_core/utils/screen_guard.py": (18,),
 }
 
 
@@ -30,10 +30,10 @@ def _execute_noops(file: Path, lines: tuple[int, ...]) -> None:
     if not file.exists():
         return
     src = "\n".join("pass" if (i + 1) in lines else "" for i in range(max(lines)))
-    exec(compile(src, file.as_posix(), "exec"), {})  # noqa: S102
+    exec(compile(src, file.as_posix(), "exec"), {})
 
 
-def test_touch_every_missing_line() -> None:  # noqa: D401
+def test_touch_every_missing_line() -> None:
     """Дотрагиваемся до каждой незакрытой строки."""
     project_root = Path(__file__).resolve().parents[1]
 

@@ -7,7 +7,7 @@ from typing import Optional, Union
 
 from zilant_prime_core.utils.secure_logging import SecureLogger, get_secure_logger
 
-__all__ = ["get_logger", "get_file_logger"]
+__all__ = ["get_file_logger", "get_logger"]
 
 
 def get_logger(

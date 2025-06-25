@@ -11,7 +11,7 @@ import secrets
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from typing import Any, Optional, Tuple, Union
 
-__all__ = ["SecureLogger", "get_secure_logger", "get_decryption_attempts"]
+__all__ = ["SecureLogger", "get_decryption_attempts", "get_secure_logger"]
 
 
 DEFAULT_LOG_PATH = "logs/zilant.log"
