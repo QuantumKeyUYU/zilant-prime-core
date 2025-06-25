@@ -1,4 +1,6 @@
 ## Unreleased
+- fix self-heal tests by guarding fallback container imports
+- skip semgrep rule tests when semgrep is unavailable
 
 ## 0.9.9-rc1 - 2025-06-24
 ### Changed

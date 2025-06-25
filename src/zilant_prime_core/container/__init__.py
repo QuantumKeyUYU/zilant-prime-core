@@ -3,22 +3,31 @@
 
 # src/zilant_prime_core/container/__init__.py
 
+from typing import Any, cast
+
 try:
-    from container import HEADER_SEPARATOR, get_metadata
-    from container import pack as _pack
-    from container import pack_file, unpack_file, verify_integrity
-except ModuleNotFoundError:  # pragma: no cover - installed as package
+    import container as _ext
+
+    if not callable(getattr(_ext, "pack", None)):
+        raise ModuleNotFoundError
+    HEADER_SEPARATOR = _ext.HEADER_SEPARATOR
+    get_metadata = _ext.get_metadata  # type: ignore[assignment]
+    _selected_pack = cast(Any, _ext.pack)
+    pack_file = _ext.pack_file  # type: ignore[assignment]
+    unpack_file = _ext.unpack_file  # type: ignore[assignment]
+    verify_integrity = _ext.verify_integrity  # type: ignore[assignment]
+    from container import unpack as _unused_unpack  # noqa: F401
+except Exception:  # pragma: no cover - installed as package
     HEADER_SEPARATOR = b"\n\n"
     from .metadata import get_metadata  # type: ignore
-    from .pack import pack as _pack  # type: ignore[assignment]
-else:
-    from container import unpack as _unused_unpack  # noqa: F401
+    from .pack import pack as _fallback_pack
+
+    _selected_pack = cast(Any, _fallback_pack)
 
 from .metadata import MetadataError
 from .unpack import unpack
 
 if "pack_file" not in globals():
-    from typing import Any
 
     def pack_file(*args: Any, **kwargs: Any) -> None:
         raise NotImplementedError("pack_file is unavailable")
@@ -30,7 +39,7 @@ if "pack_file" not in globals():
         raise NotImplementedError("verify_integrity is unavailable")
 
 
-pack = _pack
+pack = _selected_pack
 
 __all__ = [
     "HEADER_SEPARATOR",
