@@ -18,8 +18,7 @@ try:
     from zilant_prime_core.container import HEADER_SEPARATOR
     from zilant_prime_core.container import pack as container_pack  # type: ignore[attr-defined]
 except ModuleNotFoundError:  # pragma: no cover - dev
-    from container import HEADER_SEPARATOR
-    from container import pack as container_pack  # type: ignore[no-redef]
+    from container import HEADER_SEPARATOR, pack as container_pack  # type: ignore[no-redef]
 from zilant_prime_core.crypto_core import hash_sha3
 
 try:
@@ -85,7 +84,7 @@ def heal_container(path: Path, key: bytes, *, rng_seed: bytes) -> bool:
 
     # Создаем новый контейнер
     try:
-        new_blob = pack(meta, payload, new_key)
+        new_blob = container_pack(meta, payload, new_key)
     except Exception as exc:
         record_action("self_heal_pack_failed", {"file": str(path), "error": str(exc)})
         os.unlink(lock_path)

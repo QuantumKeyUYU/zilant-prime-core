@@ -13,8 +13,11 @@ if sys.platform.startswith("win"):
         allow_module_level=True,
     )
 
-from hypothesis import given
-from hypothesis import strategies as st
+try:
+    from hypothesis import given
+    from hypothesis import strategies as st
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    pytest.skip("hypothesis not installed", allow_module_level=True)
 
 import zilant_prime_core.vdf as vdf_mod
 
@@ -40,7 +43,6 @@ def test_posw_invalid_steps(seed, steps):
     steps=st.integers(min_value=1, max_value=100),
     bad_proof=st.binary(),
 )
-
 def test_posw_bad_proof_returns_false(seed, steps, bad_proof):
     # Генерируем правильное доказательство, но затем портим его на входе
     proof, ok = vdf_mod.posw(seed, steps)

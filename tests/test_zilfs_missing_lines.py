@@ -1,6 +1,10 @@
-import _winapi
 import importlib
 import pytest
+
+try:
+    import _winapi
+except ModuleNotFoundError:  # pragma: no cover - non-Windows
+    pytest.skip("_winapi module not available", allow_module_level=True)
 import sys
 from pathlib import Path
 

@@ -8,7 +8,7 @@ import json
 import os
 import sys
 import time
-import yaml  # type: ignore
+import yaml  # type: ignore[import-untyped]
 from pathlib import Path
 from typing import Any, NoReturn, cast
 
@@ -665,7 +665,7 @@ def cmd_show_metadata(container: Path) -> None:
 @click.option("--recursive", is_flag=True, help="Scan directories recursively")
 @click.option("--report", type=click.Choice(["json", "table"]), default="table")
 def cmd_heal_scan(path: Path, auto: bool, recursive: bool, report: str) -> None:
-    from tabulate import tabulate  # type: ignore
+    from tabulate import tabulate  # type: ignore[import-untyped]
 
     try:
         from zilant_prime_core.container import get_metadata, verify_integrity

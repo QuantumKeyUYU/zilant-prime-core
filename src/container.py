@@ -4,17 +4,18 @@
 from __future__ import annotations
 
 import json
+import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, DefaultDict, cast
 
 try:
-    from zilant_prime_core.crypto.aead import PQAEAD, decrypt, encrypt
+    from zilant_prime_core.crypto.aead import PQAEAD, decrypt, encrypt  # type: ignore[attr-defined]
 except Exception:
     try:
-        from zilant_prime_core.aead import PQAEAD, decrypt, encrypt
+        from zilant_prime_core.aead import PQAEAD, decrypt, encrypt  # type: ignore[attr-defined]
     except Exception:  # pragma: no cover - local imports during dev
-        from aead import PQAEAD, decrypt, encrypt
+        from aead import PQAEAD, decrypt, encrypt  # type: ignore[attr-defined]
 try:
     from crypto_core import hash_sha3
 except ModuleNotFoundError:  # pragma: no cover - installed package path
@@ -34,13 +35,13 @@ except ModuleNotFoundError:  # pragma: no cover - local imports during dev
 try:
     from zilant_prime_core.utils.logging import get_logger
 except ModuleNotFoundError:  # pragma: no cover - local imports during dev
-    from utils.logging import get_logger
+    from utils.logging import get_logger  # type: ignore[assignment]
 
 ZIL_MAGIC = b"ZILANT"
 ZIL_VERSION = 1
 HEADER_SEPARATOR = b"\n\n"
 
-logger = get_logger("container")
+logger = cast(logging.Logger, get_logger("container"))
 
 # in-memory counter of unpack attempts per container path
 _ATTEMPTS: DefaultDict[str, int] = defaultdict(int)
@@ -205,7 +206,7 @@ def pack(meta: dict[str, Any], payload: bytes, key: bytes) -> bytes:
         raise ValueError("key must be 32 bytes long")
 
     header_bytes: bytes = json.dumps(meta, ensure_ascii=False).encode("utf-8") + HEADER_SEPARATOR
-    nonce, ciphertext = encrypt(key, payload, aad=b"")
+    nonce, ciphertext = cast(tuple[bytes, bytes], encrypt(key, payload, aad=b""))
     return header_bytes + nonce + ciphertext
 
 
@@ -264,14 +265,14 @@ def verify_integrity(path: Path) -> bool:
 
 
 __all__ = [
-    "pack_file",
-    "unpack_file",
-    "pack",
-    "unpack",
-    "get_metadata",
-    "get_open_attempts",
-    "verify_integrity",
+    "HEADER_SEPARATOR",
     "ZIL_MAGIC",
     "ZIL_VERSION",
-    "HEADER_SEPARATOR",
+    "get_metadata",
+    "get_open_attempts",
+    "pack",
+    "pack_file",
+    "unpack",
+    "unpack_file",
+    "verify_integrity",
 ]

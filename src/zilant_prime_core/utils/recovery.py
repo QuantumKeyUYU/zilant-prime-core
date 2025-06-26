@@ -20,7 +20,7 @@ except ModuleNotFoundError:  # pragma: no cover - dev
 try:
     from zilant_prime_core.utils.logging import get_logger
 except ModuleNotFoundError:  # pragma: no cover - dev
-    from utils.logging import get_logger
+    from utils.logging import get_logger  # type: ignore[assignment,no-redef]
 _get_logger = get_logger
 try:
     from zilant_prime_core.utils.secure_memory import wipe_bytes
