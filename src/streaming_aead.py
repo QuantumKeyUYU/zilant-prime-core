@@ -56,11 +56,20 @@ def _tree_mac(tags: List[bytes], key: bytes) -> bytes:
     return nodes[0] if nodes else Poly1305.generate_tag(key, b"")
 
 
-def pack_stream(src: Path, dst: Path, key: bytes, threads: int = 0, progress: bool = False) -> None:
+def pack_stream(src: Path | str, dst: Path, key: bytes, threads: int = 0, progress: bool = False) -> None:
+    """Compress and encrypt a file-like stream into *dst*.
+
+    The *src* parameter may be a :class:`~pathlib.Path` or a plain string.  This
+    flexibility is useful in tests that monkeypatch ``os.name`` to emulate
+    Windows, where constructing ``Path`` objects may yield ``WindowsPath``
+    instances which are not valid on POSIX systems.
+    """
+
+    src_path = os.fspath(src)
     comp = zstd.ZstdCompressor(level=3, threads=threads or 0)
     tags: List[bytes] = []
     tmp = dst.with_suffix(dst.suffix + ".tmp")
-    with open(src, "rb") as f_in, open(tmp, "wb") as f_out:
+    with open(src_path, "rb") as f_in, open(tmp, "wb") as f_out:
         chunk_id = 0
         size = 0
         while True:

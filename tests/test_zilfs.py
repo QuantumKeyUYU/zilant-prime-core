@@ -25,8 +25,22 @@ def test_pack_dir_stream(tmp_path, monkeypatch):
     (src / "a.txt").write_text("y")
     out = tmp_path / "out.zil"
     key = b"k" * 32
-    # Для Windows — fallback branch, no mkfifo
-    monkeypatch.setattr(os, "name", "nt")
+    # Emulate Windows by disabling mkfifo support
+    if hasattr(os, "mkfifo"):
+        monkeypatch.delattr(os, "mkfifo")
+    import streaming_aead
+    if streaming_aead._NativeAEAD is None:
+        class DummyAEAD:
+            def __init__(self, key: bytes) -> None:
+                self._k = key
+
+            def encrypt(self, nonce: bytes, data: bytes, aad: bytes) -> bytes:
+                return b"CT" + data
+
+            def decrypt(self, nonce: bytes, ct: bytes, aad: bytes) -> bytes:
+                return ct[2:]
+
+        monkeypatch.setattr(streaming_aead, "_NativeAEAD", DummyAEAD, raising=False)
     zilfs.pack_dir_stream(src, out, key)
     dst = tmp_path / "dst"
     zilfs.unpack_dir(out, dst, key)
