@@ -10,6 +10,8 @@ from tempfile import TemporaryDirectory
 
 from zilant_prime_core.zilfs import ZilantFS
 
+from .utils import fs as _fs_patch  # noqa: F401  # ensure mkfifo/sync stubs on Windows
+
 
 def bench_fs() -> float:
     """Write 100 MB through ZilantFS and return throughput (MB/s)."""

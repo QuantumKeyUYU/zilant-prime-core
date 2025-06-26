@@ -12,6 +12,7 @@ import time
 from pathlib import Path
 from typing import Dict, List, Set
 
+ pr-111
 from audit_ledger import record_decoy_purged, record_decoy_removed_early
 from container import get_metadata, pack_file
 
@@ -24,6 +25,16 @@ __all__ = [
     "delete_expired_decoy_files",
     "clean_decoy_folder",
 ]
+
+try:
+    from zilant_prime_core.audit_ledger import record_decoy_purged, record_decoy_removed_early
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from audit_ledger import record_decoy_purged, record_decoy_removed_early
+try:
+    from zilant_prime_core.container import pack_file
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from container import pack_file
+ main
 
 _DECOY_EXPIRY: Dict[Path, float] = {}
 _DECOY_SET: Set[Path] = set()

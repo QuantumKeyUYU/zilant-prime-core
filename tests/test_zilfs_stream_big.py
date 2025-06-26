@@ -1,9 +1,20 @@
+ pr-111
 import _winapi
 import importlib
 import shutil
 from pathlib import Path
 
 from zilant_prime_core.zilfs import ZilantFS
+
+import pytest
+import sys
+from pathlib import Path
+
+if sys.platform == "win32":
+    pytest.skip("mkfifo/NamedPipe отсутствует под Windows", allow_module_level=True)
+
+from zilant_prime_core.zilfs import ZilantFS, unpack_dir
+main
 
 zl = importlib.import_module("zilant_prime_core.zilfs")
 

@@ -12,9 +12,16 @@ src/zilant_prime_core/tray.py
 
 from __future__ import annotations
 
+ pr-111
 import os
 import sys
 from typing import TYPE_CHECKING, Any, Callable
+
+try:
+    from zilant_prime_core.container import get_metadata
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from container import get_metadata
+ main
 
 # Глобальный список виртуальных ФС, которые ожидают тесты
 ACTIVE_FS: list[Any] = []

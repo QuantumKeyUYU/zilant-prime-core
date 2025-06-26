@@ -1,6 +1,10 @@
 import json
 import pytest
+import sys
 from pathlib import Path
+
+if sys.platform == "win32":
+    pytest.skip("stream-header тестируется только на POSIX", allow_module_level=True)
 
 from zilant_prime_core.zilfs import pack_dir_stream
 

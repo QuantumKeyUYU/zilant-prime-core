@@ -21,6 +21,16 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Tuple, cast
 
+pr-111
+
+from .utils import fs as _fs_patch  # noqa: F401  # ensure mkfifo/sync stubs on Windows
+
+try:  # pragma: no cover - optional dependency may be missing
+    from fuse import FUSE, FuseOSError, Operations  # type: ignore
+except Exception:  # pragma: no cover - optional dependency may be missing
+    FUSE = None  # type: ignore[assignment]
+    FuseOSError = OSError  # type: ignore[misc]
+ main
 
 # ───────────────────────────── fusepy (опционально)
 class Operations:  # noqa: D101
@@ -41,11 +51,23 @@ except ImportError:  # pragma: no cover
 # ───────────────────────────── project-local импорты
 from cryptography.exceptions import InvalidTag
 
-from container import get_metadata, pack_file, unpack_file
-from streaming_aead import pack_stream, unpack_stream
-from utils.logging import get_logger
+try:
+    from zilant_prime_core.container import get_metadata, pack_file, unpack_file
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from container import get_metadata, pack_file, unpack_file
+try:
+    from zilant_prime_core.streaming_aead import pack_stream, unpack_stream
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from streaming_aead import pack_stream, unpack_stream
+try:
+    from zilant_prime_core.utils.logging import get_logger
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from utils.logging import get_logger
+_get_logger = get_logger
 
-logger = get_logger("zilfs")
+from logging import Logger
+
+logger = cast(Logger, _get_logger("zilfs"))
 
 # ───────────────────────────── service-константы
 _DECOY_PROFILES: Dict[str, Dict[str, str]] = {
@@ -193,6 +215,7 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
     • Windows: «sparse-tar», большие файлы заменяем нулями.
     """
     with TemporaryDirectory() as tmp:
+ pr-111
         fifo = os.path.join(tmp, "pipe_or_tar")
 
         # POSIX-ветка
@@ -227,6 +250,17 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
 
         _mark_sparse(Path(fifo))
         pack_stream(Path(fifo), dest, key)
+
+        fifo = Path(tmp) / "pipe"
+        try:
+            os.mkfifo(fifo)
+        except (AttributeError, NotImplementedError, OSError):
+            pack_dir(src, dest, key)
+            return
+        proc = subprocess.Popen(["tar", "-C", str(src), "-cf", str(fifo), "."])
+        pack_stream(fifo, dest, key)
+        proc.wait()
+ main
 
 
 def unpack_dir(container: Path, dest: Path, key: bytes) -> None:

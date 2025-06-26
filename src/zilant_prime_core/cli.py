@@ -12,8 +12,19 @@ import yaml  # type: ignore
 from pathlib import Path
 from typing import Any, NoReturn, cast
 
-from container import pack_file, unpack_file
-from crypto_core import hash_sha3
+try:
+    from crypto_core import hash_sha3
+except ModuleNotFoundError:  # pragma: no cover - installed package path
+    try:
+        from zilant_prime_core.crypto_core import hash_sha3  # type: ignore
+    except Exception:  # pragma: no cover - fallback to stdlib
+        import hashlib
+
+        def hash_sha3(data: bytes) -> bytes:  # type: ignore
+            return hashlib.sha3_256(data).digest()
+
+
+from zilant_prime_core.container import pack_file, unpack_file
 from zilant_prime_core.crypto.password_hash import hash_password, verify_password
 from zilant_prime_core.metrics import metrics
 from zilant_prime_core.utils import VaultClient
@@ -135,7 +146,7 @@ def cli(
     decoy_sweep: bool,
     paranoid: bool,
 ) -> None:
-    """Zilant Prime command‑line interface.
+    """Zilant Prime command-line interface.
 
     Use ``zilant install-completion bash`` to enable shell autocompletion.
     """
@@ -201,7 +212,7 @@ def cmd_key_rotate(ctx: click.Context, days: int, in_key: Path, out_key: Path) -
 @click.option("--overwrite/--no-overwrite", default=False, show_default=True)
 @click.pass_context
 @metrics.record_cli("pack")
-def cmd_pack(  # noqa: C901  (covered by extensive tests)
+def cmd_pack(
     ctx: click.Context,
     source: Path,
     output: Path | None,
@@ -261,11 +272,11 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
     except Exception as exc:  # pragma: no cover
         _abort(f"Pack error: {exc}")
 
-    # write container (non‑PQ branch)
+    # write container (non-PQ branch)
     if blob is not None:
         tmp = dest.with_suffix(dest.suffix + ".tmp")
         try:
-            with open(tmp, "wb") as fh:  # noqa: PTH123
+            with open(tmp, "wb") as fh:
                 fh.write(blob)
             os.replace(tmp, dest)
             os.chmod(dest, 0o600)
@@ -404,7 +415,7 @@ def cmd_check_snapshot() -> None:
 @click.argument("reason")
 def cmd_self_destruct_cli(reason: str) -> None:
     self_destruct(reason, DESTRUCTION_KEY_BUFFER)
-    click.echo("Self‑destruct completed. Decoy file generated.")
+    click.echo("Self-destruct completed. Decoy file generated.")
 
 
 @cli.command("gen_kem_keys")
@@ -560,7 +571,7 @@ def cmd_audit_verify(ctx: click.Context) -> None:
 
 @cli.group()
 def timelock() -> None:
-    """Time‑lock encryption helpers."""
+    """Time-lock encryption helpers."""
 
 
 @timelock.command("lock")
@@ -627,7 +638,10 @@ def uyi_group() -> None:
 @uyi_group.command("verify-integrity")
 @click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 def cmd_verify_integrity(container: Path) -> None:
-    from container import verify_integrity
+    try:
+        from zilant_prime_core.container import verify_integrity
+    except ModuleNotFoundError:  # pragma: no cover - dev
+        from container import verify_integrity
 
     ok = verify_integrity(container)
     click.echo("valid" if ok else "invalid")
@@ -636,7 +650,10 @@ def cmd_verify_integrity(container: Path) -> None:
 @uyi_group.command("show-metadata")
 @click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 def cmd_show_metadata(container: Path) -> None:
-    from container import get_metadata
+    try:
+        from zilant_prime_core.container import get_metadata
+    except ModuleNotFoundError:  # pragma: no cover - dev
+        from container import get_metadata
 
     click.echo(json.dumps(get_metadata(container)))
 
@@ -650,7 +667,10 @@ def cmd_show_metadata(container: Path) -> None:
 def cmd_heal_scan(path: Path, auto: bool, recursive: bool, report: str) -> None:
     from tabulate import tabulate  # type: ignore
 
-    from container import get_metadata, verify_integrity
+    try:
+        from zilant_prime_core.container import get_metadata, verify_integrity
+    except ModuleNotFoundError:  # pragma: no cover - dev
+        from container import get_metadata, verify_integrity
     from zilant_prime_core.self_heal import heal_container
 
     paths: list[Path] = []
@@ -689,7 +709,10 @@ def cmd_heal_scan(path: Path, auto: bool, recursive: bool, report: str) -> None:
 @cli.command("heal-verify")
 @click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 def cmd_heal_verify(container: Path) -> None:
-    from container import get_metadata
+    try:
+        from zilant_prime_core.container import get_metadata
+    except ModuleNotFoundError:  # pragma: no cover - dev
+        from container import get_metadata
     from zilant_prime_core.zkp import verify_intact
 
     meta = get_metadata(container)
@@ -723,7 +746,47 @@ def install_completion(ctx: click.Context, shell: str) -> None:
     click.echo(res.stdout)
 
 
-# ───────── external sub‑commands (kdf, pw‑hash, …) ─────────
+@cli.command("wizard")
+def cmd_wizard() -> None:
+    """Interactive container creation wizard."""
+    import hashlib
+    import questionary
+
+    try:
+        import qrcode  # type: ignore
+    except Exception:  # pragma: no cover - optional dep
+        qrcode = None
+    import tempfile
+
+    click.echo("Path to container: ", nl=False)
+    path_str = input().strip()
+    if not path_str:
+        raise click.Abort()
+    path = Path(path_str)
+    pwd = questionary.password("New password").ask()
+    if pwd is None:
+        raise click.Abort()
+    confirm = questionary.password("Confirm password").ask()
+    if confirm != pwd:
+        click.echo("Passwords do not match", err=True)
+        raise click.Abort()
+    strength = "strong" if len(pwd) >= 8 else "weak"
+    click.echo(f"Password strength: {strength}")
+    if questionary.confirm("Generate QR backup", default=False).ask():
+        if qrcode:
+            img = qrcode.make(pwd)
+            img.save(path.with_name("qr.png"))
+        else:  # pragma: no cover - optional dep missing
+            click.echo("qrcode package not installed", err=True)
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        tmp.write(b"zilant-wizard")
+        tmp.flush()
+        pack_file(Path(tmp.name), path, hashlib.sha256(pwd.encode()).digest())
+    if questionary.confirm("Mount now?", default=False).ask():
+        mount_fs(path, path.with_suffix(".mnt"), pwd)
+
+
+# ───────── external sub-commands (kdf, pw-hash, …) ─────────
 from zilant_prime_core.cli_commands import (
     derive_key_cmd,
     hpke_cmd,
@@ -741,6 +804,12 @@ cli.add_command(pq_genkeypair_cmd)
 key.add_command(shard_cmd)
 cli.add_command(stream_cmd)
 cli.add_command(hpke_cmd)
+try:  # pragma: no cover - optional dependency
+    from .cli_wormhole import cli as wormhole_cmd
+except Exception:  # pragma: no cover - wormhole optional
+    wormhole_cmd = None
+if wormhole_cmd:
+    cli.add_command(wormhole_cmd, name="wormhole")
 
 add_complete_flag()
 

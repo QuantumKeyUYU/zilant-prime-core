@@ -13,6 +13,12 @@ if sys.platform.startswith("win"):
         allow_module_level=True,
     )
 
+ pr-111
+
+import pytest
+
+pytest.importorskip("hypothesis")
+ main
 from hypothesis import given
 from hypothesis import strategies as st
 
@@ -35,11 +41,15 @@ def test_posw_invalid_steps(seed, steps):
         vdf_mod.posw(seed, steps)
 
 
+ pr-111
 @given(
     seed=st.binary(min_size=1),
     steps=st.integers(min_value=1, max_value=100),
     bad_proof=st.binary(),
 )
+
+@given(seed=st.binary(min_size=1), steps=st.integers(min_value=1, max_value=100), bad_proof=st.binary())
+ main
 def test_posw_bad_proof_returns_false(seed, steps, bad_proof):
     # Генерируем правильное доказательство, но затем портим его на входе
     proof, ok = vdf_mod.posw(seed, steps)

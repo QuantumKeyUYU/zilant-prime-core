@@ -11,7 +11,7 @@ MERMAID       ?= npx -y @mermaid-js/mermaid-cli
 DIAGRAM_SRC    = architecture/key_lifecycle.mmd
 DIAGRAM_OUT    = _static/key_lifecycle.svg
 
-.PHONY: help clean mermaid html
+.PHONY: help clean mermaid html linkcheck
 
 help:
 	@echo "make mermaid   – обновить все *.mmd → SVG"
@@ -30,3 +30,6 @@ html: mermaid
 
 clean:
 	rm -rf $(BUILDDIR) $(DIAGRAM_OUT)
+
+linkcheck:
+	$(SPHINXBUILD) -M linkcheck $(SOURCEDIR) $(BUILDDIR) $(SPHINXOPTS)

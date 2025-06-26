@@ -8,6 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Buildx
@@ -21,4 +23,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: yourorg/zilant:latest, yourorg/zilant:${{ github.ref_name }}
+      - name: Test image
+        run: docker run --rm yourorg/zilant:latest zilant --version

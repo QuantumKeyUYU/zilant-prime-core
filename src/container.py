@@ -8,10 +8,33 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, DefaultDict, cast
 
-from aead import PQAEAD, decrypt, encrypt
-from crypto_core import hash_sha3
-from utils.file_utils import atomic_write
-from utils.logging import get_logger
+try:
+    from zilant_prime_core.crypto.aead import PQAEAD, decrypt, encrypt
+except Exception:
+    try:
+        from zilant_prime_core.aead import PQAEAD, decrypt, encrypt
+    except Exception:  # pragma: no cover - local imports during dev
+        from aead import PQAEAD, decrypt, encrypt
+try:
+    from crypto_core import hash_sha3
+except ModuleNotFoundError:  # pragma: no cover - installed package path
+    try:
+        from zilant_prime_core.crypto_core import hash_sha3  # type: ignore
+    except Exception:  # pragma: no cover - fallback to stdlib
+        import hashlib
+
+        def hash_sha3(data: bytes) -> bytes:  # type: ignore
+            return hashlib.sha3_256(data).digest()
+
+
+try:
+    from zilant_prime_core.utils.file_utils import atomic_write
+except ModuleNotFoundError:  # pragma: no cover - local imports during dev
+    from utils.file_utils import atomic_write
+try:
+    from zilant_prime_core.utils.logging import get_logger
+except ModuleNotFoundError:  # pragma: no cover - local imports during dev
+    from utils.logging import get_logger
 
 ZIL_MAGIC = b"ZILANT"
 ZIL_VERSION = 1

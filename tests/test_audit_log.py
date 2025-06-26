@@ -15,6 +15,6 @@ def test_audit_log_append_and_verify(tmp_path):
 
     # портим последнюю строку
     lines = path.read_text().splitlines()
-    bad = lines[:-1] + ["deadbeef wrong"]
+    bad = [*lines[:-1], "deadbeef wrong"]
     path.write_text("\n".join(bad), encoding="utf-8")
     assert not log.verify_log()
