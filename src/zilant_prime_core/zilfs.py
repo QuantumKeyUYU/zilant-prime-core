@@ -88,7 +88,7 @@ def _mark_sparse(path: Path) -> None:
             0,
             None,
             3,  # OPEN_EXISTING
-            0x02000000,  # FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS
+            0x02000000,
             None,
         )
         if handle == -1:
@@ -142,7 +142,6 @@ try:
             progress: int | None = None,
         ) -> int:  # pragma: no cover
             try:
-                # приводим Any → int, чтобы satisfy mypy/ruff no-any-return
                 return int(_ORIG_COPYFILE2(src, dst, flags, progress))  # type: ignore[arg-type]
             except OSError as exc:
                 if getattr(exc, "winerror", None) != 112:
@@ -155,7 +154,7 @@ except ImportError:
     pass
 
 
-# ───────────── служебные tar-функции ─────────────
+# ───────── служебные tar-функции ─────────
 def _read_meta(container: Path) -> Dict[str, Any]:
     """Прочитать JSON-заголовок контейнера (до двойного LF)."""
     header = bytearray()
@@ -243,7 +242,7 @@ def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
                     _truncate_file(dest / member.name, int(sp))
 
 
-# ───────────── snapshot / diff ─────────────
+# ───────── snapshot / diff ─────────
 def _rewrite_metadata(container: Path, extra: Dict[str, Any], key: bytes) -> None:
     with TemporaryDirectory() as tmp:
         plain = Path(tmp) / "plain"
@@ -300,7 +299,7 @@ def diff_snapshots(a: Path, b: Path, key: bytes) -> Dict[str, Tuple[str, str]]:
     }
 
 
-# ───────────── класс ZilantFS ─────────────
+# ───────── основной класс FS ─────────
 class ZilantFS(Operations):  # type: ignore[misc]
     """In-memory (FUSE-совместимая) FS для автотестов."""
 
@@ -417,26 +416,28 @@ class ZilantFS(Operations):  # type: ignore[misc]
         self._rw_check()
         _truncate_file(Path(self._full(path)), length)
 
-    def unlink(self, path: str) -> None:  # pragma: no cover
+    # ─────────── добавленные методы ───────────
+
+    def unlink(self, path: str) -> None:
         self._rw_check()
         os.unlink(self._full(path))
 
-    def mkdir(self, path: str, mode: int) -> None:  # pragma: no cover
+    def mkdir(self, path: str, mode: int) -> None:
         self._rw_check()
         os.mkdir(self._full(path), mode)
 
-    def rmdir(self, path: str) -> None:  # pragma: no cover
+    def rmdir(self, path: str) -> None:
         self._rw_check()
         os.rmdir(self._full(path))
 
-    def rename(self, old: str, new: str) -> None:  # pragma: no cover
+    def rename(self, old: str, new: str) -> None:
         self._rw_check()
         os.rename(self._full(old), self._full(new))
 
-    def flush(self, _p: str, fh: int) -> None:  # pragma: no cover
+    def flush(self, _p: str, fh: int) -> None:
         os.fsync(fh)
 
-    def release(self, _p: str, fh: int) -> None:  # pragma: no cover
+    def release(self, _p: str, fh: int) -> None:
         os.close(fh)
 
 
