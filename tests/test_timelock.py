@@ -10,8 +10,9 @@ def test_lock_unlock(tmp_path, monkeypatch):
     locked = tmp_path / "locked.bin"
     unlocked = tmp_path / "out.txt"
 
-    monkeypatch.setattr("timelock.generate_proof", lambda delay, data: b"p" * 8)
-    monkeypatch.setattr("timelock.verify_proof", lambda proof, data: True)
+    # Исправлено на правильные функции
+    monkeypatch.setattr("timelock.generate_posw", lambda delay, data: b"p" * 8)
+    monkeypatch.setattr("timelock.verify_posw", lambda proof, data, delay: True)
 
     lock_file(src, locked, 10)
     unlock_file(locked, unlocked)
@@ -23,8 +24,11 @@ def test_cli_timelock(tmp_path, monkeypatch):
     src.write_text("hi")
     locked = tmp_path / "f.lock"
     unlocked = tmp_path / "f.out"
-    monkeypatch.setattr("timelock.generate_proof", lambda delay, data: b"p" * 8)
-    monkeypatch.setattr("timelock.verify_proof", lambda proof, data: True)
+
+    # Исправлено на правильные функции
+    monkeypatch.setattr("timelock.generate_posw", lambda delay, data: b"p" * 8)
+    monkeypatch.setattr("timelock.verify_posw", lambda proof, data, delay: True)
+
     runner = CliRunner()
     res1 = runner.invoke(
         cli,

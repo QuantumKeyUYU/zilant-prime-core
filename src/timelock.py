@@ -5,7 +5,7 @@ import json
 from itertools import cycle
 from pathlib import Path
 
-from vdf import generate_proof, verify_proof
+from vdf import generate_posw, verify_posw  # Исправлено на правильные функции
 
 
 def _xor_data(data: bytes, key: bytes) -> bytes:
@@ -26,7 +26,7 @@ def lock_file(input_path: str, output_path: str, delay: int) -> None:
     """
     src = Path(input_path).read_bytes()
     digest = hashlib.sha256(src).digest()
-    proof = generate_proof(delay, digest)
+    proof = generate_posw(digest, delay)  # Исправлено на generate_posw
     header = {"delay": delay, "proof": proof.hex()}
     key = hashlib.sha256(proof).digest()
     payload = _xor_data(src, key)
@@ -45,6 +45,6 @@ def unlock_file(input_path: str, output_path: str) -> None:
     key = hashlib.sha256(proof).digest()
     data = _xor_data(payload, key)
     digest = hashlib.sha256(data).digest()
-    if not verify_proof(proof, digest):
+    if not verify_posw(proof, digest, header["delay"]):  # Исправлено на verify_posw
         raise ValueError("Proof verification failed")
     Path(output_path).write_bytes(data)
