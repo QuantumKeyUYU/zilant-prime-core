@@ -92,3 +92,11 @@ adb install -r mobile/android/app/build/outputs/apk/debug/app-debug.apk
 Open the app to view files extracted from `sample.zil`.
 
 ![android](../assets/android_poc.png)
+
+## Interactive wizard
+
+Create a container using the guided wizard:
+
+```{figure} ../assets/zilfs_demo.gif
+:alt: wizard demo
+```

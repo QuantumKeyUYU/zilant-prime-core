@@ -40,7 +40,6 @@ from .shard_secret import recover_secret, split_secret
 from .vault_client import VaultClient
 
 __all__: list[str] = [
-    # constants.py
     "DEFAULT_KEY_LENGTH",
     "DEFAULT_NONCE_LENGTH",
     "DEFAULT_SALT_LENGTH",
@@ -48,37 +47,29 @@ __all__: list[str] = [
     "HEADER_SIZE",
     "MAGIC",
     "VERSION",
-    # formats.py
-    "from_b64",
-    "from_hex",
-    "to_b64",
-    "to_hex",
-    # logging.py
-    "get_logger",
-    "get_file_logger",
-    # secure_logging.py
-    "SecureLogger",
-    "get_secure_logger",
-    # vault_client.py
-    "VaultClient",
-    # device fingerprint
-    "get_device_fingerprint",
-    "device_fp_fallback",
-    # shard secret
-    "split_secret",
-    "recover_secret",
-    # counter
-    "read_counter",
-    "write_counter",
-    "increment_counter",
-    # anti snapshot
-    "detect_snapshot",
-    "assert_safe_or_die",
-    "is_device_rooted",
+    "HoneyfileError",
     "ScreenGuard",
     "ScreenGuardError",
-    "guard",
-    "HoneyfileError",
+    "SecureLogger",
+    "VaultClient",
+    "assert_safe_or_die",
     "check_tmp_for_honeyfiles",
+    "detect_snapshot",
+    "device_fp_fallback",
+    "from_b64",
+    "from_hex",
     "generate_daily_challenge",
+    "get_device_fingerprint",
+    "get_file_logger",
+    "get_logger",
+    "get_secure_logger",
+    "guard",
+    "increment_counter",
+    "is_device_rooted",
+    "read_counter",
+    "recover_secret",
+    "split_secret",
+    "to_b64",
+    "to_hex",
+    "write_counter",
 ]

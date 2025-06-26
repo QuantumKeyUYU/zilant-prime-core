@@ -12,8 +12,12 @@ import time
 import uuid
 from typing import Dict, cast
 
-from crypto_core import hash_sha3
-from utils.secure_memory import wipe_bytes
+from zilant_prime_core.crypto_core import hash_sha3
+
+try:
+    from zilant_prime_core.utils.secure_memory import wipe_bytes
+except ModuleNotFoundError:  # pragma: no cover - dev mode
+    from utils.secure_memory import wipe_bytes
 
 # Соль фиксированная, ровно 16 байт
 SALT_CONST: bytes = b"\x00" * 16

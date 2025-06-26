@@ -8,7 +8,10 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from utils.file_utils import atomic_write
+try:
+    from zilant_prime_core.utils.file_utils import atomic_write
+except ModuleNotFoundError:  # pragma: no cover
+    from utils.file_utils import atomic_write
 from zilant_prime_core.utils.counter import read_counter
 
 TIMESTAMP_FILE = Path.home() / ".zilant_timestamp"

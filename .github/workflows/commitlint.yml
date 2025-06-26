@@ -1,0 +1,13 @@
+name: commitlint
+on:
+  pull_request:
+    types: [opened, synchronize]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: wagoid/commitlint-github-action@v5
+        with:
+          failOnWarnings: true
+          args: '--max-warnings 0'

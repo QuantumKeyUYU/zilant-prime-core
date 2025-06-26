@@ -3,8 +3,9 @@ rules:
     message: click.prompt should hide input for passwords
     severity: WARNING
     languages: [python]
-    pattern: click.prompt($MSG)
-    pattern-not: click.prompt($MSG, hide_input=True, ...)
+    patterns:
+      - pattern: click.prompt($MSG)
+      - pattern-not: click.prompt($MSG, hide_input=True, ...)
     fix: click.prompt($MSG, hide_input=True)
     metadata:
       cwe: CWE-285

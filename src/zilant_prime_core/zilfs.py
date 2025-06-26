@@ -41,11 +41,23 @@ except ImportError:  # pragma: no cover
 # ───────────────────────────── project-local импорты
 from cryptography.exceptions import InvalidTag
 
-from container import get_metadata, pack_file, unpack_file
-from streaming_aead import pack_stream, unpack_stream
-from utils.logging import get_logger
+try:
+    from zilant_prime_core.container import get_metadata, pack_file, unpack_file
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from container import get_metadata, pack_file, unpack_file
+try:
+    from zilant_prime_core.streaming_aead import pack_stream, unpack_stream
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from streaming_aead import pack_stream, unpack_stream
+try:
+    from zilant_prime_core.utils.logging import get_logger
+except ModuleNotFoundError:  # pragma: no cover - dev
+    from utils.logging import get_logger
+_get_logger = get_logger
 
-logger = get_logger("zilfs")
+from logging import Logger
+
+logger = cast(Logger, _get_logger("zilfs"))
 
 # ───────────────────────────── service-константы
 _DECOY_PROFILES: Dict[str, Dict[str, str]] = {
@@ -193,6 +205,7 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
     • Windows: «sparse-tar», большие файлы заменяем нулями.
     """
     with TemporaryDirectory() as tmp:
+
         fifo = os.path.join(tmp, "pipe_or_tar")
 
         # POSIX-ветка
@@ -227,7 +240,6 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
 
         _mark_sparse(Path(fifo))
         pack_stream(Path(fifo), dest, key)
-
 
 def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
     if not container.is_file():
