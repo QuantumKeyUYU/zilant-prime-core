@@ -80,7 +80,11 @@ def sweep_expired_decoys(dir_path: Path) -> int:
     """
     removed = 0
     now = time.time()
-    for path in dir_path.glob("*.zil"):
+    try:
+        paths = list(dir_path.glob("*.zil"))
+    except (FileNotFoundError, NotADirectoryError, IsADirectoryError):
+        return 0
+    for path in paths:
         try:
             if path.stat().st_mtime <= now:
                 path.unlink(missing_ok=True)

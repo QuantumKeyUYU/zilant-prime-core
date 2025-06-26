@@ -1,4 +1,7 @@
-import _winapi
+import pytest
+import sys
+
+_winapi = pytest.importorskip("_winapi")
 import importlib
 import shutil
 from pathlib import Path

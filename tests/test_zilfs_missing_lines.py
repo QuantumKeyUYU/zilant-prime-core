@@ -1,8 +1,9 @@
-import _winapi
 import importlib
 import pytest
 import sys
 from pathlib import Path
+
+_winapi = pytest.importorskip("_winapi")
 
 zl = importlib.import_module("zilant_prime_core.zilfs")
 ZilantFS = zl.ZilantFS

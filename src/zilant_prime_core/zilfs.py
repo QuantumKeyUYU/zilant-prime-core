@@ -161,7 +161,7 @@ try:
             progress: int | None = None,
         ) -> int:  # pragma: no cover
             try:
-                return _ORIG_COPYFILE2(src, dst, flags, progress)  # type: ignore[arg-type]
+                return int(_ORIG_COPYFILE2(src, dst, flags, progress))  # type: ignore[arg-type, no-any-return]
             except OSError as exc:
                 if getattr(exc, "winerror", None) != 112:
                     raise
@@ -205,23 +205,22 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
     • Windows: «sparse-tar», большие файлы заменяем нулями.
     """
     with TemporaryDirectory() as tmp:
-
-        fifo = os.path.join(tmp, "pipe_or_tar")
+        fifo = Path(tmp) / "pipe_or_tar"
 
         # POSIX-ветка
         if os.name != "nt" and hasattr(os, "mkfifo"):
-            os.mkfifo(fifo)  # type: ignore[arg-type]
+            os.mkfifo(str(fifo))  # type: ignore[arg-type]
             proc = subprocess.Popen(
-                ["tar", "-C", str(src), "-cf", fifo, "."],
+                ["tar", "-C", str(src), "-cf", str(fifo), "."],
                 stderr=subprocess.DEVNULL,
                 stdout=subprocess.DEVNULL,
             )
-            pack_stream(Path(fifo), dest, key)
+            pack_stream(fifo, dest, key)
             proc.wait()
             return
 
         # Windows/fallback
-        with tarfile.open(fifo, "w") as tar:
+        with fifo.open("wb") as fb, tarfile.open(fileobj=fb, mode="w") as tar:
             for f in sorted(src.rglob("*")):
                 rel = f.relative_to(src)
                 if f.is_dir():

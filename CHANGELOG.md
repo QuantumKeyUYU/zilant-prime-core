@@ -1,4 +1,5 @@
 ## Unreleased
+- Fixed CI failures on Linux / Py 3.12
 
 ## 0.9.9-rc1 - 2025-06-24
 ### Changed

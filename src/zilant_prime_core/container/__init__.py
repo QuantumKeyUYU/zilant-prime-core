@@ -11,7 +11,7 @@ except ModuleNotFoundError:  # pragma: no cover - installed as package
     HEADER_SEPARATOR = b"\n\n"
     from .metadata import get_metadata  # type: ignore
     from .pack import pack as _pack
-    from .pack import pack_file
+    from .pack import pack as pack_file
     from .unpack import unpack_file, verify_integrity  # type: ignore
 else:
     from container import unpack as _unused_unpack  # noqa: F401

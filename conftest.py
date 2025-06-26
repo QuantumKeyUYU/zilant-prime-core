@@ -14,6 +14,11 @@ if SRC.is_dir():
 
 os.environ.setdefault("ZILANT_ALLOW_ROOT", "1")
 
+import pathlib
+
+if sys.platform != "win32":
+    pathlib.WindowsPath = pathlib.PosixPath  # type: ignore[assignment]
+
 import pytest
 
 
