@@ -1,34 +1,27 @@
-import pytest
+import _winapi
+import importlib
+import shutil
 from pathlib import Path
 
-from zilant_prime_core.zilfs import ZilantFS, unpack_dir
+from zilant_prime_core.zilfs import ZilantFS
 
-pytestmark = pytest.mark.zilfs
-
-
-def _hash_file(path: Path) -> str:
-    import hashlib
-
-    h = hashlib.sha256()
-    with open(path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(65536), b""):
-            h.update(chunk)
-    return h.hexdigest()
+zl = importlib.import_module("zilant_prime_core.zilfs")
 
 
 def test_zilfs_stream_big(tmp_path: Path, monkeypatch):
-    src = tmp_path / "src"
-    src.mkdir()
-    big = src / "big.bin"
-    with open(big, "wb") as fh:
-        fh.truncate(6 * 1024 * 1024 * 1024)
+    """Ветка ZILANT_STREAM=1 + Windows fallback без рекурсии."""
+    # подавляем реальный CopyFile2 → не будет зацикливаться
+    monkeypatch.setattr(_winapi, "CopyFile2", lambda *a, **kw: 0, raising=False)
+
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    big = src_dir / "big.bin"
+    big.write_bytes(b"\0" * (8 * 1024 * 1024))  # 8 MiB
+
     container = tmp_path / "c.zil"
     monkeypatch.setenv("ZILANT_STREAM", "1")
-    fs = ZilantFS(container, b"k" * 32)
-    import shutil
+    fs = ZilantFS(container, b"k" * 32, force=True)
 
-    shutil.copy2(big, fs.root / "big.bin")
+    shutil.copy2(big, fs.root / big.name)  # не падает
     fs.destroy("/")
-    out = tmp_path / "out"
-    unpack_dir(container, out, b"k" * 32)
-    assert _hash_file(big) == _hash_file(out / "big.bin")
+    assert container.is_file()

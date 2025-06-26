@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 from __future__ import annotations
 
 import os
@@ -19,7 +22,12 @@ def bench_fs() -> float:
         with open(path, "wb") as fh:
             for _ in range(25):
                 fh.write(b"\0" * 4 * 1024 * 1024)
-        os.sync()
+            fh.flush()
+            try:
+                os.fsync(fh.fileno())
+            except AttributeError:
+                # fsync is missing only on exotic platforms
+                pass
         fs.destroy("/")
         dur = time.time() - start
         mb_s = 100 / dur if dur else 0.0
