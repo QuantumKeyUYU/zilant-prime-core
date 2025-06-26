@@ -2,8 +2,6 @@
 # SPDX-License-Identifier: MIT
 
 import pytest
-
-# tests/test_vdf_property.py
 import sys
 
 # На Windows Hypothesis падает из-за внутреннего бага с sys.modules

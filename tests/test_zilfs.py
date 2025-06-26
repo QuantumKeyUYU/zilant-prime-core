@@ -25,7 +25,7 @@ def test_pack_dir_stream(tmp_path, monkeypatch):
     (src / "a.txt").write_text("y")
     out = tmp_path / "out.zil"
     key = b"k" * 32
-    # For Windows — fallback branch, no mkfifo
+    # Для Windows — fallback branch, no mkfifo
     monkeypatch.setattr(os, "name", "nt")
     zilfs.pack_dir_stream(src, out, key)
     dst = tmp_path / "dst"

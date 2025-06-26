@@ -5,7 +5,7 @@ import json
 from itertools import cycle
 from pathlib import Path
 
-from vdf import generate_posw, verify_posw  # Исправлено на правильные функции
+from vdf import generate_posw, verify_posw  # Используем правильные функции
 
 
 def _xor_data(data: bytes, key: bytes) -> bytes:
