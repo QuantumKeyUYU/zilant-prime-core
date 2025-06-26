@@ -17,9 +17,10 @@ import subprocess
 import tarfile
 import time
 from hashlib import sha256
+from logging import Logger
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, List, Tuple, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple, cast
 
 
 # ───────────────────────────── fusepy (опционально)
@@ -41,10 +42,17 @@ except ImportError:  # pragma: no cover
 # ───────────────────────────── project-local импорты
 from cryptography.exceptions import InvalidTag
 
-try:
-    from zilant_prime_core.container import get_metadata, pack_file, unpack_file
-except ModuleNotFoundError:  # pragma: no cover - dev
-    from container import get_metadata, pack_file, unpack_file
+if TYPE_CHECKING:  # pragma: no cover - hints for mypy
+    import container as container_mod
+else:
+    try:
+        import zilant_prime_core.container as container_mod
+    except ModuleNotFoundError:  # pragma: no cover - dev
+        import container as container_mod
+
+get_metadata = container_mod.get_metadata
+pack_file = container_mod.pack_file
+unpack_file = container_mod.unpack_file
 try:
     from zilant_prime_core.streaming_aead import pack_stream, unpack_stream
 except ModuleNotFoundError:  # pragma: no cover - dev
@@ -53,11 +61,8 @@ try:
     from zilant_prime_core.utils.logging import get_logger
 except ModuleNotFoundError:  # pragma: no cover - dev
     from utils.logging import get_logger
-_get_logger = get_logger
 
-from logging import Logger
-
-logger = cast(Logger, _get_logger("zilfs"))
+logger = cast(Logger, get_logger("zilfs"))
 
 # ───────────────────────────── service-константы
 _DECOY_PROFILES: Dict[str, Dict[str, str]] = {

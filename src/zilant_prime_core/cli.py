@@ -758,7 +758,7 @@ def cmd_wizard() -> None:
         qrcode = None
     import tempfile
 
-    click.echo("Path to container: ", nl=False)
+    print("Path to container:", end=" ", flush=True)
     path_str = input().strip()
     if not path_str:
         raise click.Abort()

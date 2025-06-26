@@ -14,10 +14,7 @@ try:
     from zilant_prime_core.audit_ledger import record_action
 except ModuleNotFoundError:  # pragma: no cover - dev
     from audit_ledger import record_action
-try:
-    from zilant_prime_core.container import HEADER_SEPARATOR, pack
-except ModuleNotFoundError:  # pragma: no cover - dev
-    from container import HEADER_SEPARATOR, pack
+from zilant_prime_core.container import HEADER_SEPARATOR, pack
 from zilant_prime_core.crypto_core import hash_sha3
 
 try:
@@ -83,7 +80,7 @@ def heal_container(path: Path, key: bytes, *, rng_seed: bytes) -> bool:
 
     # Создаем новый контейнер
     try:
-        new_blob: bytes = pack(payload, new_key)
+        new_blob: bytes = pack(meta, payload, new_key)
     except Exception as exc:
         record_action("self_heal_pack_failed", {"file": str(path), "error": str(exc)})
         os.unlink(lock_path)
