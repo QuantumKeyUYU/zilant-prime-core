@@ -1,12 +1,5 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
-"""
-Упрощённая in-memory-FS поверх .zil-контейнеров (используется только в CI-тестах).
-
-• FUSE не требуется — монтирование происходит в tmp-каталог.
-• На Windows реализована защита от «WinError 112» при shutil.copy*.
-• Поддерживает sparse-упаковку больших файлов, чтобы не кушать диск в CI.
-"""
 
 from __future__ import annotations
 
@@ -22,8 +15,8 @@ from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Tuple, cast
 
 
-# ───────────────────────────── fusepy (опционально)
-class Operations:  # noqa: D101
+# ───────────── fusepy (опционально) ─────────────
+class Operations:  # type: ignore
     """Заглушка, если fusepy не установлен — нужна только для типизации."""
 
 
@@ -38,7 +31,7 @@ try:
 except ImportError:  # pragma: no cover
     FuseOSError = OSError  # type: ignore[assignment]
 
-# ───────────────────────────── project-local импорты
+# ───────────── project-local импорты ─────────────
 from cryptography.exceptions import InvalidTag
 
 from container import get_metadata, pack_file, unpack_file
@@ -47,7 +40,7 @@ from utils.logging import get_logger
 
 logger = get_logger("zilfs")
 
-# ───────────────────────────── service-константы
+# ───────────── service-константы ─────────────
 _DECOY_PROFILES: Dict[str, Dict[str, str]] = {
     "minimal": {"dummy.txt": "lorem ipsum"},
     "adaptive": {
@@ -62,14 +55,14 @@ _DECOY_PROFILES: Dict[str, Dict[str, str]] = {
 ACTIVE_FS: List["ZilantFS"] = []
 
 
-# ───────────────────────────── helpers (низкоуровневые)
+# ───────────── helpers (низкоуровневые) ─────────────
 class _ZeroFile:
     """file-like, отдающий N нулей без выделения RAM."""
 
     def __init__(self, size: int) -> None:
         self._remain = size
 
-    def read(self, n: int = -1) -> bytes:  # noqa: D401
+    def read(self, n: int = -1) -> bytes:
         if self._remain == 0:
             return b""
         if n < 0 or n > self._remain:
@@ -89,7 +82,7 @@ def _mark_sparse(path: Path) -> None:
         FSCTL_SET_SPARSE = 0x900C4
         kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
 
-        handle = kernel32.CreateFileW(  # type: ignore[attr-defined]
+        handle = kernel32.CreateFileW(
             str(path),
             0x400,  # GENERIC_WRITE
             0,
@@ -101,7 +94,7 @@ def _mark_sparse(path: Path) -> None:
         if handle == -1:
             return
         bytes_ret = wt.DWORD()
-        kernel32.DeviceIoControl(  # type: ignore[attr-defined]
+        kernel32.DeviceIoControl(
             handle,
             FSCTL_SET_SPARSE,
             None,
@@ -111,7 +104,7 @@ def _mark_sparse(path: Path) -> None:
             ctypes.byref(bytes_ret),
             None,
         )
-        kernel32.CloseHandle(handle)  # type: ignore[attr-defined]
+        kernel32.CloseHandle(handle)
     except Exception:  # pragma: no cover
         pass
 
@@ -135,7 +128,7 @@ def _sparse_copyfile2(src: str, dst: str, _flags: int) -> None:
     _mark_sparse(Path(dst))
 
 
-# ───────────────────────────── patch CopyFile2 (Windows only)
+# ───────────── patch CopyFile2 (Windows only) ─────────────
 try:
     import _winapi as _winapi_mod  # type: ignore
 
@@ -161,7 +154,7 @@ except ImportError:
     pass
 
 
-# ───────────────────────────── служебные tar-функции
+# ───────────── служебные tar-функции ─────────────
 def _read_meta(container: Path) -> Dict[str, Any]:
     """Прочитать JSON-заголовок контейнера (до двойного LF)."""
     header = bytearray()
@@ -197,7 +190,7 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
 
         # POSIX-ветка
         if os.name != "nt" and hasattr(os, "mkfifo"):
-            os.mkfifo(fifo)  # type: ignore[arg-type]
+            os.mkfifo(fifo)
             proc = subprocess.Popen(
                 ["tar", "-C", str(src), "-cf", fifo, "."],
                 stderr=subprocess.DEVNULL,
@@ -251,7 +244,7 @@ def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
                     _truncate_file(dest / member.name, int(sp))
 
 
-# ───────────────────────────── snapshot / diff
+# ───────────── snapshot / diff ─────────────
 def _rewrite_metadata(container: Path, extra: Dict[str, Any], key: bytes) -> None:
     with TemporaryDirectory() as tmp:
         plain = Path(tmp) / "plain"
@@ -272,12 +265,19 @@ def snapshot_container(container: Path, key: bytes, label: str) -> Path:
         pack_dir(d, out, key)
         _rewrite_metadata(
             out,
-            {"label": label, "latest_snapshot_id": label, "snapshots": {**snaps, label: ts}},
+            {
+                "label": str(label),
+                "latest_snapshot_id": str(label),
+                "snapshots": {str(label): str(ts), **snaps},
+            },
             key,
         )
     _rewrite_metadata(
         container,
-        {"latest_snapshot_id": label, "snapshots": {**snaps, label: ts}},
+        {
+            "latest_snapshot_id": str(label),
+            "snapshots": {str(label): str(ts), **snaps},
+        },
         key,
     )
     return out
@@ -301,7 +301,7 @@ def diff_snapshots(a: Path, b: Path, key: bytes) -> Dict[str, Tuple[str, str]]:
     }
 
 
-# ───────────────────────────── основной класс FS
+# ───────────── основной класс FS ─────────────
 class ZilantFS(Operations):  # type: ignore[misc]
     """In-memory (FUSE-совместимая) FS для автотестов."""
 
@@ -358,7 +358,7 @@ class ZilantFS(Operations):  # type: ignore[misc]
         self._bytes_rw, self._start = 0, time.time()
         return mb / dur
 
-    def destroy(self, _p: str) -> None:  # noqa: D401
+    def destroy(self, _p: str) -> None:
         """Сериализовать tmp-каталог обратно в контейнер. Второй вызов — noop."""
         if not self.ro:
             try:
@@ -368,12 +368,10 @@ class ZilantFS(Operations):  # type: ignore[misc]
                     pack_dir(self.root, self.container, self.password)
             except FileNotFoundError:  # pragma: no cover
                 pass
-        # Всегда очищаем tmp, даже при повторном destroy
         try:
             self._tmp.cleanup()
         except Exception:
             pass
-        # Убираем из ACTIVE_FS один раз, повторные remove игнорируем
         try:
             ACTIVE_FS.remove(self)
         except ValueError:
@@ -420,7 +418,6 @@ class ZilantFS(Operations):  # type: ignore[misc]
         self._rw_check()
         _truncate_file(Path(self._full(path)), length)
 
-    # дополнительные операции (не требуются CI, но для полноты)
     def unlink(self, path: str) -> None:  # pragma: no cover
         self._rw_check()
         os.unlink(self._full(path))
@@ -444,7 +441,7 @@ class ZilantFS(Operations):  # type: ignore[misc]
         os.close(fh)
 
 
-# ───────────────────────────── stub-mount API
+# ───────────── stub-mount API ─────────────
 def mount_fs(*_a: Any, **_kw: Any) -> None:  # pragma: no cover
     raise RuntimeError("mount_fs not available in test build")
 
