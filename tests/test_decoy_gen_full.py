@@ -59,9 +59,12 @@ def test_sweep_expired_decoys_handles_file_disappear(monkeypatch):
 
     with tempfile.TemporaryDirectory() as td:
         dest_dir = Path(td)
+        # создаём файл, который уже просрочен
         decoy_gen.generate_decoy_file(dest_dir / "boom.zil", expire_seconds=-1)
 
-        def fake_stat(self):
+        # Подменяем метод stat так, чтобы он удалял файл и
+        # не падал на unexpected keyword argument
+        def fake_stat(self, *args, **kwargs):
             os.unlink(self)
             raise FileNotFoundError
 
