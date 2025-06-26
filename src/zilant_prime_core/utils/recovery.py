@@ -21,7 +21,6 @@ try:
     from zilant_prime_core.utils.logging import get_logger
 except ModuleNotFoundError:  # pragma: no cover - dev
     from utils.logging import get_logger
-_get_logger = get_logger
 try:
     from zilant_prime_core.utils.secure_memory import wipe_bytes
 except ModuleNotFoundError:  # pragma: no cover - dev
@@ -36,7 +35,7 @@ DESTRUCTION_KEY_BUFFER: bytearray = bytearray(b"0123456789ABCDEF0123456789ABCDEF
 from logging import Logger
 from typing import cast
 
-logger = cast(Logger, _get_logger("recovery"))
+logger = cast(Logger, get_logger("recovery"))
 
 
 def self_destruct(reason: str, key_buffer: bytearray) -> Optional[bytes]:
