@@ -1,6 +1,6 @@
-import _winapi
-import importlib
 import pytest
+_winapi = pytest.importorskip("_winapi")
+import importlib
 import sys
 from pathlib import Path
 
