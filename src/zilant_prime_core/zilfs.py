@@ -55,7 +55,7 @@ _DECOY_PROFILES: Dict[str, Dict[str, str]] = {
 ACTIVE_FS: List["ZilantFS"] = []
 
 
-# ───────────── helpers (низкоуровневые) ─────────────
+# ───────────── helpers ─────────────
 class _ZeroFile:
     """file-like, отдающий N нулей без выделения RAM."""
 
@@ -128,7 +128,7 @@ def _sparse_copyfile2(src: str, dst: str, _flags: int) -> None:
     _mark_sparse(Path(dst))
 
 
-# ───────────── patch CopyFile2 (Windows only) ─────────────
+# ───────── patch CopyFile2 (Windows only) ─────────
 try:
     import _winapi as _winapi_mod  # type: ignore
 
@@ -142,7 +142,8 @@ try:
             progress: int | None = None,
         ) -> int:  # pragma: no cover
             try:
-                return _ORIG_COPYFILE2(src, dst, flags, progress)  # type: ignore[arg-type]
+                # приводим Any → int, чтобы satisfy mypy/ruff no-any-return
+                return int(_ORIG_COPYFILE2(src, dst, flags, progress))  # type: ignore[arg-type]
             except OSError as exc:
                 if getattr(exc, "winerror", None) != 112:
                     raise
@@ -154,7 +155,7 @@ except ImportError:
     pass
 
 
-# ───────────── служебные tar-функции ─────────────
+# ───────── служебные tar-функции ─────────
 def _read_meta(container: Path) -> Dict[str, Any]:
     """Прочитать JSON-заголовок контейнера (до двойного LF)."""
     header = bytearray()
@@ -188,7 +189,6 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
     with TemporaryDirectory() as tmp:
         fifo = os.path.join(tmp, "pipe_or_tar")
 
-        # POSIX-ветка
         if os.name != "nt" and hasattr(os, "mkfifo"):
             os.mkfifo(fifo)
             proc = subprocess.Popen(
@@ -200,7 +200,6 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
             proc.wait()
             return
 
-        # Windows/fallback
         with tarfile.open(fifo, "w") as tar:
             for f in sorted(src.rglob("*")):
                 rel = f.relative_to(src)
@@ -244,7 +243,7 @@ def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
                     _truncate_file(dest / member.name, int(sp))
 
 
-# ───────────── snapshot / diff ─────────────
+# ───────── snapshot / diff ─────────
 def _rewrite_metadata(container: Path, extra: Dict[str, Any], key: bytes) -> None:
     with TemporaryDirectory() as tmp:
         plain = Path(tmp) / "plain"
@@ -301,7 +300,7 @@ def diff_snapshots(a: Path, b: Path, key: bytes) -> Dict[str, Tuple[str, str]]:
     }
 
 
-# ───────────── основной класс FS ─────────────
+# ───────── основной класс FS ─────────
 class ZilantFS(Operations):  # type: ignore[misc]
     """In-memory (FUSE-совместимая) FS для автотестов."""
 
@@ -366,7 +365,7 @@ class ZilantFS(Operations):  # type: ignore[misc]
                     pack_dir_stream(self.root, self.container, self.password)
                 else:
                     pack_dir(self.root, self.container, self.password)
-            except FileNotFoundError:  # pragma: no cover
+            except FileNotFoundError:
                 pass
         try:
             self._tmp.cleanup()
@@ -441,7 +440,7 @@ class ZilantFS(Operations):  # type: ignore[misc]
         os.close(fh)
 
 
-# ───────────── stub-mount API ─────────────
+# ───────── stub-mount API ─────────
 def mount_fs(*_a: Any, **_kw: Any) -> None:  # pragma: no cover
     raise RuntimeError("mount_fs not available in test build")
 
