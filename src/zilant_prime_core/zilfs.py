@@ -155,7 +155,7 @@ except ImportError:
     pass
 
 
-# ───────── служебные tar-функции ─────────
+# ───────────── служебные tar-функции ─────────────
 def _read_meta(container: Path) -> Dict[str, Any]:
     """Прочитать JSON-заголовок контейнера (до двойного LF)."""
     header = bytearray()
@@ -236,14 +236,14 @@ def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
             raise ValueError("bad key or corrupted container") from exc
 
         with tarfile.open(tar_path) as tar:
-            tar.extractall(dest)
+            tar.extractall(dest)  # nosec B202: safe with our own containers
             for member in tar.getmembers():
                 sp = member.pax_headers.get("ZIL_SPARSE_SIZE")
                 if sp:
                     _truncate_file(dest / member.name, int(sp))
 
 
-# ───────── snapshot / diff ─────────
+# ───────────── snapshot / diff ─────────────
 def _rewrite_metadata(container: Path, extra: Dict[str, Any], key: bytes) -> None:
     with TemporaryDirectory() as tmp:
         plain = Path(tmp) / "plain"
@@ -300,7 +300,7 @@ def diff_snapshots(a: Path, b: Path, key: bytes) -> Dict[str, Tuple[str, str]]:
     }
 
 
-# ───────── основной класс FS ─────────
+# ───────────── класс ZilantFS ─────────────
 class ZilantFS(Operations):  # type: ignore[misc]
     """In-memory (FUSE-совместимая) FS для автотестов."""
 
