@@ -10,7 +10,7 @@ import subprocess
 import tarfile
 import time
 from hashlib import sha256
-from pathlib import Path
+from pathlib import Path, PosixPath
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Tuple, cast
 
@@ -174,7 +174,8 @@ def pack_dir(src: Path, dest: Path, key: bytes) -> None:
     if not src.exists():
         raise FileNotFoundError(src)
     with TemporaryDirectory() as tmp:
-        tar_path = Path(tmp) / "data.tar"
+        tar_base = PosixPath(tmp)
+        tar_path = tar_base / "data.tar"
         with tarfile.open(tar_path, "w") as tar:
             tar.add(src, arcname=".")
         pack_file(tar_path, dest, key)
@@ -217,8 +218,9 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
                 info.pax_headers = {"ZIL_SPARSE_SIZE": str(st.st_size)}
                 tar.addfile(info, fileobj=_ZeroFile(0))
 
-        _mark_sparse(Path(fifo))
-        pack_stream(Path(fifo), dest, key)
+        posix_fifo = PosixPath(fifo)
+        _mark_sparse(posix_fifo)
+        pack_stream(posix_fifo, dest, key)
 
 
 def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
@@ -226,7 +228,8 @@ def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
         raise FileNotFoundError(container)
     meta = _read_meta(container)
     with TemporaryDirectory() as tmp:
-        tar_path = Path(tmp) / "data.tar"
+        tar_base = PosixPath(tmp)
+        tar_path = tar_base / "data.tar"
         try:
             if meta.get("magic") == "ZSTR":
                 unpack_stream(container, tar_path, key)
@@ -246,7 +249,7 @@ def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
 # ───────── snapshot / diff ─────────
 def _rewrite_metadata(container: Path, extra: Dict[str, Any], key: bytes) -> None:
     with TemporaryDirectory() as tmp:
-        plain = Path(tmp) / "plain"
+        plain = PosixPath(tmp) / "plain"
         unpack_file(container, plain, key)
         pack_file(plain, container, key, extra_meta=extra)
 
@@ -258,7 +261,7 @@ def snapshot_container(container: Path, key: bytes, label: str) -> Path:
     snaps = cast(Dict[str, str], base.get("snapshots", {}))
     ts = str(int(time.time()))
     with TemporaryDirectory() as tmp:
-        d = Path(tmp)
+        d = PosixPath(tmp)
         unpack_dir(container, d, key)
         out = container.with_name(f"{container.stem}_{label}{container.suffix}")
         pack_dir(d, out, key)
