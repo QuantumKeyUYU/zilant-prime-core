@@ -7,7 +7,8 @@ from hypothesis import strategies as st
 from container import pack_file, unpack_file
 
 
-@settings(suppress_health_check=(HealthCheck.function_scoped_fixture,))
+# turn off both the function-scoped-fixture warning and the per-example timing deadline
+@settings(suppress_health_check=(HealthCheck.function_scoped_fixture,), deadline=None)
 @given(data=st.binary(min_size=0, max_size=2048))
 def test_pack_unpack_roundtrip(tmp_path, data):
     src = tmp_path / "inp.bin"

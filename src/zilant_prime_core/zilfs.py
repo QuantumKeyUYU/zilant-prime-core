@@ -188,6 +188,7 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
     with TemporaryDirectory() as tmp:
         fifo = os.path.join(tmp, "pipe_or_tar")
 
+        # Проверка на ОС и создание правильного типа пути
         if os.name != "nt" and hasattr(os, "mkfifo"):
             os.mkfifo(fifo)
             proc = subprocess.Popen(
