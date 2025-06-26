@@ -12,8 +12,8 @@ __all__ = [
     "record_decoy_event",
     "record_decoy_purged",
     "record_decoy_removed_early",
-    "record_self_heal_triggered",
     "record_self_heal_done",
+    "record_self_heal_triggered",
 ]
 
 _LEDGER: Final[Path] = Path("audit-ledger.jsonl")

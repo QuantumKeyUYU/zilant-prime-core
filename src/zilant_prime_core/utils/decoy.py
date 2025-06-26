@@ -12,18 +12,17 @@ import time
 from pathlib import Path
 from typing import Dict, List, Set
 
-
 from audit_ledger import record_decoy_purged, record_decoy_removed_early
 from container import get_metadata, pack_file
 
 __all__ = [
+    "clean_decoy_folder",
+    "delete_expired_decoy_files",
     "generate_decoy_file",
     "generate_decoy_files",
-    "is_decoy_file",
     "is_decoy_expired",
+    "is_decoy_file",
     "sweep_expired_decoys",
-    "delete_expired_decoy_files",
-    "clean_decoy_folder",
 ]
 
 _DECOY_EXPIRY: Dict[Path, float] = {}

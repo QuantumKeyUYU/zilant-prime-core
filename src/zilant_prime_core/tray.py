@@ -11,6 +11,7 @@ src/zilant_prime_core/tray.py
 """
 
 from __future__ import annotations
+
 import os
 import sys
 from typing import TYPE_CHECKING, Any, Callable
@@ -21,7 +22,7 @@ ACTIVE_FS: list[Any] = []
 # ───────────────────────────── попытка импорта PySide6
 try:  # pragma: no cover
     # QtCore/QTimer — не используем при рендере, но тесты могут подменить
-    from PySide6.QtCore import QTimer  # noqa: F401
+    from PySide6.QtCore import QTimer
     from PySide6.QtGui import QIcon
     from PySide6.QtWidgets import QAction, QApplication, QMenu, QSystemTrayIcon
 except (ImportError, ModuleNotFoundError):
@@ -48,9 +49,9 @@ except (ImportError, ModuleNotFoundError):
 
 if TYPE_CHECKING:
     # Для mypy: эти имена существуют
-    from PySide6.QtCore import QTimer  # noqa: F811  # pragma: no cover
-    from PySide6.QtGui import QIcon  # noqa: F811   # pragma: no cover
-    from PySide6.QtWidgets import QAction, QApplication, QMenu, QSystemTrayIcon  # noqa: F811   # pragma: no cover
+    from PySide6.QtCore import QTimer  # pragma: no cover
+    from PySide6.QtGui import QIcon  # pragma: no cover
+    from PySide6.QtWidgets import QAction, QApplication, QMenu, QSystemTrayIcon  # pragma: no cover
 
 
 # ───────────────────────────── основная функция
@@ -110,12 +111,12 @@ def run_tray(icon_path: str | None = None) -> None:
 
 
 __all__ = [
-    "run_tray",
-    "QApplication",
-    "QSystemTrayIcon",
-    "QMenu",
-    "QAction",
-    "QIcon",
-    "QTimer",
     "ACTIVE_FS",
+    "QAction",
+    "QApplication",
+    "QIcon",
+    "QMenu",
+    "QSystemTrayIcon",
+    "QTimer",
+    "run_tray",
 ]

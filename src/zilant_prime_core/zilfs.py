@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Tuple, cast
 
 
 # ───────────────────────────── fusepy (опционально)
-class Operations:  # noqa: D101
+class Operations:
     """Заглушка, если fusepy не установлен — нужна только для типизации."""
 
 
@@ -81,7 +81,7 @@ class _ZeroFile:
     def __init__(self, size: int) -> None:
         self._remain = size
 
-    def read(self, n: int = -1) -> bytes:  # noqa: D401
+    def read(self, n: int = -1) -> bytes:
         if self._remain == 0:
             return b""
         if n < 0 or n > self._remain:
@@ -241,6 +241,7 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
         _mark_sparse(Path(fifo))
         pack_stream(Path(fifo), dest, key)
 
+
 def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
     if not container.is_file():
         raise FileNotFoundError(container)
@@ -370,7 +371,7 @@ class ZilantFS(Operations):  # type: ignore[misc]
         self._bytes_rw, self._start = 0, time.time()
         return mb / dur
 
-    def destroy(self, _p: str) -> None:  # noqa: D401
+    def destroy(self, _p: str) -> None:
         """Сериализовать tmp-каталог обратно в контейнер. Второй вызов — noop."""
         if not self.ro:
             try:
