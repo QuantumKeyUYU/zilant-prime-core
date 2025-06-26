@@ -10,7 +10,7 @@ import subprocess
 import tarfile
 import time
 from hashlib import sha256
-from pathlib import Path
+from pathlib import Path, PosixPath
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Tuple, cast
 
@@ -174,7 +174,7 @@ def pack_dir(src: Path, dest: Path, key: bytes) -> None:
     if not src.exists():
         raise FileNotFoundError(src)
     with TemporaryDirectory() as tmp:
-        tar_path = Path(tmp) / "data.tar"
+        tar_path = PosixPath(tmp) / "data.tar"
         with tarfile.open(tar_path, "w") as tar:
             tar.add(src, arcname=".")
         pack_file(tar_path, dest, key)
@@ -186,7 +186,8 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
     • Windows: «sparse-tar», большие файлы заменяем нулями.
     """
     with TemporaryDirectory() as tmp:
-        fifo = os.path.join(tmp, "pipe_or_tar")
+        fifo_path = PosixPath(tmp) / "pipe_or_tar"
+        fifo = str(fifo_path)
 
         # Проверка на ОС и создание правильного типа пути
         if os.name != "nt" and hasattr(os, "mkfifo"):
@@ -196,7 +197,7 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
                 stderr=subprocess.DEVNULL,
                 stdout=subprocess.DEVNULL,
             )
-            pack_stream(Path(fifo), dest, key)
+            pack_stream(fifo_path, dest, key)
             proc.wait()
             return
 
@@ -217,8 +218,8 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
                 info.pax_headers = {"ZIL_SPARSE_SIZE": str(st.st_size)}
                 tar.addfile(info, fileobj=_ZeroFile(0))
 
-        _mark_sparse(Path(fifo))
-        pack_stream(Path(fifo), dest, key)
+        _mark_sparse(fifo_path)
+        pack_stream(fifo_path, dest, key)
 
 
 def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
@@ -226,7 +227,7 @@ def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
         raise FileNotFoundError(container)
     meta = _read_meta(container)
     with TemporaryDirectory() as tmp:
-        tar_path = Path(tmp) / "data.tar"
+        tar_path = PosixPath(tmp) / "data.tar"
         try:
             if meta.get("magic") == "ZSTR":
                 unpack_stream(container, tar_path, key)
