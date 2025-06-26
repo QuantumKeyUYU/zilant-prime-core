@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
+# SPDX-License-Identifier: MIT
+
 name: zilant-ci
 
 on:
@@ -8,47 +11,60 @@ on:
 
 jobs:
   quality:
-    name: quality
+    name: Quality Checks
     runs-on: ubuntu-latest
     steps:
+      # Проверка исходного кода
       - uses: actions/checkout@v4
 
+      # Настройка Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
+      # Установка зависимостей для разработки
       - name: Install dev-deps
         run: pip install -e ".[dev,cli]"
 
+      # Запуск pre-commit hooks
       - name: Pre-commit
         run: pre-commit run --all-files
 
+      # Линтинг с помощью ruff
       - name: Ruff (lint)
         run: ruff check .
 
+      # Форматирование с помощью black
       - name: Black (format)
         run: black --check .
 
+      # Проверка импорта с помощью isort
       - name: isort (imports)
         run: isort --check-only .
 
+      # Сборка wheel пакета
       - name: Build wheel
         run: python -m build -w -o dist/
 
+      # Статический анализ безопасности с помощью bandit
       - name: Bandit (SAST)
         run: bandit -r src -ll
 
+      # Статический анализ с помощью semgrep
       - name: Semgrep (SAST)
         run: semgrep ci
 
+      # Проверка типов с помощью mypy
       - name: Mypy (types)
         run: mypy --config-file mypy.ini src
 
+      # Запуск юнит-тестов
       - name: Pytest
         run: ZILANT_ALLOW_ROOT=1 pytest -q
 
   perf:
+    name: Performance Test
     needs: quality
     runs-on: ubuntu-latest
     steps:
@@ -57,10 +73,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
+      # Установка зависимостей для разработки
       - run: pip install -e ".[dev,cli]"
+
+      # Запуск тестов производительности
       - run: SKIP_FUZZ=1 ZILANT_ALLOW_ROOT=1 pytest -q -m perf --disable-warnings --maxfail=1
 
   large-file-test:
+    name: Large File Test
     needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -70,10 +91,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
+      # Установка зависимостей для разработки
       - run: pip install -e ".[dev,cli]"
+
+      # Запуск тестов на большие файлы
       - run: pytest -q tests/test_stream_large.py tests/test_stream_resume.py
 
   cli-polish:
+    name: CLI Polish
     needs: quality
     runs-on: ubuntu-latest
     steps:
@@ -82,10 +108,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
+      # Установка зависимостей для разработки
       - run: pip install -e ".[dev,cli]"
+
+      # Тестирование CLI
       - run: pytest -q tests/test_cli_observability.py
 
   docs:
+    name: Documentation Generation
     needs: quality
     runs-on: ubuntu-latest
     steps:
@@ -94,6 +125,7 @@ jobs:
       - name: Install docs-deps
         run: pip install -e .[docs]
 
+      # Настройка Node.js для генерации диаграмм Mermaid
       - uses: actions/setup-node@v3
         with:
           node-version: "18"
@@ -101,6 +133,7 @@ jobs:
       - name: Install Mermaid-CLI
         run: npm install -g @mermaid-js/mermaid-cli
 
+      # Установка зависимостей для работы с Chrome
       - name: Install Chrome deps
         run: |
           sudo apt-get update -qq
@@ -109,6 +142,7 @@ jobs:
             libxext6 libxfixes3 libxi6 libxrandr2 libxtst6 \
             libnss3 libatk1.0-0 libgtk-3-0 libpangocairo-1.0-0
 
+      # Конфигурация Puppeteer
       - name: Create puppeteer-config.json
         run: |
           mkdir -p docs
@@ -116,6 +150,7 @@ jobs:
           { "args": ["--no-sandbox", "--disable-setuid-sandbox"] }
           EOF
 
+      # Генерация диаграмм Mermaid
       - name: Generate Mermaid diagrams
         run: |
           npx mmdc \
@@ -123,11 +158,13 @@ jobs:
             -i docs/architecture/key_lifecycle.mmd \
             -o docs/_static/key_lifecycle.svg
 
+      # Генерация HTML документации
       - name: Build HTML docs
         working-directory: docs
         run: make html
 
   build-pq:
+    name: Build PQ Wheels
     needs: [ quality, perf ]
     runs-on: ubuntu-latest
     steps:
@@ -137,38 +174,38 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      # Настройка Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
+      # Установка зависимостей для сборки
       - name: Install build deps
         run: pip install -e ".[dev,cli]" build pyyaml
 
+      # Сборка PQ колес
       - name: Build PQ wheels
         run: python tools/build_pq_wheels.py
 
+      # Установка зависимостей для генерации документации
       - name: Install Pandoc & XeLaTeX
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y pandoc texlive-xetex
 
+      # Подготовка THREATS placeholder
       - name: Prepare THREATS placeholder
         run: cp docs/THREATS.rst docs/THREATS.md
 
+      # Генерация Whitepaper
       - name: Generate Whitepaper
         run: python tools/gen_whitepaper.py
 
+      # Загрузка PQ колес
       - name: Upload PQ wheels
         uses: actions/upload-artifact@v4
         with:
           name: pq-wheels
           path: dist/*.whl
           if-no-files-found: ignore
-
-  # sign (закомментировано)
-  # sign:
-  #   needs: build-pq
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     …
