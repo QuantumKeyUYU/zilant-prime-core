@@ -139,3 +139,7 @@
 - CI: установка FUSE-пакетов на Linux и инициализация `zil_mobile_api`.
 
 ---
+## 0.9.9b3 - 2025-06-29
+- Restore stubs for test modules
+- Reintroduce docs requirements and compliance report
+- Fix imports via pre-commit
