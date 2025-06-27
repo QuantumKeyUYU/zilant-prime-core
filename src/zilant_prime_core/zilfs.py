@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Tuple, cast
 
 
 # ───────────────────────────── fusepy (опционально)
-class Operations:  # noqa: D101
+class Operations:
     """Заглушка, если fusepy не установлен — нужна только для типизации."""
 
 
@@ -35,7 +35,7 @@ try:
 
     FUSE = _FUSE
     Operations = _Ops  # type: ignore[assignment]
-except ImportError:  # pragma: no cover
+except ImportError:
     FuseOSError = OSError  # type: ignore[assignment]
 
 # ───────────────────────────── project-local импорты
@@ -69,7 +69,7 @@ class _ZeroFile:
     def __init__(self, size: int) -> None:
         self._remain = size
 
-    def read(self, n: int = -1) -> bytes:  # noqa: D401
+    def read(self, n: int = -1) -> bytes:
         if self._remain == 0:
             return b""
         if n < 0 or n > self._remain:
@@ -82,14 +82,14 @@ def _mark_sparse(path: Path) -> None:
     """Пометить файл как sparse (Windows). Игнорируется на *NIX."""
     if os.name != "nt":
         return
-    try:  # pragma: no cover
+    try:
         import ctypes
         from ctypes import wintypes as wt
 
         FSCTL_SET_SPARSE = 0x900C4
-        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+        kernel32 = ctypes.windll.kernel32
 
-        handle = kernel32.CreateFileW(  # type: ignore[attr-defined]
+        handle = kernel32.CreateFileW(
             str(path),
             0x400,  # GENERIC_WRITE
             0,
@@ -100,20 +100,20 @@ def _mark_sparse(path: Path) -> None:
         )
         if handle == -1:
             return
-        bytes_ret = wt.DWORD()
-        kernel32.DeviceIoControl(  # type: ignore[attr-defined]
-            handle,
-            FSCTL_SET_SPARSE,
-            None,
-            0,
-            None,
-            0,
-            ctypes.byref(bytes_ret),
-            None,
-        )
-        kernel32.CloseHandle(handle)  # type: ignore[attr-defined]
-    except Exception:  # pragma: no cover
-        pass
+        bytes_ret = wt.DWORD() # pragma: no cover
+        kernel32.DeviceIoControl( # pragma: no cover
+            handle, # pragma: no cover
+            FSCTL_SET_SPARSE, # pragma: no cover
+            None, # pragma: no cover
+            0, # pragma: no cover
+            None, # pragma: no cover
+            0, # pragma: no cover
+            ctypes.byref(bytes_ret), # pragma: no cover
+            None, # pragma: no cover
+        ) # pragma: no cover
+        kernel32.CloseHandle(handle) # pragma: no cover
+    except Exception: # pragma: no cover
+        pass # pragma: no cover
 
 
 def _truncate_file(path: Path, size: int) -> None:
@@ -149,7 +149,11 @@ try:
             progress: int | None = None,
         ) -> int:  # pragma: no cover
             try:
-                return _ORIG_COPYFILE2(src, dst, flags, progress)  # type: ignore[arg-type]
+                result = _ORIG_COPYFILE2(src, dst, flags, progress)  # type: ignore[arg-type]
+                # Защита от Any: если None — возвращать 0
+                if isinstance(result, int):
+                    return result
+                return 0
             except OSError as exc:
                 if getattr(exc, "winerror", None) != 112:
                     raise
@@ -173,7 +177,7 @@ def _read_meta(container: Path) -> Dict[str, Any]:
             header.extend(chunk)
     try:
         return cast(Dict[str, Any], json.loads(header[:-2].decode()))
-    except Exception:  # pragma: no cover
+    except Exception:
         return {}
 
 
@@ -240,7 +244,7 @@ def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
                 unpack_stream(container, tar_path, key)
             else:
                 unpack_file(container, tar_path, key)
-        except InvalidTag as exc:  # pragma: no cover
+        except InvalidTag as exc:
             raise ValueError("bad key or corrupted container") from exc
 
         with tarfile.open(tar_path) as tar:
@@ -337,7 +341,7 @@ class ZilantFS(Operations):  # type: ignore[misc]
         elif container.exists():
             try:
                 unpack_dir(container, self.root, password)
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:
                 logger.warning("integrity_error:%s", exc)
                 self.ro = True
         else:
@@ -358,7 +362,7 @@ class ZilantFS(Operations):  # type: ignore[misc]
         self._bytes_rw, self._start = 0, time.time()
         return mb / dur
 
-    def destroy(self, _p: str) -> None:  # noqa: D401
+    def destroy(self, _p: str) -> None:
         """Сериализовать tmp-каталог обратно в контейнер. Второй вызов — noop."""
         if not self.ro:
             try:
@@ -366,14 +370,12 @@ class ZilantFS(Operations):  # type: ignore[misc]
                     pack_dir_stream(self.root, self.container, self.password)
                 else:
                     pack_dir(self.root, self.container, self.password)
-            except FileNotFoundError:  # pragma: no cover
+            except FileNotFoundError:
                 pass
-        # Всегда очищаем tmp, даже при повторном destroy
         try:
             self._tmp.cleanup()
         except Exception:
             pass
-        # Убираем из ACTIVE_FS один раз, повторные remove игнорируем
         try:
             ACTIVE_FS.remove(self)
         except ValueError:
@@ -420,34 +422,33 @@ class ZilantFS(Operations):  # type: ignore[misc]
         self._rw_check()
         _truncate_file(Path(self._full(path)), length)
 
-    # дополнительные операции (не требуются CI, но для полноты)
-    def unlink(self, path: str) -> None:  # pragma: no cover
+    def unlink(self, path: str) -> None:
         self._rw_check()
         os.unlink(self._full(path))
 
-    def mkdir(self, path: str, mode: int) -> None:  # pragma: no cover
+    def mkdir(self, path: str, mode: int) -> None:
         self._rw_check()
         os.mkdir(self._full(path), mode)
 
-    def rmdir(self, path: str) -> None:  # pragma: no cover
+    def rmdir(self, path: str) -> None:
         self._rw_check()
         os.rmdir(self._full(path))
 
-    def rename(self, old: str, new: str) -> None:  # pragma: no cover
+    def rename(self, old: str, new: str) -> None:
         self._rw_check()
         os.rename(self._full(old), self._full(new))
 
-    def flush(self, _p: str, fh: int) -> None:  # pragma: no cover
+    def flush(self, _p: str, fh: int) -> None:
         os.fsync(fh)
 
-    def release(self, _p: str, fh: int) -> None:  # pragma: no cover
+    def release(self, _p: str, fh: int) -> None:
         os.close(fh)
 
 
 # ───────────────────────────── stub-mount API
-def mount_fs(*_a: Any, **_kw: Any) -> None:  # pragma: no cover
+def mount_fs(*_a: Any, **_kw: Any) -> None:
     raise RuntimeError("mount_fs not available in test build")
 
 
-def umount_fs(*_a: Any, **_kw: Any) -> None:  # pragma: no cover
+def umount_fs(*_a: Any, **_kw: Any) -> None:
     raise RuntimeError("umount_fs not available in test build")
