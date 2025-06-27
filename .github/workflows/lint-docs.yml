@@ -1,0 +1,58 @@
+name: lint docs
+
+# Триггерим только по изменениям в папке docs/
+on:
+  push:
+    paths:
+      - 'docs/**'
+  pull_request:
+    paths:
+      - 'docs/**'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      # 1) Клонируем
+      - uses: actions/checkout@v4
+
+      # 2) Устанавливаем Node и mermaid-cli
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install Mermaid-CLI
+        run: npm install -g @mermaid-js/mermaid-cli
+
+      # 3) Устанавливаем Python и зависимости для сборки docs
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install docs-deps
+        run: pip install -r docs/requirements.txt
+
+      - name: Install build tool
+        run: pip install build
+
+      - name: Build wheel
+        run: python -m build -w -o dist/
+
+      # 4) Генерируем диаграмму с флагами для отключения sandbox
+      - name: Create puppeteer-config.json
+        run: |
+          mkdir -p docs
+          cat > docs/puppeteer-config.json <<'EOF'
+          { "args": ["--no-sandbox", "--disable-setuid-sandbox"] }
+          EOF
+
+      - name: Generate Mermaid diagram
+        run: |
+          npx mmdc \
+            -p docs/puppeteer-config.json \
+            -i docs/architecture/key_lifecycle.mmd \
+            -o docs/_static/key_lifecycle.svg
+
+      # 5) Собираем HTML через Sphinx
+      - name: Build HTML docs
+        run: make -C docs html

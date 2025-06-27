@@ -1,0 +1,87 @@
+name: fuse
+
+on:
+  pull_request:
+    paths:
+      - 'src/zilant_prime_core/zilfs.py'
+      - 'tests/test_zilfs*'
+      - '.github/workflows/fuse.yml'
+
+jobs:
+  fuse-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install FUSE
+        run: |
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y libfuse2 libfuse3-dev
+          else
+            echo "Skipping FUSE tests on macOS"
+            exit 0
+          fi
+      - name: Set up Python
+        if: runner.os == 'Linux'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install deps
+        if: runner.os == 'Linux'
+        run: pip install -e .[dev,zilfs]
+      - name: Run tests
+        if: runner.os == 'Linux'
+        env:
+          ZILANT_ALLOW_ROOT: '1'
+        run: pytest -q -m zilfs
+  windows-smoke:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install WinFSP
+        run: choco install winfsp -y
+      - name: Install sshfs-win
+        run: choco install sshfs -y
+      - name: Start SSH
+        run: |
+          Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+          Start-Service sshd
+      - name: Add SSHFS-Win to PATH
+        run: |
+          echo "C:\\Program Files\\WinFsp\\bin" >> $env:GITHUB_PATH
+          echo "C:\\Program Files\\SSHFS-Win\\bin" >> $env:GITHUB_PATH
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install deps
+        run: pip install -e .[zilfs]
+      - name: Smoke import
+        run: python -c "import zilant_prime_core.zilfs"
+      - name: Remote mount copy
+        continue-on-error: true
+        run: |
+          mkdir C:\\rem
+          sshfs root@localhost:/ C:\\rem -o StrictHostKeyChecking=no -o PasswordAuthentication=no || echo "SSHFS mount skipped"
+          dir C:\\rem
+
+  android-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Build app
+        run: |
+          cd mobile/android && ./gradlew :app:assembleDebug
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk

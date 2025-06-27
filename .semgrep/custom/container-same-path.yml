@@ -1,0 +1,11 @@
+rules:
+  - id: container-same-path
+    message: input and output paths for pack/unpack should differ
+    severity: WARNING
+    languages: [python]
+    patterns:
+      - pattern-either:
+          - pattern: pack_file($P, $P, ...)
+          - pattern: unpack_file($P, $P, ...)
+    metadata:
+      cwe: CWE-367
