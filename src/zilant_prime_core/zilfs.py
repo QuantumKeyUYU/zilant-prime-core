@@ -90,7 +90,7 @@ def _mark_sparse(path: Path) -> None:
         # ВАЖНО: импортировать windll только на Windows
         kernel32 = getattr(ctypes, "windll", None)
         if kernel32 is None:
-            return # pragma: no cover
+            return  # pragma: no cover
 
         handle = kernel32.kernel32.CreateFileW(
             str(path),
