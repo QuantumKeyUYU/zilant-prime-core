@@ -1,6 +1,6 @@
 # Zilant Prime Core
 
-[![Coverage](https://img.shields.io/codecov/c/github/QuantumKeyUYU/zilant-prime-core?branch=main)](https://codecov.io/gh/QuantumKeyUYU/zilant-prime-core) [![Security](https://img.shields.io/badge/security-scan-passed-success.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/security) [![Docs](https://img.shields.io/badge/docs-available-blue.svg)](./docs/ARCH.md) ![ISO 27001](https://img.shields.io/badge/ISO27001-compliant-brightgreen.svg) [![Secrets](https://img.shields.io/badge/secrets-clean-brightgreen.svg)](./secret_leak_report.md) [![Changelog](https://img.shields.io/badge/changelog-up--to--date-blue.svg)](./CHANGELOG_AUTO.md) [![Licenses](https://img.shields.io/badge/licenses-open--source-brightgreen.svg)](./licenses_report.md) [![Compliance](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/security-compliance-suite.yml/badge.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/security-compliance-suite.yml) [![Threat Model](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/crypto-threat-model.yml/badge.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/crypto-threat-model.yml) [![Policy](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/policy-enforcement.yml/badge.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/policy-enforcement.yml)
+[![Coverage](https://img.shields.io/codecov/c/github/QuantumKeyUYU/zilant-prime-core?branch=main)](https://codecov.io/gh/QuantumKeyUYU/zilant-prime-core) [![Security](https://img.shields.io/badge/security-scan-passed-success.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/security) ![ISO 27001](https://img.shields.io/badge/ISO27001-compliant-brightgreen.svg) [![Secrets](https://img.shields.io/badge/secrets-clean-brightgreen.svg)](./secret_leak_report.md) [![Changelog](https://img.shields.io/badge/changelog-up--to--date-blue.svg)](./CHANGELOG_AUTO.md) [![Licenses](https://img.shields.io/badge/licenses-open--source-brightgreen.svg)](./licenses_report.md) [![Compliance](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/security-compliance-suite.yml/badge.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/security-compliance-suite.yml) [![Threat Model](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/crypto-threat-model.yml/badge.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/crypto-threat-model.yml) [![Policy](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/policy-enforcement.yml/badge.svg)](https://github.com/QuantumKeyUYU/zilant-prime-core/actions/workflows/policy-enforcement.yml)
 
 Универсальная CLI и библиотека для создания безопасных контейнеров, шифрования логов, VDF-доказательств и полной DevSecOps-цепочки.
 
@@ -57,12 +57,7 @@ CLI использует эти функции при старте, что за�
 
 ---
 
-## Документация
 
-- **Threat Model**: [docs/THREATS.md](docs/THREATS.md)
-- **Architecture**: [docs/ARCH.md](docs/ARCH.md)
-
----
 
 ## Установка
 
@@ -79,8 +74,8 @@ pip install "zilant-prime-core[cli]"
 pip install "zilant-prime-core[legacy]"
 # (only needed on Python 3.10 and below)
 
-# опционально: автодополнение
-source completions/zilant.bash  # bash
+# опциональное автодополнение (ранее находилось в папке completions)
+# source completions/zilant.bash  # bash
 ```
 
 ---
@@ -269,8 +264,6 @@ rsync -av mnt/ backup/
 zilant umount mnt
 ```
 
-![Demo](docs/assets/zilfs_demo.gif)
-![Beta](docs/assets/zilfs_beta.gif)
 
 Use a decoy profile:
 
