@@ -16,6 +16,22 @@ import os
 import sys
 from typing import TYPE_CHECKING, Any, Callable
 
+
+# ───────────────────────────── заглушка _Stub
+class _Stub:
+    """Пустой объект-заглушка: принимает любые args/kwargs и возвращает себя."""
+
+    def __getattr__(self, name: str) -> Callable[..., Any]:
+        def _noop(*_: Any, **__: Any) -> None:
+            return None
+
+        _noop.__name__ = name
+        return _noop
+
+    def __call__(self, *_: Any, **__: Any) -> _Stub:
+        return self
+
+
 # Глобальный список виртуальных ФС, которые ожидают тесты
 ACTIVE_FS: list[Any] = []
 
@@ -23,23 +39,10 @@ ACTIVE_FS: list[Any] = []
 try:  # pragma: no cover
     # QtCore/QTimer — не используем при рендере, но тесты могут подменить
     from PySide6.QtCore import QTimer  # noqa: F401
-    from PySide6.QtGui import QIcon
-    from PySide6.QtWidgets import QAction, QApplication, QMenu, QSystemTrayIcon
+    from PySide6.QtGui import QAction, QIcon  # Изменено: ACTION теперь из PySide6.QtGui
+    from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 except (ImportError, ModuleNotFoundError):
     # fallback-заглушки, чтобы recv-tests могли monkeypatch’ить их
-    class _Stub:
-        """Пустой объект-заглушка: принимает любые args/kwargs и возвращает себя."""
-
-        def __getattr__(self, name: str) -> Callable[..., Any]:
-            def _noop(*_: Any, **__: Any) -> None:
-                return None
-
-            _noop.__name__ = name
-            return _noop
-
-        def __call__(self, *_: Any, **__: Any) -> _Stub:
-            return self
-
     QApplication = _Stub  # type: ignore[assignment]
     QSystemTrayIcon = _Stub  # type: ignore[assignment]
     QMenu = _Stub  # type: ignore[assignment]
@@ -51,7 +54,7 @@ if TYPE_CHECKING:
     # Для mypy: эти имена существуют
     from PySide6.QtCore import QTimer  # noqa: F811  # pragma: no cover
     from PySide6.QtGui import QIcon  # noqa: F811   # pragma: no cover
-    from PySide6.QtWidgets import QAction, QApplication, QMenu, QSystemTrayIcon  # noqa: F811   # pragma: no cover
+    from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon  # noqa: F811   # pragma: no cover
 
 
 # ───────────────────────────── основная функция
