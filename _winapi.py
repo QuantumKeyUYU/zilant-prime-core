@@ -4,6 +4,7 @@
 чтобы import _winapi не падал.
 """
 
+
 def CopyFile2(src, dst, flags=0, progress=None):
     """
     Тесты потом перезатрут эту функцию.
