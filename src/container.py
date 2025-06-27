@@ -66,6 +66,8 @@ def pack_file(
         }
         if extra_meta:
             meta_pq.update(extra_meta)
+        meta_pq.setdefault("heal_level", 0)
+        meta_pq.setdefault("heal_history", [])
         header_bytes = json.dumps(meta_pq, ensure_ascii=False).encode("utf-8")
         container_data = header_bytes + HEADER_SEPARATOR + payload
     else:
@@ -80,6 +82,8 @@ def pack_file(
         }
         if extra_meta:
             meta_classic.update(extra_meta)
+        meta_classic.setdefault("heal_level", 0)
+        meta_classic.setdefault("heal_history", [])
         header_bytes = json.dumps(meta_classic, ensure_ascii=False).encode("utf-8")
         container_data = header_bytes + HEADER_SEPARATOR + ciphertext
 
@@ -210,7 +214,11 @@ def get_metadata(path: Path) -> dict[str, Any]:
     if sep_idx == -1:
         raise ValueError("Invalid ZIL container format")
     header_bytes = data[:sep_idx]
-    return cast(dict[str, Any], json.loads(header_bytes.decode("utf-8")))
+    meta = cast(dict[str, Any], json.loads(header_bytes.decode("utf-8")))
+    meta.setdefault("heal_level", 0)
+    meta.setdefault("heal_history", [])
+    meta.setdefault("recovery_key_hex", None)
+    return meta
 
 
 def verify_integrity(path: Path) -> bool:
