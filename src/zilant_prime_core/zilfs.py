@@ -87,9 +87,12 @@ def _mark_sparse(path: Path) -> None:
         from ctypes import wintypes as wt
 
         FSCTL_SET_SPARSE = 0x900C4
-        kernel32 = ctypes.windll.kernel32
+        # ВАЖНО: импортировать windll только на Windows
+        kernel32 = getattr(ctypes, "windll", None)
+        if kernel32 is None:
+            return # pragma: no cover
 
-        handle = kernel32.CreateFileW(
+        handle = kernel32.kernel32.CreateFileW(
             str(path),
             0x400,  # GENERIC_WRITE
             0,
@@ -100,20 +103,20 @@ def _mark_sparse(path: Path) -> None:
         )
         if handle == -1:
             return
-        bytes_ret = wt.DWORD() # pragma: no cover
-        kernel32.DeviceIoControl( # pragma: no cover
-            handle, # pragma: no cover
-            FSCTL_SET_SPARSE, # pragma: no cover
-            None, # pragma: no cover
-            0, # pragma: no cover
-            None, # pragma: no cover
-            0, # pragma: no cover
-            ctypes.byref(bytes_ret), # pragma: no cover
-            None, # pragma: no cover
-        ) # pragma: no cover
-        kernel32.CloseHandle(handle) # pragma: no cover
-    except Exception: # pragma: no cover
-        pass # pragma: no cover
+        bytes_ret = wt.DWORD()  # pragma: no cover
+        kernel32.kernel32.DeviceIoControl(  # pragma: no cover
+            handle,  # pragma: no cover
+            FSCTL_SET_SPARSE,  # pragma: no cover
+            None,  # pragma: no cover
+            0,  # pragma: no cover
+            None,  # pragma: no cover
+            0,  # pragma: no cover
+            ctypes.byref(bytes_ret),  # pragma: no cover
+            None,  # pragma: no cover
+        )  # pragma: no cover
+        kernel32.kernel32.CloseHandle(handle)  # pragma: no cover
+    except Exception:  # pragma: no cover
+        pass  # pragma: no cover
 
 
 def _truncate_file(path: Path, size: int) -> None:
