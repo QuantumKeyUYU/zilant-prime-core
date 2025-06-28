@@ -8,13 +8,13 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Sequence
 
-# watchdog — опциональная зависимость
+# watchdog — опциональная зависимость (и никаких ворнингов от линтера)
 try:
     from watchdog.events import FileSystemEventHandler
     from watchdog.observers import Observer
-except ImportError:
-    FileSystemEventHandler = object  # type: ignore
-    Observer = None  # type: ignore
+except ImportError:  # pragma: no cover
+    FileSystemEventHandler = object  # type: ignore  # pragma: no cover
+    Observer = None  # type: ignore  # pragma: no cover
 
 from zilant_prime_core.zkp import prove_intact
 

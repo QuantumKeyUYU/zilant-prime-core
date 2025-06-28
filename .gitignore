@@ -1,14 +1,21 @@
-﻿# Byte-compiled / optimized / DLL files
+﻿# ---------------------------------------------------------------
+# Python-specific ignores
+# ---------------------------------------------------------------
+
+# Byte-compiled / optimized / DLL files
+# Игнорируем скомпилированные Python-файлы и директории кеша
 __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
+# C extensions (если есть)
+# Игнорируем файлы, сгенерированные для C-расширений
 *.so
 *.pyd
 *.bin
 
 # Distribution / packaging
+# Игнорируем файлы, создаваемые при сборке и упаковке дистрибутивов
 build/
 dist/
 *.egg-info/
@@ -16,10 +23,29 @@ dist/
 *.whl
 
 # Installer logs
+# Игнорируем логи установщика пакетов (pip)
 pip-log.txt
 pip-delete-this-directory.txt
 
+# Virtual environments
+# Игнорируем папки с виртуальными окружениями
+.env/
+.venv/
+env/
+venv/
+ENV/
+
+# Environment variables files (commonly used for configuration)
+# Игнорируем файлы с переменными окружения, которые обычно содержат чувствительную информацию
+.env
+.flaskenv
+
+# ---------------------------------------------------------------
+# Testing and Static Analysis specific ignores
+# ---------------------------------------------------------------
+
 # Unit test / coverage reports
+# Игнорируем кеши и отчеты, генерируемые инструментами тестирования и анализа покрытия кода
 .pytest_cache/
 .cache/
 .coverage
@@ -27,44 +53,71 @@ pip-delete-this-directory.txt
 coverage.xml
 htmlcov/
 
-# Hypothesis
+# Hypothesis (for property-based testing)
 .hypothesis/
 
-# Ruff cache
+# Ruff cache (linter/formatter cache)
 .ruff_cache/
 
-# Mypy
+# Mypy (static type checker)
 .mypy_cache/
+.dmypy.json # MyPy daemon cache
 
-# Virtual environments
-.env/
-.venv/
-env/
-venv/
-ENV/
-
-# Pre-commit cache (hooks), but NOT the config file!
-.pre-commit/
+# ---------------------------------------------------------------
+# IDE and OS specific ignores
+# ---------------------------------------------------------------
 
 # Editor directories and files
-.idea/
-.vscode/
-*.sublime-project
+# Игнорируем временные файлы и директории, создаваемые различными IDE и редакторами кода
+.idea/             # IntelliJ / PyCharm
+.vscode/           # VS Code
+*.sublime-project  # Sublime Text
 *.sublime-workspace
+*.swp              # Vim swap files
+*~                 # Backup files (often from Vim or other editors)
 
 # OS files
-.DS_Store
-Thumbs.db
-desktop.ini
+# Игнорируем файлы, автоматически создаваемые операционными системами
+.DS_Store          # macOS
+Thumbs.db          # Windows
+desktop.ini        # Windows
+
+# ---------------------------------------------------------------
+# Project-specific generated files / logs / assets
+# ---------------------------------------------------------------
 
 # Logs and databases
+# Игнорируем различные файлы логов и базы данных (если они не отслеживаются явно)
 *.log
 *.sqlite3
+db.sqlite3 # Часто используемое имя для SQLite базы данных в проектах
 
-# Backup files
-*~
+# Pre-commit cache (hooks), but NOT the config file!
+# Игнорируем кеш pre-commit хуков, но не сам файл конфигурации (.pre-commit-config.yaml)
+.pre-commit/
+
+# Specific project output directories
+# Игнорируем сгенерированные файлы или временные директории вашего проекта
 docs/_build/
-docs/_static/key_lifecycle.png
+docs/_static/key_lifecycle.png # Если это сгенерированный файл
 .zilant_log
 docs/.zilant_log
 ui/dist/
+
+# If you use Node.js for frontend in ui/
+# node_modules/
+
+# ---------------------------------------------------------------
+# Optional / Other common ignores (uncomment if applicable)
+# ---------------------------------------------------------------
+
+# Local settings / configuration files that should not be committed
+# local_settings.py
+# config.ini.local
+
+# Docker related
+# .dockerignore
+# Dockerfile.local
+
+# Uploaded media files (if applicable and not stored externally)
+# media/

@@ -1,125 +1,87 @@
-# SPDX-License-Identifier: MIT
-# SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
-
-"""
-src/zilant_prime_core/tray.py
-Мини-трей-модуль, работающий как с PySide6, так и без него.
-
-▪ В обычном окружении пытаемся импортировать необходимые Qt-классы.
-▪ Если PySide6 недоступен — подставляем лёгкие заглушки, чтобы
-  тесты могли подменить их через monkeypatch.
-"""
-
 from __future__ import annotations
 
-import os
-import sys
-from typing import TYPE_CHECKING, Any, Callable
+import logging
+from typing import Any
 
-
-# ───────────────────────────── заглушка _Stub
-class _Stub:
-    """Пустой объект-заглушка: принимает любые args/kwargs и возвращает себя."""
-
-    def __getattr__(self, name: str) -> Callable[..., Any]:
-        def _noop(*_: Any, **__: Any) -> None:
-            return None
-
-        _noop.__name__ = name
-        return _noop
-
-    def __call__(self, *_: Any, **__: Any) -> _Stub:
-        return self
-
-
-# Глобальный список виртуальных ФС, которые ожидают тесты
 ACTIVE_FS: list[Any] = []
 
-# ───────────────────────────── попытка импорта PySide6
-try:  # pragma: no cover
-    # QtCore/QTimer — не используем при рендере, но тесты могут подменить
-    from PySide6.QtCore import QTimer  # noqa: F401
-    from PySide6.QtGui import QAction, QIcon  # Изменено: ACTION теперь из PySide6.QtGui
+try:
+    from PySide6.QtCore import QTimer
+    from PySide6.QtGui import QAction, QIcon
     from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
-except (ImportError, ModuleNotFoundError):
-    # fallback-заглушки, чтобы recv-tests могли monkeypatch’ить их
-    QApplication = _Stub  # type: ignore[assignment]
-    QSystemTrayIcon = _Stub  # type: ignore[assignment]
-    QMenu = _Stub  # type: ignore[assignment]
-    QAction = _Stub  # type: ignore[assignment]
-    QIcon = _Stub  # type: ignore[assignment]
-    QTimer = _Stub  # type: ignore[assignment]
-
-if TYPE_CHECKING:
-    # Для mypy: эти имена существуют
-    from PySide6.QtCore import QTimer  # noqa: F811  # pragma: no cover
-    from PySide6.QtGui import QIcon  # noqa: F811   # pragma: no cover
-    from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon  # noqa: F811   # pragma: no cover
+except ImportError:  # pragma: no cover
+    QTimer = QAction = QIcon = QApplication = QMenu = QSystemTrayIcon = None  # type: ignore  # pragma: no cover
 
 
-# ───────────────────────────── основная функция
 def run_tray(icon_path: str | None = None) -> None:
-    """
-    Создаёт системный трэй с пунктом «Quit».
-
-    Если _ZILANT_TEST_MODE=1 **или** sys._called_from_test=True —
-    выходим до запуска цикла событий (для unit-тестов).
-    """
-    # 1) Qt-приложение (или stub)
-    app = QApplication([])  # type: ignore[call-arg]
-
-    # 2) Иконка + трэй
-    icon = QIcon(icon_path) if icon_path else QIcon()
-    tray = QSystemTrayIcon(icon)  # type: ignore[call-arg]
-
-    # 3) Меню + пункт Quit
-    menu = QMenu()
-    quit_action = QAction("Quit")
-
-    # 4) Сигнал Quit → app.quit (если available)
+    app = None
     try:
-        quit_action.triggered.connect(app.quit)  # type: ignore[attr-defined]
-    except Exception:
-        pass
+        try:
+            app = QApplication([])
+        except Exception as exc:
+            logging.error(f"[tray] QApplication init failed: {exc}")
+            return
 
-    # 5) Собираем меню и показываем трэй
-    try:
-        menu.addAction(quit_action)  # type: ignore[attr-defined]
-        tray.setContextMenu(menu)  # type: ignore[attr-defined]
-        tray.show()  # type: ignore[attr-defined]
-    except Exception:
-        pass
+        try:
+            icon = QIcon(icon_path)
+        except Exception as exc:
+            logging.error(f"[tray] Failed to create QIcon: {exc}")
+            return
 
-    # 6) Наконец — логика тестового ФС: lock/unlock
-    for fs in ACTIVE_FS:
-        # попытка сериализовать/закрыть любой mounted FS
-        if hasattr(fs, "destroy") and callable(fs.destroy):
+        try:
+            tray = QSystemTrayIcon(icon)
+        except Exception as exc:
+            logging.error(f"[tray] Failed to create QSystemTrayIcon: {exc}")
+            return
+
+        try:
+            menu = QMenu()
+            quit_action = QAction("Quit")
             try:
-                fs.destroy("/")
-            except Exception:
-                pass
-        # если есть флаг locked — выставляем по ro-флагу
-        if hasattr(fs, "locked"):
-            fs.locked = bool(getattr(fs, "ro", False))
+                menu.addAction(quit_action)
+            except Exception as exc:
+                logging.warning(f"[tray] menu.addAction failed: {exc}")
+            try:
+                tray.setContextMenu(menu)
+            except Exception as exc:
+                logging.warning(f"[tray] tray.setContextMenu failed: {exc}")
+            try:
+                quit_action.triggered.connect(app.quit)
+            except Exception as exc:
+                logging.warning(f"[tray] QAction.connect failed: {exc}")
+        except Exception as exc:
+            logging.error(f"[tray] Menu/action setup failed: {exc}")
 
-    # 7) Если в тестовом режиме — выходим без цикла
-    if os.environ.get("_ZILANT_TEST_MODE") == "1" or getattr(sys, "_called_from_test", False):
-        return
+        try:
+            tray.show()
+        except Exception as exc:
+            logging.warning(f"[tray] tray.show failed: {exc}")
 
-    # 8) Запуск Qt-loop (exec() / exec_())
-    for loop_method in ("exec", "exec_"):
-        if hasattr(app, loop_method):
-            getattr(app, loop_method)()  # type: ignore[misc]
-            break
+        try:
+            if hasattr(app, "exec"):
+                app.exec()
+            elif hasattr(app, "exec_"):
+                app.exec_()
+            else:
+                logging.error("[tray] No suitable QApplication event loop method found")
+        except Exception as exc:
+            logging.error(f"[tray] QApplication exec failed: {exc}")
 
-
-__all__ = [
-    "run_tray",
-    "QApplication",
-    "QSystemTrayIcon",
-    "QMenu",
-    "QAction",
-    "QIcon",
-    "QTimer",
-    "ACTIVE_FS",
-]
+    finally:
+        for fs in list(ACTIVE_FS):
+            if hasattr(fs, "destroy"):
+                try:
+                    fs.destroy("/")
+                except Exception as exc:
+                    logging.warning(f"[tray] fs.destroy failed: {exc}")
+                    if getattr(fs, "ro", False):
+                        fs.locked = True
+        try:
+            ACTIVE_FS.clear()
+        except Exception as exc:
+            logging.warning(f"[tray] ACTIVE_FS.clear() failed: {exc}")
+        if app:
+            try:
+                app.quit()
+            except Exception as exc:
+                logging.warning(f"[tray] app.quit() failed: {exc}")

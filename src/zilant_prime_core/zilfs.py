@@ -183,7 +183,7 @@ def pack_dir(src: Path, dest: Path, key: bytes) -> None:
     with TemporaryDirectory() as tmp:
         tar_path = Path(tmp) / "data.tar"
         with tarfile.open(tar_path, "w") as tar:
-            tar.add(src, arcname=".")
+            tar.add(src, arcname=".")  # noqa: D200
         pack_file(tar_path, dest, key)
 
 
