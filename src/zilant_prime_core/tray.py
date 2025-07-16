@@ -3,7 +3,11 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-ACTIVE_FS: list[Any] = []
+class _ActiveList(list):
+    """List subclass allowing attribute patching during tests."""
+
+
+ACTIVE_FS: _ActiveList = _ActiveList()
 
 try:
     from PySide6.QtCore import QTimer

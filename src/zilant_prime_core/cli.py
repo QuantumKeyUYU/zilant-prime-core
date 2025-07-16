@@ -648,8 +648,6 @@ def cmd_show_metadata(container: Path) -> None:
 @click.option("--recursive", is_flag=True, help="Scan directories recursively")
 @click.option("--report", type=click.Choice(["json", "table"]), default="table")
 def cmd_heal_scan(path: Path, auto: bool, recursive: bool, report: str) -> None:
-    from tabulate import tabulate  # type: ignore
-
     from container import get_metadata, verify_integrity
     from zilant_prime_core.self_heal import heal_container
 
@@ -678,7 +676,17 @@ def cmd_heal_scan(path: Path, auto: bool, recursive: bool, report: str) -> None:
     if report == "json":
         click.echo(json.dumps(rows))
     else:
-        click.echo(tabulate([[r["file"], r["status"]] for r in rows], headers=["file", "status"]))
+        try:
+            from tabulate import tabulate  # type: ignore
+            click.echo(
+                tabulate(
+                    [[r["file"], r["status"]] for r in rows],
+                    headers=["file", "status"],
+                )
+            )
+        except Exception:
+            for r in rows:
+                click.echo(f"{r['file']}: {r['status']}")
 
     if failed:
         raise SystemExit(4)

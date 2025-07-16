@@ -36,32 +36,35 @@ def test_run_tray_qapplication_failure(monkeypatch, caplog, _reload_tray_module)
 def test_run_tray_icon_failure(monkeypatch, caplog, _reload_tray_module):
     tray_module = _reload_tray_module
     app = MagicMock()
-    monkeypatch.setattr(tray_module, "QApplication", MagicMock(return_value=app))
+    qapp_mock = MagicMock(return_value=app)
+    monkeypatch.setattr(tray_module, "QApplication", qapp_mock)
     monkeypatch.setattr(tray_module, "QIcon", MagicMock(side_effect=Exception("icon error")))
     with caplog.at_level(logging.ERROR):
         tray_module.run_tray("icon.png")
     assert "[tray] Failed to create QIcon: icon error" in caplog.text
-    app.assert_called_once_with([])
+    qapp_mock.assert_called_once_with([])
     assert not tray_module.ACTIVE_FS
 
 
 def test_run_tray_systemtrayicon_failure(monkeypatch, caplog, _reload_tray_module):
     tray_module = _reload_tray_module
     app = MagicMock()
-    monkeypatch.setattr(tray_module, "QApplication", MagicMock(return_value=app))
+    qapp_mock = MagicMock(return_value=app)
+    monkeypatch.setattr(tray_module, "QApplication", qapp_mock)
     monkeypatch.setattr(tray_module, "QIcon", MagicMock())
     monkeypatch.setattr(tray_module, "QSystemTrayIcon", MagicMock(side_effect=Exception("tray error")))
     with caplog.at_level(logging.ERROR):
         tray_module.run_tray("icon.png")
     assert "[tray] Failed to create QSystemTrayIcon: tray error" in caplog.text
-    app.assert_called_once_with([])
+    qapp_mock.assert_called_once_with([])
     assert not tray_module.ACTIVE_FS
 
 
 def test_run_tray_menu_action_setup_failure(monkeypatch, caplog, _reload_tray_module):
     tray_module = _reload_tray_module
     app = MagicMock()
-    monkeypatch.setattr(tray_module, "QApplication", MagicMock(return_value=app))
+    qapp_mock = MagicMock(return_value=app)
+    monkeypatch.setattr(tray_module, "QApplication", qapp_mock)
     monkeypatch.setattr(tray_module, "QIcon", MagicMock())
     monkeypatch.setattr(tray_module, "QSystemTrayIcon", MagicMock(return_value=MagicMock()))
     monkeypatch.setattr(tray_module, "QMenu", MagicMock(side_effect=Exception("menu setup error")))
@@ -69,7 +72,7 @@ def test_run_tray_menu_action_setup_failure(monkeypatch, caplog, _reload_tray_mo
     with caplog.at_level(logging.ERROR):
         tray_module.run_tray("icon.png")
     assert "[tray] Menu/action setup failed: menu setup error" in caplog.text
-    app.assert_called_once_with([])
+    qapp_mock.assert_called_once_with([])
     assert not tray_module.ACTIVE_FS
 
 
