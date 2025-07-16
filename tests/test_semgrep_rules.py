@@ -1,7 +1,15 @@
 import json
 import os
+import pytest
+import shutil
 import subprocess
 from pathlib import Path
+
+if shutil.which("semgrep") is None:
+    pytest.skip(
+        "semgrep executable not available, skipping semgrep rule tests",
+        allow_module_level=True,
+    )
 
 RULE_DIR = Path(__file__).resolve().parents[1] / ".semgrep" / "custom"
 
