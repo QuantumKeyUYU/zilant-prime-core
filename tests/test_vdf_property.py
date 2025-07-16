@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MIT
 
 import pytest
-import sys
 
 # Property-based VDF tests are unstable on some environments; skip if Hypothesis
 # behaves unexpectedly (e.g. missing modules or provider issues).

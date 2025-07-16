@@ -678,6 +678,7 @@ def cmd_heal_scan(path: Path, auto: bool, recursive: bool, report: str) -> None:
     else:
         try:
             from tabulate import tabulate  # type: ignore
+
             click.echo(
                 tabulate(
                     [[r["file"], r["status"]] for r in rows],

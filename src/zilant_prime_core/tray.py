@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+
 
 class _ActiveList(list):
     """List subclass allowing attribute patching during tests."""
