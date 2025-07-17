@@ -88,3 +88,11 @@
 - All core files at 100% coverage, including decoy, sweep, and edge flows
 
 ---
+## [0.8.7] - 2025-06-28
+### Changed
+- Исправлена ошибка с типами данных в `HashableSimpleNamespace`.
+- Обновлена логика с типами в файле `__init__.py`.
+
+### Fixed
+- Исправлена ошибка с несовпадением типов в Mypy.
+- Обновлены тесты для новых типов данных и классов.

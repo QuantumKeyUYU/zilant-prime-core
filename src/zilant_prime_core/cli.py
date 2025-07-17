@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, NoReturn, cast
 
 from container import pack_file, unpack_file
+from crypto_core import hash_sha3
 from zilant_prime_core.crypto.password_hash import hash_password, verify_password
 from zilant_prime_core.metrics import metrics
 from zilant_prime_core.utils import VaultClient
@@ -52,6 +53,7 @@ from zilant_prime_core.utils.device_fp import SALT_CONST, collect_hw_factors, co
 from zilant_prime_core.utils.pq_crypto import Dilithium2Signature, Kyber768KEM
 from zilant_prime_core.utils.recovery import DESTRUCTION_KEY_BUFFER, self_destruct
 from zilant_prime_core.utils.screen_guard import ScreenGuardError, guard
+from zilant_prime_core.zilfs import diff_snapshots, mount_fs, snapshot_container, umount_fs
 
 
 # ────────────────────────── helpers ──────────────────────────
@@ -425,6 +427,88 @@ def cmd_gen_sig_keys(out_pk: Path, out_sk: Path) -> None:
     click.echo("Signature keypair generated.")
 
 
+@cli.command("mount")
+@click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument("mountpoint", type=click.Path(file_okay=False, path_type=Path))
+@click.option("-p", "--password", metavar="PWD|-", help='Password or "-" to prompt')
+@click.option("--decoy-profile", type=str, help="Mount predefined decoy profile")
+@click.option("--remote", type=str, help="Remote path user@host:/path/container")
+@click.option("--force", is_flag=True, help="Ignore anti-rollback check")
+def cmd_mount(
+    container: Path,
+    mountpoint: Path,
+    password: str | None,
+    decoy_profile: str | None,
+    remote: str | None,
+    force: bool,
+) -> None:
+    """Mount CONTAINER at MOUNTPOINT via FUSE."""
+    pwd = _ask_pwd() if password == "-" else password or _ask_pwd()
+    try:
+        mount_fs(
+            container,
+            mountpoint,
+            pwd,
+            decoy_profile=decoy_profile,
+            remote=remote,
+            force=force,
+        )
+    except Exception as exc:  # pragma: no cover - runtime errors
+        click.echo(f"Mount error: {exc}", err=True)
+        raise click.Abort()
+
+
+@cli.command("umount")
+@click.argument("mountpoint", type=click.Path(file_okay=False, path_type=Path))
+def cmd_umount_cli(mountpoint: Path) -> None:
+    """Unmount previously mounted ZilantFS."""
+    try:
+        umount_fs(mountpoint)
+    except Exception as exc:  # pragma: no cover - runtime errors
+        click.echo(f"Umount error: {exc}", err=True)
+        raise click.Abort()
+
+
+@cli.command("bench")
+@click.option("--fs", "bench_fs", is_flag=True, help="Benchmark ZilantFS")
+def cmd_bench(bench_fs: bool) -> None:
+    """Run benchmarks."""
+    if bench_fs:
+        from zilant_prime_core.bench_zfs import bench_fs as run
+
+        mb_s = run()
+        click.echo(f"{mb_s:.2f} MB/s")
+
+
+@cli.command("snapshot")
+@click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option("--label", required=True, type=str)
+@click.password_option("--password", prompt=True, confirmation_prompt=False)
+def cmd_snapshot(container: Path, label: str, password: str) -> None:
+    """Create snapshot of container."""
+    out = snapshot_container(container, password.encode(), label)
+    click.echo(str(out))
+
+
+@cli.command("diff")
+@click.argument("snap_a", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.argument("snap_b", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.password_option("--password", prompt=True, confirmation_prompt=False)
+def cmd_diff(snap_a: Path, snap_b: Path, password: str) -> None:
+    """Show diff between snapshots."""
+    diff = diff_snapshots(snap_a, snap_b, password.encode())
+    for name, pair in diff.items():
+        click.echo(f"{name}: {pair[0]} -> {pair[1]}")
+
+
+@cli.command("tray")
+def cmd_tray() -> None:
+    """Launch system tray helper."""
+    from zilant_prime_core.tray import run_tray
+
+    run_tray()
+
+
 # ───────── secure register / login (Argon2id) ─────────
 @cli.command("register")
 @click.argument("username")
@@ -555,6 +639,75 @@ def cmd_show_metadata(container: Path) -> None:
     from container import get_metadata
 
     click.echo(json.dumps(get_metadata(container)))
+
+
+# ───────────────────────── heal commands ─────────────────────────
+@cli.command("heal-scan")
+@click.argument("path", type=click.Path(exists=True, path_type=Path))
+@click.option("--auto", is_flag=True, help="Attempt to heal automatically")
+@click.option("--recursive", is_flag=True, help="Scan directories recursively")
+@click.option("--report", type=click.Choice(["json", "table"]), default="table")
+def cmd_heal_scan(path: Path, auto: bool, recursive: bool, report: str) -> None:
+    from tabulate import tabulate  # type: ignore
+
+    from container import get_metadata, verify_integrity
+    from zilant_prime_core.self_heal import heal_container
+
+    paths: list[Path] = []
+    if path.is_dir():
+        paths.extend(path.rglob("*.zil") if recursive else path.glob("*.zil"))
+    else:
+        paths.append(path)
+
+    rows = []
+    healed = False
+    failed = False
+    for p in paths:
+        status = "ok" if verify_integrity(p) else "broken"
+        if auto and status == "broken":
+            seed = cast(bytes, hash_sha3(p.read_bytes()))
+            if heal_container(p, b"k" * 32, rng_seed=seed):
+                meta = get_metadata(p)
+                click.echo(f"new-key saved to {p.name}: {meta.get('recovery_key_hex')}")
+                status = "healed"
+                healed = True
+            else:
+                failed = True
+        rows.append({"file": p.name, "status": status})
+
+    if report == "json":
+        click.echo(json.dumps(rows))
+    else:
+        click.echo(tabulate([[r["file"], r["status"]] for r in rows], headers=["file", "status"]))
+
+    if failed:
+        raise SystemExit(4)
+    if healed:
+        raise SystemExit(3)
+
+
+@cli.command("heal-verify")
+@click.argument("container", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+def cmd_heal_verify(container: Path) -> None:
+    from container import get_metadata
+    from zilant_prime_core.zkp import verify_intact
+
+    meta = get_metadata(container)
+    history = meta.get("heal_history", [])
+    if not history:
+        click.echo("no history", err=True)
+        raise SystemExit(1)
+    proof_path = container.with_suffix(container.suffix + ".proof")
+    if not proof_path.exists():
+        click.echo("proof missing", err=True)
+        raise SystemExit(1)
+    event_hash = bytes.fromhex(history[-1])
+    ok = verify_intact(event_hash, proof_path.read_bytes())
+    if ok:
+        click.echo("proof ok")
+        raise SystemExit(0)
+    click.echo("proof invalid", err=True)
+    raise SystemExit(2)
 
 
 @cli.command("install-completion")
