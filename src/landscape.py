@@ -1,16 +1,36 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
 
-"""Мини-«пейзаж» из (clauses, salts) с добровольной strict-валидацией."""
+"""Генераторы SAT-формул и мини-«пейзажей» со strict-валидацией по желанию."""
 
 from __future__ import annotations
 
 import random
 
 
+def generate_sat(variables: int, density: float) -> list[list[int]]:
+    """Return a random 3-CNF formula with the given variables and density."""
+
+    if not isinstance(variables, int) or variables <= 0:
+        raise ValueError("Number of variables must be a positive integer.")
+    if not isinstance(density, (int, float)) or density < 0:
+        raise ValueError("Density must be non-negative.")
+
+    num_clauses = int(variables * density)
+    formula: list[list[int]] = []
+    for _ in range(num_clauses):
+        picks = random.sample(range(1, variables + 1), k=min(3, variables))
+        clause: list[int] = []
+        for v in picks:
+            lit = v if random.choice([True, False]) else -v
+            clause.append(lit)
+        formula.append(clause)
+    return formula
+
+
 def generate_landscape(size: int, *, strict: bool = False) -> tuple[list[int], list[int]]:
-    if size <= 0:
-        raise ValueError("size must be positive")
+    if not isinstance(size, int) or size <= 0:
+        raise ValueError("size must be positive integer")
 
     clauses: list[int] = []
     salts: list[int] = []
