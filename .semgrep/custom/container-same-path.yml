@@ -1,6 +1,7 @@
 rules:
-- id: container-same-path
-  languages: [python]
-  severity: WARNING
-  message: Source and destination paths must differ
-  pattern: pack_file($A, $A, $KEY)
+  - id: container-same-path
+    languages: [python]
+    message: "Источник и приёмник одинаковы в pack_file — так нельзя"
+    severity: ERROR
+    pattern: |
+      pack_file($SRC, $SRC, ...)

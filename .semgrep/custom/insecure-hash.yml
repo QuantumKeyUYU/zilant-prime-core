@@ -1,7 +1,7 @@
 rules:
-- id: insecure-hash
-  languages: [python]
-  severity: WARNING
-  message: Use SHA-256 instead of MD5
-  pattern: hashlib.md5($X)
-  fix: hashlib.sha256($X)
+  - id: insecure-hash
+    languages: [python]
+    message: "MD5 считается небезопасным, используйте SHA256"
+    severity: WARNING
+    pattern: hashlib.md5($DATA)
+    fix: hashlib.sha256($DATA)

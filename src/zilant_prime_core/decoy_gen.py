@@ -33,7 +33,7 @@ def generate_decoy_file(
     expire_seconds: float = 60.0,
 ) -> Path:
     """
-    Создать одиночный decoy-контейнер *dest*.
+    Создать одиночный decoy-файл *dest*.
 
     Parameters
     ----------
@@ -79,11 +79,14 @@ def sweep_expired_decoys(dir_path: Path) -> int:
     now = time.time()
     for path in dir_path.glob("*.zil"):
         try:
-            # не пытаемся удалять директории
-            if path.is_file() and path.stat().st_mtime <= now:
+            # пропускаем всё, что не файл
+            if not path.is_file():
+                continue
+            # если срок истёк — удаляем
+            if path.stat().st_mtime <= now:
                 path.unlink(missing_ok=True)
                 removed += 1
-        except (FileNotFoundError, IsADirectoryError):
-            # файл уже удалён или путь оказался директорией
+        except (FileNotFoundError, NotADirectoryError, IsADirectoryError):
+            # файл/папка уже пропали или путь оказался директорией — игнорируем
             continue
     return removed

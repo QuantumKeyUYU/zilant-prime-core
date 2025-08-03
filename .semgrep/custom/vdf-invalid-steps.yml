@@ -1,7 +1,7 @@
 rules:
-- id: vdf-invalid-steps
-  languages: [python]
-  severity: WARNING
-  message: Steps must be a positive integer; using 1 instead of 0
-  pattern: generate_posw_sha256($DATA, 0)
-  fix: generate_posw_sha256($DATA, 1)
+  - id: vdf-invalid-steps
+    languages: [python]
+    message: "Шаги в generate_posw_sha256 должны быть ≥1"
+    severity: WARNING
+    pattern: generate_posw_sha256($S, 0)
+    fix: generate_posw_sha256($S, 1)

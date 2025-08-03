@@ -1,7 +1,7 @@
 rules:
-- id: click-prompt-insecure
-  languages: [python]
-  severity: WARNING
-  message: Use hide_input=True when prompting for passwords
-  pattern: click.prompt($A)
-  fix: click.prompt($A, hide_input=True)
+  - id: click-prompt-insecure
+    languages: [python]
+    message: "Для скрытия ввода пароля используйте hide_input=True"
+    severity: WARNING
+    pattern: click.prompt($MSG)
+    fix: click.prompt($MSG, hide_input=True)

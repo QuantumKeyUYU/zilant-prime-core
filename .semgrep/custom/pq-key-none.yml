@@ -1,6 +1,7 @@
 rules:
-- id: pq-key-none
-  languages: [python]
-  severity: WARNING
-  message: Don't pass None as the key
-  pattern: PQAEAD.encrypt(None, $B)
+  - id: pq-key-none
+    languages: [python]
+    message: "Ключ не может быть None для PQAEAD.encrypt"
+    severity: ERROR
+    pattern: |
+      PQAEAD.encrypt(None, $DATA)
