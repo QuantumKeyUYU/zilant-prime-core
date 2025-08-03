@@ -108,7 +108,7 @@ shiboken6==6.9.1
 six==1.17.0
 sortedcontainers==2.4.0
 stevedore==5.4.1
-tabulate==0.9.0
+tabulate>=0.9      # теперь реальная зависимость self-heal CLI
 tomli==2.0.2
 tomlkit==0.13.3
 tqdm==4.67.1
