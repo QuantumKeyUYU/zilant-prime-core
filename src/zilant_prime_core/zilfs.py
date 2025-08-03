@@ -94,7 +94,6 @@ class _ZeroFile:
             self._pos = self._size + offset
         else:
             raise ValueError(f"invalid whence ({whence}, should be 0, 1 or 2)")
-        # Гарантируем, что позиция не будет отрицательной
         if self._pos < 0:
             self._pos = 0
         return self._pos
@@ -121,11 +120,11 @@ def _mark_sparse(path: Path) -> None:  # pragma: no cover
 
         handle = kernel32.CreateFileW(
             str(path),
-            0x400,  # GENERIC_WRITE
+            0x400,
             0,
             None,
-            3,  # OPEN_EXISTING
-            0x02000000,  # FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS
+            3,
+            0x02000000,
             None,
         )
         if handle == -1:
@@ -153,10 +152,7 @@ def _truncate_file(path: Path, size: int) -> None:
 
 
 def _sparse_copyfile2(src: str, dst: str, _flags: int) -> None:
-    """
-    Fallback для CopyFile2, когда Windows отвечает WinError 112 («нет места»).
-    Создаёт в dst нулевой sparse-файл той же длины, что src.
-    """
+    """Fallback для CopyFile2 при нехватке места на Windows."""
     length = os.path.getsize(src)
     with open(dst, "wb") as fh:
         if length:
@@ -179,7 +175,6 @@ try:
             progress: int | None = None,
         ) -> int:
             try:
-                # ИСПРАВЛЕНИЕ: Используем cast, чтобы указать mypy точный тип возврата
                 return cast(int, _ORIG_COPYFILE2(src, dst, flags, progress))
             except OSError as exc:
                 if getattr(exc, "winerror", None) != 112:
@@ -226,7 +221,6 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
     with TemporaryDirectory() as tmp:
         fifo = os.path.join(tmp, "pipe_or_tar")
 
-        # POSIX-ветка
         if os.name != "nt" and hasattr(os, "mkfifo"):  # pragma: no cover
             os.mkfifo(fifo)  # type: ignore[arg-type]
             proc = subprocess.Popen(
@@ -238,7 +232,6 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
             proc.wait()
             return
 
-        # Windows/fallback
         with tarfile.open(fifo, "w") as tar:
             for f in sorted(src.rglob("*")):
                 rel = f.relative_to(src)
@@ -250,10 +243,9 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
                     tar.add(f, arcname=str(rel))
                     continue
                 info = tarfile.TarInfo(str(rel))
-                info.size = 0  # Для sparse-файла реальный размер 0
+                info.size = 0
                 info.mtime = int(st.st_mtime)
                 info.mode = st.st_mode
-                # Сохраняем реальный размер в кастомном PAX-заголовке
                 info.pax_headers = {"ZIL_SPARSE_SIZE": str(st.st_size)}
                 tar.addfile(info, fileobj=_ZeroFile(0))
 
@@ -262,6 +254,7 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
 
 
 def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
+    """Безопасно распаковывает tar-архив, предотвращая Path Traversal."""
     if not container.is_file():
         raise FileNotFoundError(container)
     meta = _read_meta(container)
@@ -275,8 +268,18 @@ def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
         except InvalidTag as exc:  # pragma: no cover
             raise ValueError("bad key or corrupted container") from exc
 
+        # ИСПРАВЛЕНИЕ: Безопасная распаковка для устранения уязвимости B302
         with tarfile.open(tar_path) as tar:
-            tar.extractall(dest)
+            dest_abs = os.path.abspath(dest)
+            for member in tar.getmembers():
+                member_path = os.path.join(dest_abs, member.name)
+                # Нормализуем путь для защиты от ../
+                abs_path = os.path.abspath(member_path)
+                if not abs_path.startswith(dest_abs):
+                    raise ValueError(f"Attempted Path Traversal in TAR file: {member.name}")
+
+            tar.extractall(path=dest)
+
             for member in tar.getmembers():
                 sp_size_str = member.pax_headers.get("ZIL_SPARSE_SIZE")
                 if sp_size_str:
@@ -400,12 +403,10 @@ class ZilantFS(Operations):  # type: ignore[misc]
                     pack_dir(self.root, self.container, self.password)
             except FileNotFoundError:  # pragma: no cover
                 pass
-        # Всегда очищаем tmp, даже при повторном destroy
         try:
             self._tmp.cleanup()
         except Exception:  # pragma: no cover
             pass
-        # Убираем из ACTIVE_FS один раз, повторные remove игнорируем
         try:
             ACTIVE_FS.remove(self)
         except ValueError:
@@ -452,7 +453,6 @@ class ZilantFS(Operations):  # type: ignore[misc]
         self._rw_check()
         _truncate_file(Path(self._full(path)), length)
 
-    # дополнительные операции (не требуются CI, но для полноты)
     def unlink(self, path: str) -> None:  # pragma: no cover
         self._rw_check()
         os.unlink(self._full(path))
