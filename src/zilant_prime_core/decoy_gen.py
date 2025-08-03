@@ -3,7 +3,7 @@
 """
 Генерация/уборка файлов-приманок («decoy»).
 
-* TTL хранится в `mtime` самого `.zil`-файла – никаких побочных `.json`.
+* TTL хранится в mtime самого .zil-файла — без побочных .json.
 * Все функции thread-safe и кроссплатформенны.
 """
 
@@ -22,11 +22,13 @@ __all__ = [
 ]
 
 
+# ──────────────────────────── helpers ────────────────────────────
 def _set_expiry(path: Path, expires_at: float) -> None:
-    """Меняем atime/mtime, сохраняя TTL внутри самого файла."""
+    """Записываем TTL в atime/mtime."""
     os.utime(path, (expires_at, expires_at))
 
 
+# ──────────────────────────── creators ───────────────────────────
 def generate_decoy_file(
     dest: Path,
     size: int = 1024,
@@ -37,12 +39,12 @@ def generate_decoy_file(
 
     Parameters
     ----------
-    dest:
-        Полный путь до создаваемого файла (должен оканчиваться `.zil`).
-    size:
-        Размер случайных данных (байт). Для тестов обычно 16–64 B.
-    expire_seconds:
-        Через сколько секунд файл считается «протухшим».
+    dest : Path
+        Должен оканчиваться `.zil`.
+    size : int
+        Размер случайных данных.
+    expire_seconds : float
+        Через сколько секунд файл протухнет.
     """
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_bytes(os.urandom(max(1, size)))
@@ -56,11 +58,7 @@ def generate_decoy_files(
     size: int = 1024,
     expire_seconds: float = 60.0,
 ) -> List[Path]:
-    """
-    Сгенерировать пачку приманок в каталоге *dest_dir*.
-
-    Возвращает список созданных путей (только `.zil`, без побочных файлов).
-    """
+    """Сгенерировать пачку приманок в *dest_dir* и вернуть их пути."""
     dest_dir.mkdir(parents=True, exist_ok=True)
     created: List[Path] = []
     for _ in range(count):
@@ -69,24 +67,38 @@ def generate_decoy_files(
     return created
 
 
+# ──────────────────────────── sweeper ────────────────────────────
 def sweep_expired_decoys(dir_path: Path) -> int:
     """
-    Удалить все decoy-файлы из *dir_path*, у которых `mtime` ≤ time.time().
+    Удалить все `.zil`-файлы в *dir_path*, чей mtime ≤ текущего времени.
 
     Возвращает количество успешно удалённых файлов.
+
+    *Почему не glob()*
+    `Path.glob("*.zil")` иногда падает с `IsADirectoryError`, если во время
+    обхода подкаталог внезапно исчез. Проходимся `iterdir()` и ловим гонки
+    вручную — так надёжнее.
     """
-    removed = 0
-    now = time.time()
-    for path in dir_path.glob("*.zil"):
+    removed, now = 0, time.time()
+
+    try:
+        entries = dir_path.iterdir()
+    except FileNotFoundError:
+        # Каталог уже исчез к моменту вызова
+        return 0
+
+    for entry in entries:
         try:
-            # пропускаем всё, что не файл
-            if not path.is_file():
+            # берём только реальные файлы с нужным суффиксом
+            if entry.suffix != ".zil" or not entry.is_file():
                 continue
-            # если срок истёк — удаляем
-            if path.stat().st_mtime <= now:
-                path.unlink(missing_ok=True)
+
+            if entry.stat().st_mtime <= now:
+                entry.unlink(missing_ok=True)
                 removed += 1
+
         except (FileNotFoundError, NotADirectoryError, IsADirectoryError):
-            # файл/папка уже пропали или путь оказался директорией — игнорируем
+            # Файл/папка пропали между iterdir() и stat()/unlink()
             continue
+
     return removed
