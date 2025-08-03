@@ -244,7 +244,7 @@ def pack_dir_stream(src: Path, dest: Path, key: bytes) -> None:
                     continue
                 info = tarfile.TarInfo(str(rel))
                 info.size = 0
-                info.mtime = int(st.st_mtime)
+                info.mtime = int(st.st_mtime)  # <--- ВОТ ИСПРАВЛЕНИЕ
                 info.mode = st.st_mode
                 info.pax_headers = {"ZIL_SPARSE_SIZE": str(st.st_size)}
                 tar.addfile(info, fileobj=_ZeroFile(0))
@@ -268,12 +268,10 @@ def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
         except InvalidTag as exc:  # pragma: no cover
             raise ValueError("bad key or corrupted container") from exc
 
-        # ИСПРАВЛЕНИЕ: Безопасная распаковка для устранения уязвимости B302
         with tarfile.open(tar_path) as tar:
             dest_abs = os.path.abspath(dest)
             for member in tar.getmembers():
                 member_path = os.path.join(dest_abs, member.name)
-                # Нормализуем путь для защиты от ../
                 abs_path = os.path.abspath(member_path)
                 if not abs_path.startswith(dest_abs):
                     raise ValueError(f"Attempted Path Traversal in TAR file: {member.name}")
