@@ -2,8 +2,8 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 import os
-import sys
 import pytest
+import sys
 
 from zilant_prime_core import zilfs
 

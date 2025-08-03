@@ -21,6 +21,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Tuple, cast
 
+
 # ───────────────────────────── fusepy (опционально)
 class Operations:  # noqa: D101
     """Заглушка, если fusepy не установлен — нужна только для типизации."""
