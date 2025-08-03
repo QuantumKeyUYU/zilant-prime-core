@@ -1,7 +1,8 @@
+# .semgrep/custom/requests-timeout.yml
 rules:
-  - id: requests-without-timeout
-    message: requests calls should set timeout
-    severity: WARNING
-    languages: [python]
-    pattern: requests.$FUNC(...)
-    pattern-not: requests.$FUNC(..., timeout=$TIMEOUT, ...)
+- id: requests-timeout
+  languages: [python]
+  severity: WARNING
+  message: "Add a timeout parameter to requests calls"
+  pattern: requests.$METHOD($ARGS)
+  fix: requests.$METHOD($ARGS, timeout=5)

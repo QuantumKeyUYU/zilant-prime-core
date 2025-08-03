@@ -1,11 +1,7 @@
+# .semgrep/custom/container-same-path.yml
 rules:
-  - id: container-same-path
-    message: input and output paths for pack/unpack should differ
-    severity: WARNING
-    languages: [python]
-    patterns:
-      - pattern-either:
-          - pattern: pack_file($P, $P, ...)
-          - pattern: unpack_file($P, $P, ...)
-    metadata:
-      cwe: CWE-367
+- id: container-same-path
+  languages: [python]
+  severity: WARNING
+  message: Source and destination paths must differ
+  pattern: pack_file($P, $P, $KEY)

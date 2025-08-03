@@ -1,10 +1,8 @@
+# .semgrep/custom/click-prompt-insecure.yml
 rules:
-  - id: click-prompt-insecure
-    message: click.prompt should hide input for passwords
-    severity: WARNING
-    languages: [python]
-    pattern: click.prompt($MSG)
-    pattern-not: click.prompt($MSG, hide_input=True, ...)
-    fix: click.prompt($MSG, hide_input=True)
-    metadata:
-      cwe: CWE-285
+- id: click-prompt-insecure
+  languages: [python]
+  severity: WARNING
+  message: "Use hide_input=True when prompting for passwords"
+  pattern: click.prompt($ARGS)
+  fix: click.prompt($ARGS, hide_input=True)

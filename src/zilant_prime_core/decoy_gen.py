@@ -21,15 +21,12 @@ __all__ = [
     "sweep_expired_decoys",
 ]
 
-# ───────────────────────────── helpers
-
 
 def _set_expiry(path: Path, expires_at: float) -> None:
     """Меняем atime/mtime, сохраняя TTL внутри самого файла."""
     os.utime(path, (expires_at, expires_at))
 
 
-# ───────────────────────────── public API
 def generate_decoy_file(
     dest: Path,
     size: int = 1024,
@@ -66,7 +63,7 @@ def generate_decoy_files(
     """
     dest_dir.mkdir(parents=True, exist_ok=True)
     created: List[Path] = []
-    for _ in range(count):  # переменная цикла не используется — Ruff B007 учтён
+    for _ in range(count):
         fname = dest_dir / f"decoy_{sha256(os.urandom(8)).hexdigest()[:8]}.zil"
         created.append(generate_decoy_file(fname, size, expire_seconds))
     return created
@@ -82,10 +79,11 @@ def sweep_expired_decoys(dir_path: Path) -> int:
     now = time.time()
     for path in dir_path.glob("*.zil"):
         try:
-            if path.stat().st_mtime <= now:
+            # не пытаемся удалять директории
+            if path.is_file() and path.stat().st_mtime <= now:
                 path.unlink(missing_ok=True)
                 removed += 1
-        except FileNotFoundError:
-            # Возможно, другой поток уже снёс файл.
-            pass
+        except (FileNotFoundError, IsADirectoryError):
+            # файл уже удалён или путь оказался директорией
+            continue
     return removed

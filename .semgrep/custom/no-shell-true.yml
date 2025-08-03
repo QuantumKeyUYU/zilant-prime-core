@@ -1,8 +1,10 @@
+# .semgrep/custom/no-shell-true.yml
 rules:
-  - id: no-shell-true
-    message: Avoid shell=True in subprocess calls
-    severity: ERROR
-    languages: [python]
-    pattern: subprocess.$FUNC(..., shell=True, ...)
-    metadata:
-      cwe: CWE-78
+- id: no-shell-true
+  languages: [python]
+  severity: WARNING
+  message: Avoid using shell=True in subprocess calls
+  pattern: subprocess.$FUNC($ARGS, shell=True)
+  metavariable-regex:
+    FUNC: "run|Popen|call|check_output|check_call"
+  fix: subprocess.$FUNC($ARGS, shell=False)

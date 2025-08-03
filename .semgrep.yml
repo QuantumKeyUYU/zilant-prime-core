@@ -1,11 +1,13 @@
 rules:
+  # Ваши текущие rules
   - id: no-hardcoded-crypto-key
     message: Do not hardcode cryptographic keys
     severity: ERROR
     languages: [python]
     pattern-either:
-      - pattern-regex: "(?i)(key|secret)\\w*\\s*=\\s*b?[\\\"'][^\\\"']{32,}[\\\"']"
-      - pattern-regex: "(?i)(key|secret)\\w*\\s*=\\s*b?[\\\"'][^\\\"']*[\\\"']\\s*\\*\\s*\\d+"
+      - pattern-regex: "(?i)(key|secret)\\w*\\s*=\\s*b?[\"'][^\"']{32,}[\"']"
+      - pattern-regex: "(?i)(key|secret)\\w*\\s*=\\s*b?[\"'][^\"']*[\"']\\s*\\*\\s*\\d+"
+
   - id: require-os-urandom
     message: Use os.urandom() or secrets module for cryptography
     severity: WARNING
@@ -24,3 +26,49 @@ rules:
           - pattern-inside: |
               from cryptography import $X
               ...
+
+  # → вот тут добавляем ваши кастомные правила
+  - id: insecure-hash
+    languages: [python]
+    severity: WARNING
+    message: "Use SHA-256 instead of MD5"
+    patterns:
+      - pattern: hashlib.md5($X)
+    fix:
+      - pattern: hashlib.md5($X)
+        replace: hashlib.sha256($X)
+
+  - id: container-same-path
+    languages: [python]
+    severity: WARNING
+    message: "Source and destination paths must differ"
+    patterns:
+      - pattern: pack_file($P, $P, $KEY)
+
+  - id: pq-key-none
+    languages: [python]
+    severity: WARNING
+    message: "Don't pass None as the key"
+    patterns:
+      - pattern: PQAEAD.encrypt(None, $B)
+
+  - id: vdf-invalid-steps
+    languages: [python]
+    severity: WARNING
+    message: "Steps must be a positive integer; using 1 instead of 0"
+    patterns:
+      - pattern: generate_posw_sha256($DATA, 0)
+    fix:
+      - pattern: generate_posw_sha256($DATA, 0)
+        replace: generate_posw_sha256($DATA, 1)
+
+  - id: click-prompt-insecure
+    languages: [python]
+    severity: WARNING
+    message: "Use `hide_input=True` when prompting for passwords"
+    patterns:
+      - pattern: click.prompt($MSG)
+      - pattern-not: hide_input=
+    fix:
+      - pattern: click.prompt($ARGS)
+        replace: click.prompt($ARGS, hide_input=True)

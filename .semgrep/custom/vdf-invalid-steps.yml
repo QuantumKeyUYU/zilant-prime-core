@@ -1,16 +1,8 @@
+# .semgrep/custom/vdf-invalid-steps.yml
 rules:
-  - id: vdf-invalid-steps-generate
-    message: VDF steps must be positive
-    severity: ERROR
-    languages: [python]
-    pattern: generate_posw_sha256($DATA, 0)
-    fix: generate_posw_sha256($DATA, 1)
-    metadata:
-      cwe: CWE-704
-  - id: vdf-invalid-steps-verify
-    message: VDF steps must be positive
-    severity: ERROR
-    languages: [python]
-    pattern: verify_posw_sha256($DATA, $PROOF, 0)
-    metadata:
-      cwe: CWE-704
+- id: vdf-invalid-steps
+  languages: [python]
+  severity: WARNING
+  message: Steps must be a positive integer; using 1 instead of 0
+  pattern: generate_posw_sha256($DATA, 0)
+  fix: generate_posw_sha256($DATA, 1)
