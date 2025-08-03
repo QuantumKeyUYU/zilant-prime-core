@@ -150,7 +150,7 @@ try:
             progress: int | None = None,
         ) -> int:  # pragma: no cover
             try:
-                return _ORIG_COPYFILE2(src, dst, flags, progress)  # type: ignore[arg-type]
+                return _ORIG_COPYFILE2(src, dst, flags, progress)  # type: ignore[arg-type,no-any-return]
             except OSError as exc:
                 if getattr(exc, "winerror", None) != 112:
                     raise
