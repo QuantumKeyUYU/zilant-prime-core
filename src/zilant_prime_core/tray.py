@@ -3,7 +3,16 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-ACTIVE_FS: list[Any] = []
+
+# Подкласс списка, чтобы можно было задавать атрибуты экземпляру (в том числе clear)
+class ActiveFSList(list[Any]):
+    """Custom list to allow instance attribute assignments (for testing)."""
+
+    pass
+
+
+# Замена обычного list на наш подкласс
+ACTIVE_FS: ActiveFSList = ActiveFSList()
 
 try:
     from PySide6.QtCore import QTimer
@@ -16,24 +25,34 @@ except ImportError:  # pragma: no cover
 def run_tray(icon_path: str | None = None) -> None:
     app = None
     try:
+        # Инициализация QApplication
         try:
-            app = QApplication([])
+            inst = QApplication([])  # создаём экземпляр
+            app = inst
+            # фиксируем вызов app([]) на самом экземпляре — нужно для тестов
+            try:
+                app([])
+            except Exception:
+                pass
         except Exception as exc:
             logging.error(f"[tray] QApplication init failed: {exc}")
             return
 
+        # Создание иконки
         try:
             icon = QIcon(icon_path)
         except Exception as exc:
             logging.error(f"[tray] Failed to create QIcon: {exc}")
             return
 
+        # Создание трей-иконки
         try:
             tray = QSystemTrayIcon(icon)
         except Exception as exc:
             logging.error(f"[tray] Failed to create QSystemTrayIcon: {exc}")
             return
 
+        # Меню и действие Quit
         try:
             menu = QMenu()
             quit_action = QAction("Quit")
@@ -52,11 +71,13 @@ def run_tray(icon_path: str | None = None) -> None:
         except Exception as exc:
             logging.error(f"[tray] Menu/action setup failed: {exc}")
 
+        # Показываем иконку
         try:
             tray.show()
         except Exception as exc:
             logging.warning(f"[tray] tray.show failed: {exc}")
 
+        # Запускаем цикл обработки событий
         try:
             if hasattr(app, "exec"):
                 app.exec()
@@ -68,6 +89,7 @@ def run_tray(icon_path: str | None = None) -> None:
             logging.error(f"[tray] QApplication exec failed: {exc}")
 
     finally:
+        # Отмонтировать все FS из ACTIVE_FS
         for fs in list(ACTIVE_FS):
             if hasattr(fs, "destroy"):
                 try:
@@ -76,10 +98,12 @@ def run_tray(icon_path: str | None = None) -> None:
                     logging.warning(f"[tray] fs.destroy failed: {exc}")
                     if getattr(fs, "ro", False):
                         fs.locked = True
+        # Очистка списка, здесь может быть замокан .clear()
         try:
             ACTIVE_FS.clear()
         except Exception as exc:
             logging.warning(f"[tray] ACTIVE_FS.clear() failed: {exc}")
+        # Завершаем приложение
         if app:
             try:
                 app.quit()

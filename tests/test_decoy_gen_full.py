@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
+import os
 import tempfile
 import time
 from pathlib import Path
@@ -55,15 +56,15 @@ def test_generate_decoy_files_unique_names():
 
 
 def test_sweep_expired_decoys_handles_file_disappear(monkeypatch):
-    import os
-
     with tempfile.TemporaryDirectory() as td:
         dest_dir = Path(td)
         decoy_gen.generate_decoy_file(dest_dir / "boom.zil", expire_seconds=-1)
 
-        def fake_stat(self):
+        # Заглушка для Path.stat: принимает любые args/kwargs,
+        # удаляет файл и кидает FileNotFoundError
+        def fake_stat(self, *args, **kwargs):
             os.unlink(self)
-            raise FileNotFoundError
+            raise FileNotFoundError(str(self))
 
         monkeypatch.setattr(Path, "stat", fake_stat)
         removed = decoy_gen.sweep_expired_decoys(dest_dir)
