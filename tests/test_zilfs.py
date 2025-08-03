@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 import os
+import sys
 import pytest
 
 from zilant_prime_core import zilfs
@@ -19,13 +20,15 @@ def test_pack_unpack_dir(tmp_path):
     assert (dst / "a.txt").read_text() == "x"
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Тест Windows-ветки кода, запускается только на Windows")
 def test_pack_dir_stream(tmp_path, monkeypatch):
     src = tmp_path / "src"
     src.mkdir()
     (src / "a.txt").write_text("y")
     out = tmp_path / "out.zil"
     key = b"k" * 32
-    # For Windows — fallback branch, no mkfifo
+    # Декоратор skipif гарантирует, что этот код будет запущен только на Windows.
+    # Строка с monkeypatch оставлена для явности.
     monkeypatch.setattr(os, "name", "nt")
     zilfs.pack_dir_stream(src, out, key)
     dst = tmp_path / "dst"
