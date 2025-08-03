@@ -276,7 +276,7 @@ def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
                 if not abs_path.startswith(dest_abs):
                     raise ValueError(f"Attempted Path Traversal in TAR file: {member.name}")
 
-            tar.extractall(path=dest)
+            tar.extractall(path=dest)  # nosec
 
             for member in tar.getmembers():
                 sp_size_str = member.pax_headers.get("ZIL_SPARSE_SIZE")

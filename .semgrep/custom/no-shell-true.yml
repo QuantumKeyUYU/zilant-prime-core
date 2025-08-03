@@ -1,4 +1,3 @@
-# .semgrep/custom/no-shell-true.yml
 rules:
 - id: no-shell-true
   languages: [python]

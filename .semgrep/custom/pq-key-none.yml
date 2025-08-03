@@ -1,4 +1,3 @@
-# .semgrep/custom/pq-key-none.yml
 rules:
 - id: pq-key-none
   languages: [python]

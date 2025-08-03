@@ -1,4 +1,3 @@
-# .semgrep/custom/vdf-invalid-steps.yml
 rules:
 - id: vdf-invalid-steps
   languages: [python]

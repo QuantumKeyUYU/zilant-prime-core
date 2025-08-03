@@ -1,8 +1,7 @@
-# .semgrep/custom/requests-timeout.yml
 rules:
 - id: requests-timeout
   languages: [python]
   severity: WARNING
-  message: "Add a timeout parameter to requests calls"
+  message: Add a timeout parameter to requests calls
   pattern: requests.$METHOD($ARGS)
   fix: requests.$METHOD($ARGS, timeout=5)

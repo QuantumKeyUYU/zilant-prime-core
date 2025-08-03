@@ -1,7 +1,6 @@
-# .semgrep/custom/container-same-path.yml
 rules:
 - id: container-same-path
   languages: [python]
   severity: WARNING
   message: Source and destination paths must differ
-  pattern: pack_file($P, $P, $KEY)
+  pattern: pack_file($A, $A, $KEY)

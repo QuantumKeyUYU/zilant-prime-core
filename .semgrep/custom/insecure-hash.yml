@@ -1,4 +1,3 @@
-# .semgrep/custom/insecure-hash.yml
 rules:
 - id: insecure-hash
   languages: [python]
