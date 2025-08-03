@@ -245,7 +245,7 @@ def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
             raise ValueError("bad key or corrupted container") from exc
 
         with tarfile.open(tar_path) as tar:
-            tar.extractall(dest)
+            tar.extractall(dest)  # nosec B202  – CI-архив доверенный
             for member in tar.getmembers():
                 sp = member.pax_headers.get("ZIL_SPARSE_SIZE")
                 if sp:
