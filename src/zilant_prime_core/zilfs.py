@@ -21,7 +21,6 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Tuple, cast
 
-
 # ───────────────────────────── fusepy (опционально)
 class Operations:  # noqa: D101
     """Заглушка, если fusepy не установлен — нужна только для типизации."""
@@ -268,12 +267,10 @@ def unpack_dir(container: Path, dest: Path, key: bytes) -> None:
         except InvalidTag as exc:  # pragma: no cover
             raise ValueError("bad key or corrupted container") from exc
 
-        # ИСПРАВЛЕНИЕ: Безопасная распаковка для устранения уязвимости B302
         with tarfile.open(tar_path) as tar:
             dest_abs = os.path.abspath(dest)
             for member in tar.getmembers():
                 member_path = os.path.join(dest_abs, member.name)
-                # Нормализуем путь для защиты от ../
                 abs_path = os.path.abspath(member_path)
                 if not abs_path.startswith(dest_abs):
                     raise ValueError(f"Attempted Path Traversal in TAR file: {member.name}")
@@ -476,10 +473,10 @@ class ZilantFS(Operations):  # type: ignore[misc]
         os.close(fh)
 
 
-# ───────────────────────────── stub-mount  API
+# ───────────────────────────── stub-mount API
 def mount_fs(*_a: Any, **_kw: Any) -> None:  # pragma: no cover
     raise RuntimeError("mount_fs not available in test build")
 
 
 def umount_fs(*_a: Any, **_kw: Any) -> None:  # pragma: no cover
-    raise RuntimeError("umount_fs not available in test build")
+    raise RuntimeError("mount_fs not available in test build")
