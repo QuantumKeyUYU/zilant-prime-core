@@ -17,6 +17,7 @@ jobs:
     name: Lint & Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false # Добавил, чтобы видеть ошибки на всех версиях Python, а не падать сразу
       matrix:
         python-version: ['3.11', '3.12', '3.13']
 
@@ -28,7 +29,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      # ИСПРАВЛЕНИЕ: Устанавливаем системную зависимость для PyNaCl
+      # ФИКС №1: Устанавливаем системную зависимость для PyNaCl
       - name: Install libsodium-dev
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
 
@@ -44,8 +45,9 @@ jobs:
           mypy src
 
       - name: Unit tests with coverage
+        # ФИКС №2: Отключаем кеш pytest, чтобы избежать ошибки с WindowsPath
         run: |
-          pytest --cov=src --cov-report=xml
+          pytest -p no:cacheprovider --cov=src --cov-report=xml
 
       - name: Build PQ wheels
         run: python tools/build_pq_wheels.py
