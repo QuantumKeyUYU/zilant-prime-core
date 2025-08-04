@@ -38,9 +38,16 @@ def encrypt_chunk(key: bytes, nonce: bytes, data: bytes, aad: bytes = b"") -> by
     if _NativeAEAD is not None:
         ct = _NativeAEAD(key).encrypt(nonce, data, aad)
     else:
-        from nacl.bindings import crypto_aead_xchacha20poly1305_ietf_encrypt
+        try:
+            from nacl.bindings import crypto_aead_xchacha20poly1305_ietf_encrypt
+        except ImportError:  # pragma: no cover - если нет PyNaCl
+            from cryptography.hazmat.primitives.ciphers.aead import (
+                XChaCha20Poly1305,
+            )
 
-        ct = crypto_aead_xchacha20poly1305_ietf_encrypt(data, aad, nonce, key)
+            ct = XChaCha20Poly1305(key).encrypt(nonce, data, aad)
+        else:
+            ct = crypto_aead_xchacha20poly1305_ietf_encrypt(data, aad, nonce, key)
     return cast(bytes, ct)
 
 
@@ -52,9 +59,16 @@ def decrypt_chunk(key: bytes, nonce: bytes, cipher: bytes, aad: bytes = b"") -> 
     if _NativeAEAD is not None:
         pt = _NativeAEAD(key).decrypt(nonce, cipher, aad)
     else:
-        from nacl.bindings import crypto_aead_xchacha20poly1305_ietf_decrypt
+        try:
+            from nacl.bindings import crypto_aead_xchacha20poly1305_ietf_decrypt
+        except ImportError:  # pragma: no cover - если нет PyNaCl
+            from cryptography.hazmat.primitives.ciphers.aead import (
+                XChaCha20Poly1305,
+            )
 
-        pt = crypto_aead_xchacha20poly1305_ietf_decrypt(cipher, aad, nonce, key)
+            pt = XChaCha20Poly1305(key).decrypt(nonce, cipher, aad)
+        else:
+            pt = crypto_aead_xchacha20poly1305_ietf_decrypt(cipher, aad, nonce, key)
     return cast(bytes, pt)
 
 

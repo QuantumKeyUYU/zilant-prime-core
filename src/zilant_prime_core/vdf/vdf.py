@@ -70,4 +70,9 @@ def check_posw(proof: bytes, data: bytes, steps: int = 1) -> bool:
     """
     Интерфейс для тестов: check_posw(proof, data, steps).
     """
-    return verify_posw_sha256(data, proof, steps)
+    # ensure the provided proof is *exactly* the one produced by ``posw``
+    # без каких-либо дополнительных байт
+    if not isinstance(proof, (bytes, bytearray)):
+        return False
+    expected, _ = posw(data, steps)
+    return bytes(proof) == expected and len(proof) == len(expected)

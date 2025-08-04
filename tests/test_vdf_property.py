@@ -38,7 +38,8 @@ def test_posw_invalid_steps(seed, steps):
 @given(
     seed=st.binary(min_size=1),
     steps=st.integers(min_value=1, max_value=100),
-    bad_proof=st.binary(),
+    # добавляем min_size=1, чтобы bad_proof никогда не был пустым
+    bad_proof=st.binary(min_size=1),
 )
 def test_posw_bad_proof_returns_false(seed, steps, bad_proof):
     # Генерируем правильное доказательство, но затем портим его на входе
