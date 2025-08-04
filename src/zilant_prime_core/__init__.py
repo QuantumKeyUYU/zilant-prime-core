@@ -115,9 +115,8 @@ def _patch_hypothesis() -> None:
 
 
 # Патч нужен только на новых версиях CPython, где SimpleNamespace стал immutable
-if sys.version_info >= (3, 13):  # pragma: no cover
-    _strip_simplenamespace_modules()
-    _patch_hypothesis()
+_strip_simplenamespace_modules()
+_patch_hypothesis()
 
 # --------------------------------------------------------------------------- #
 #                         3. С л у ж е б н ы е   х э л п ы                    #

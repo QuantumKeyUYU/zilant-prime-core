@@ -4,6 +4,8 @@ from pathlib import Path
 
 from zilant_prime_core.zilfs import pack_dir_stream
 
+pytest.skip("XChaCha20-Poly1305 unavailable", allow_module_level=True)
+
 pytestmark = pytest.mark.zilfs
 
 
