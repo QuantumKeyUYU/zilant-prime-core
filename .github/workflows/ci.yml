@@ -1,11 +1,4 @@
 # .github/workflows/ci.yml
-#
-# «Минимальный, но достаточный» CI-workflow для основного репозитория.
-# Проверяем форматирование, запускаем все unit-/интеграционные тесты
-# на Linux, собирая PyNaCl из исходников против системного libsodium.
-# Один известный flaky-тест VDF временно пропускаем, пока не пофикшим
-# алгоритм проверки доказательства.
-
 name: CI
 
 on:
@@ -16,68 +9,47 @@ on:
 
 permissions:
   contents: read
-  # security-events прописывать не нужно – это только линт + тесты
 
 jobs:
   lint_and_test:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
 
     steps:
-      # ────────────────────────────────────────────────────────────────
-      - name: ⬇️ Checkout
-        uses: actions/checkout@v4
+    # ────────────────────────── checkout ──────────────────────────
+    - uses: actions/checkout@v4
 
-      # ────────────────────────────────────────────────────────────────
-      # 1) Зависимости ОС: libsodium → PyNaCl получит XChaCha20-Poly1305
-      - name: 🏗 Install system libraries
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends build-essential libsodium-dev
+    # ───── системные пакеты: компилятор + libsodium ─────
+    - name: Install system libs
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends build-essential libsodium-dev
 
-      # ────────────────────────────────────────────────────────────────
-      # 2) Настраиваем конкретную версию Python
-      - name: 🐍 Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
+    # ────────────────── Python & кеш ───────────────────
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: pip
 
-      # ────────────────────────────────────────────────────────────────
-      # 3) Ставим зависимости проекта
-      #    ВАЖНО: сначала PyNaCl из исходников (--no-binary),
-      #    затем requirements* + сам пакет
-      - name: 📦 Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install --no-binary :all: pynacl           # XChaCha20 из system-libsodium
-          pip install -r requirements.txt -r requirements-dev.txt
-          pip install -e .                               # cython-модуль crypto_core
+    # ─────────────── deps (pinned cryptography) ────────────────
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install "cryptography<43.0"                        # 👈 фиксация
+        pip install --no-binary :all: pynacl                   # собираем с libsodium
+        pip install -r requirements.txt -r requirements-dev.txt
+        pip install -e .
 
-      # ────────────────────────────────────────────────────────────────
-      # 4) Прогоняем pre-commit — быстро ловим формат/линт-ошибки
-      - name: 🧹 pre-commit (format + lint)
-        run: pre-commit run --all-files --show-diff-on-failure
+    # ─────────────── pre-commit (lint/format) ────────────────
+    - name: pre-commit (lint + format)
+      run: pre-commit run --all-files --show-diff-on-failure
 
-      # ────────────────────────────────────────────────────────────────
-      # 5) Запускаем тесты
-      #    flaky-property-based VDF пока исключаем
-      - name: ✅ Run test-suite
-        env:
-          PYTEST_ADDOPTS: "-k 'not test_vdf_property'"
-          ZILANT_ALLOW_ROOT: "1"        # подавляем root-warning в Hypothesis
-        run: |
-          pytest -q --durations=15 -n auto
-
-      # ────────────────────────────────────────────────────────────────
-      # 6) Загружаем отчёт покрытия (по желанию)
-      #    — раскомментируйте, если нужен upload в Codecov/GH Summary
-      # - name: 📊 Upload coverage XML
-      #   if: always()
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: coverage-xml
-      #     path: coverage.xml
+    # ─────────────── pytest ────────────────
+    - name: Run test-suite
+      env:
+        PYTEST_ADDOPTS: "-k 'not test_vdf_property'"           # flaky VDF остаётся выключен
+      run: |
+        pytest -q --durations=15                               # 👈 без -xdist
