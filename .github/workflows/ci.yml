@@ -1,3 +1,5 @@
+# .github/workflows/ci.yml
+
 name: CI
 
 on:
@@ -10,30 +12,42 @@ jobs:
   lint_and_test:
     runs-on: ubuntu-latest
     strategy:
+      # Запускаем тесты на нескольких версиях Python, чтобы убедиться в совместимости
       matrix:
         python-version: ['3.11', '3.12', '3.13']
 
     steps:
+      # 1. Получаем код из репозитория
       - uses: actions/checkout@v4
 
-      - name: Set up Python
+      # 2. Настраиваем нужную версию Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
+      # 3. Устанавливаем системные зависимости (например, для pynacl)
       - name: Install system deps
         run: |
           sudo apt-get update
           sudo apt-get install -y libsodium-dev
 
+      # 4. Устанавливаем все зависимости Python для разработки
+      #    Это главное изменение!
       - name: Install Python deps
         run: |
           python -m pip install --upgrade pip
+          # Эта строка важна, чтобы pynacl скомпилировался с системной libsodium
           pip install --no-cache-dir --no-binary :all: "pynacl>=1.5"
-          pip install .[test] "hypothesis>=6.104" "pytest-cov>=5.0" "coverage>=7.4"
+          # Устанавливаем все зависимости для разработки [dev] из pyproject.toml
+          # Это включает pytest, pre-commit, black, ruff и все остальные инструменты.
+          pip install .[dev]
 
-      - name: Pre-commit
+      # 5. Запускаем pre-commit для проверки форматирования и линтинга
+      #    Теперь эта команда будет работать, т.к. pre-commit установлен на шаге выше.
+      - name: Pre-commit checks
         run: pre-commit run --all-files
 
+      # 6. Запускаем тесты с покрытием кода
       - name: Run pytest
         run: pytest --cov=src --cov-report=xml
