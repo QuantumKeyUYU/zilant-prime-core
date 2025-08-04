@@ -2,10 +2,8 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  push:      { branches: [main] }
+  pull_request: { branches: [main] }
 
 permissions:
   contents: read
@@ -18,38 +16,42 @@ jobs:
         python-version: ["3.11", "3.12", "3.13"]
 
     steps:
-    # ────────────────────────── checkout ──────────────────────────
     - uses: actions/checkout@v4
 
-    # ───── системные пакеты: компилятор + libsodium ─────
+    # ─── системные библиотеки ───
     - name: Install system libs
       run: |
         sudo apt-get update
-        sudo apt-get install -y --no-install-recommends build-essential libsodium-dev
+        sudo apt-get install -y --no-install-recommends \
+          build-essential python3-dev pkg-config \
+          libsodium-dev                                 # ← xchacha20poly1305 lives here
 
-    # ────────────────── Python & кеш ───────────────────
+    # ─── Python + кеш ───
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: pip
 
-    # ─────────────── deps (pinned cryptography) ────────────────
+    # ─── Зависимости (ключевая часть) ───
     - name: Install dependencies
+      env:
+        SODIUM_INSTALL: "system"                       # <-- заставляем PyNaCl линковаться с system-libsodium
       run: |
         python -m pip install --upgrade pip
-        pip install "cryptography<43.0"                        # 👈 фиксация
-        pip install --no-binary :all: pynacl                   # собираем с libsodium
+        # 1. cryptography с XChaCha (до 43)
+        pip install "cryptography<43"
+        # 2. PyNaCl из исходников → получаем xchacha-binding’и
+        pip install --force-reinstall --no-binary=pynacl pynacl==1.5.0
+        # 3. все остальные пакеты
         pip install -r requirements.txt -r requirements-dev.txt
         pip install -e .
 
-    # ─────────────── pre-commit (lint/format) ────────────────
+    # ─── Линтеры / форматирование ───
     - name: pre-commit (lint + format)
       run: pre-commit run --all-files --show-diff-on-failure
 
-    # ─────────────── pytest ────────────────
+    # ─── Тест-сюит ───
     - name: Run test-suite
-      env:
-        PYTEST_ADDOPTS: "-k 'not test_vdf_property'"           # flaky VDF остаётся выключен
-      run: |
-        pytest -q --durations=15                               # 👈 без -xdist
+      # VDF-property тест пока flaky — отрубим
+      run: pytest -q -k "not test_vdf_property" --durations=15
