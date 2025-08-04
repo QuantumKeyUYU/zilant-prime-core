@@ -1,56 +1,103 @@
+# .github/workflows/ci.yml
 name: CI
 
 on:
   push:
     branches: [main]
   pull_request:
-    types: [opened, synchronize, reopened]
+    branches: [main]
 
-env:
-  # временно исключаем флейковый property-test VDF
-  PYTEST_ADDOPTS: "-m 'not flaky'"
+# ⏹️  если пушим поверх старого коммита ─ прежний ран отменяется
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
+permissions:
+  contents: read
+
+# ─────────────────────────────── 1. LINT ───────────────────────────────
 jobs:
-  lint_and_test:
+  lint:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 15            # hard-stop safeguard
+    steps:
+      - uses: actions/checkout@v4
 
+      # ---------- кеш pip (по хэшу lock-файлов) ----------
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+
+      # ---------- кеш pre-commit environments ----------
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-precommit-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps (ruff, mypy, pre-commit)
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff mypy pre-commit
+          pip install -r requirements.txt
+
+      - name: Run pre-commit (format + lint)
+        run: pre-commit run --all-files --show-diff-on-failure
+        # pre-commit сам берёт ruff, black, isort и др. из кеша выше
+
+# ───────────────────────────── 2. TEST MATRIX ─────────────────────────────
+  tests:
+    needs: lint                    # запускать только если lint прошёл
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
     strategy:
-      fail-fast: false
+      fail-fast: false             # не останавливать всю матрицу при одном фейле
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
 
     steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: 🛠️  Install system libs
+      # ---------- кеш pip ----------
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ env.python-version }}-${{ hashFiles('**/requirements*.txt') }}
+
+      - name: Install system libs (gcc + libsodium)
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y \
-            build-essential pkg-config libsodium-dev libzstd-dev \
-            libbz2-dev liblzma-dev
+          sudo apt-get install -y --no-install-recommends build-essential libsodium-dev
 
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "pip"
+          cache: pip                # дополнительный встроенный кеш
 
-      - name: 📦 Install project dependencies
+      - name: Install project deps                      # ⏱️ ~1-1.5 мин
         run: |
           python -m pip install --upgrade pip
-          # pin to <43: cryptography 45 ломает бинарные колёса PyPI
-          pip install "cryptography<43"
+          pip install "cryptography<43.0"               # pin (см. issue #…)
+          pip install --no-binary :all: pynacl          # c libsodium, без колёс
           pip install -r requirements.txt -r requirements-dev.txt
-          # PyNaCl — только из исходников, чтобы слинковалось с system libsodium
-          pip install --no-binary :all: pynacl
-          # локальная установка проекта (C-extensions соберутся в-месте)
           pip install -e .
 
-      - name: ✅ pre-commit (format + lint + type)
-        # собственная конфигурация pre-commit в репозитории
-        run: pre-commit run --all-files --show-diff-on-failure
+      # ─── быстрый smoke-ран Ruff + MyPy (src только) ───
+      - name: Ruff + MyPy quick-check
+        run: |
+          ruff check src
+          mypy --install-types --non-interactive src
+        timeout-minutes: 3
 
-      - name: 🧪 Run full test-suite
-        run: pytest -q
+      # ─── Тесты ───
+      - name: Run pytest
+        env:
+          # ➊ убираем кэш-плагин (WindowsPath fail) и flaky-VDF-property-тест
+          PYTEST_ADDOPTS: "-p no:cacheprovider -k 'not test_vdf_property'"
+        run: |
+          pytest -q --durations=15                # без xdist
+        timeout-minutes: 15
