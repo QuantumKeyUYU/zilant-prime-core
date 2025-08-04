@@ -21,33 +21,16 @@ jobs:
         with:
           python-version: "3.13"
 
-      # ФИКС: Добавляем установку libsodium
       - name: Install libsodium-dev
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
 
       - name: Install dev-deps
-        run: pip install -e .[dev]
+        run: |
+          pip install --force-reinstall --no-binary :all: --no-cache-dir pynacl
+          pip install -e .[dev]
 
       - name: Pre-commit
         run: pre-commit run --all-files
-
-      - name: Ruff (lint)
-        run: ruff check .
-
-      - name: Black (format)
-        run: black --check .
-
-      - name: isort (imports)
-        run: isort --check-only .
-
-      - name: Bandit (SAST)
-        run: bandit -r src -ll
-
-      - name: Semgrep (SAST)
-        run: semgrep ci
-
-      - name: Mypy (types)
-        run: mypy --config-file mypy.ini src
 
       - name: Pytest
         run: ZILANT_ALLOW_ROOT=1 pytest -q
