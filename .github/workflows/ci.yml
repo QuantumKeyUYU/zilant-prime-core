@@ -30,7 +30,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install --no-cache-dir --no-binary :all: "pynacl>=1.5"
-          pip install .[test] "hypothesis>=6.104" "pytest-cov>=5.0" "coverage>=7.4"
+          pip install .[test] pre-commit "hypothesis>=6.104" "pytest-cov>=5.0" "coverage>=7.4"
 
       - name: Pre-commit
         run: pre-commit run --all-files
