@@ -33,14 +33,16 @@ def encrypt_chunk(key: bytes, nonce: bytes, data: bytes, aad: bytes = b"") -> by
     """
     AEAD-шифрование одного чанка.
     Сначала — штатный XChaCha20Poly1305, если он есть (_NativeAEAD!=None),
-    иначе — через биндинги PyNaCl/libsodium.
+    иначе — прямое создание XChaCha20Poly1305 из cryptography.
     """
     if _NativeAEAD is not None:
         ct = _NativeAEAD(key).encrypt(nonce, data, aad)
     else:
-        from nacl.bindings import crypto_aead_xchacha20poly1305_ietf_encrypt
+        from cryptography.hazmat.primitives.ciphers.aead import (
+            XChaCha20Poly1305,
+        )
 
-        ct = crypto_aead_xchacha20poly1305_ietf_encrypt(data, aad, nonce, key)
+        ct = XChaCha20Poly1305(key).encrypt(nonce, data, aad)
     return cast(bytes, ct)
 
 
@@ -52,9 +54,11 @@ def decrypt_chunk(key: bytes, nonce: bytes, cipher: bytes, aad: bytes = b"") -> 
     if _NativeAEAD is not None:
         pt = _NativeAEAD(key).decrypt(nonce, cipher, aad)
     else:
-        from nacl.bindings import crypto_aead_xchacha20poly1305_ietf_decrypt
+        from cryptography.hazmat.primitives.ciphers.aead import (
+            XChaCha20Poly1305,
+        )
 
-        pt = crypto_aead_xchacha20poly1305_ietf_decrypt(cipher, aad, nonce, key)
+        pt = XChaCha20Poly1305(key).decrypt(nonce, cipher, aad)
     return cast(bytes, pt)
 
 
