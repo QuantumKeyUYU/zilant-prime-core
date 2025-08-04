@@ -19,7 +19,10 @@ def test_hash_sources_and_zeroize(tmp_path, monkeypatch):
 
     # prepare zeroize stubs
     monkeypatch.setattr("zilant_prime_core.utils.secure_logging.zeroize", lambda: None)
-    monkeypatch.setattr("zilant_prime_core.notify.Notifier", lambda: type("N", (), {"notify": lambda self, m: None})())
+    monkeypatch.setattr(
+        "zilant_prime_core.notify.Notifier",
+        lambda: type("N", (), {"notify": lambda self, m: None})(),
+    )
 
     code = {}
 

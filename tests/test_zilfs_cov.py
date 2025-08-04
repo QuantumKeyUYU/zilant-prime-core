@@ -45,7 +45,12 @@ def test_pack_dir_stream_fifo(tmp_path, monkeypatch):
             pass
 
     monkeypatch.setattr(subprocess, "Popen", lambda *a, **k: FakeProc(), raising=False)
-    monkeypatch.setattr(zfs, "pack_stream", lambda fifo, dest, key: dest.write_bytes(b"X"), raising=False)
+    monkeypatch.setattr(
+        zfs,
+        "pack_stream",
+        lambda fifo, dest, key: dest.write_bytes(b"X"),
+        raising=False,
+    )
     zfs.pack_dir_stream(src, out, key)
     assert out.is_file()
     assert out.read_bytes() == b"X"

@@ -34,7 +34,13 @@ def patch_dependencies(monkeypatch, tmp_path, tmp_path_factory):
 
 def make_container_file(tmp_path, meta_extra=None):
     # создаём файл-контейнер со стандартным HEADER_SEPARATOR
-    hdr = {"magic": "ZILANT", "version": 1, "mode": "classic", "orig_size": 0, "checksum_hex": ""}
+    hdr = {
+        "magic": "ZILANT",
+        "version": 1,
+        "mode": "classic",
+        "orig_size": 0,
+        "checksum_hex": "",
+    }
     if meta_extra:
         hdr.update(meta_extra)
     payload = b""
@@ -57,8 +63,14 @@ def test_heal_success(tmp_path):
     proof = container.with_suffix(".zil.proof")
     assert proof.read_bytes().startswith(b"proof-")
     # события записаны
-    assert ("self_heal_triggered", {"file": str(container), "level": 1}) in DummyRecordAction.calls
-    assert ("self_heal_done", {"file": str(container), "level": 1}) in DummyRecordAction.calls
+    assert (
+        "self_heal_triggered",
+        {"file": str(container), "level": 1},
+    ) in DummyRecordAction.calls
+    assert (
+        "self_heal_done",
+        {"file": str(container), "level": 1},
+    ) in DummyRecordAction.calls
 
 
 def test_heal_cannot_lock(tmp_path):

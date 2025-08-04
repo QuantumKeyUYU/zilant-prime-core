@@ -20,7 +20,10 @@ def test_pack_unpack_dir(tmp_path):
     assert (dst / "a.txt").read_text() == "x"
 
 
-@pytest.mark.skipif(sys.platform != "win32", reason="Тест Windows-ветки кода, запускается только на Windows")
+@pytest.mark.skipif(
+    sys.platform != "win32",
+    reason="Тест Windows-ветки кода, запускается только на Windows",
+)
 def test_pack_dir_stream(tmp_path, monkeypatch):
     src = tmp_path / "src"
     src.mkdir()
