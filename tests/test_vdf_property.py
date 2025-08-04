@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 # SPDX-License-Identifier: MIT
 
+import hashlib
 import pytest
 
 # tests/test_vdf_property.py
@@ -38,7 +39,7 @@ def test_posw_invalid_steps(seed, steps):
 @given(
     seed=st.binary(min_size=1),
     steps=st.integers(min_value=1, max_value=100),
-    bad_proof=st.binary(),
+    bad_proof=st.binary(min_size=1),
 )
 def test_posw_bad_proof_returns_false(seed, steps, bad_proof):
     # Генерируем правильное доказательство, но затем портим его на входе
@@ -47,3 +48,15 @@ def test_posw_bad_proof_returns_false(seed, steps, bad_proof):
     # сурово затираем
     bad = bad_proof + proof
     assert vdf_mod.check_posw(bad, seed, steps) is False
+
+
+@given(
+    seed=st.binary(min_size=1),
+    steps=st.integers(min_value=1, max_value=100),
+    prefix_len=st.integers(min_value=0, max_value=hashlib.sha256(b"\0").digest_size - 1),
+)
+def test_posw_prefix_returns_false(seed, steps, prefix_len):
+    proof, ok = vdf_mod.posw(seed, steps)
+    assert ok is True
+    prefix = proof[:prefix_len]
+    assert vdf_mod.check_posw(prefix, seed, steps) is False
