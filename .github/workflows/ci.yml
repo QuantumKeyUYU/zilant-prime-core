@@ -36,7 +36,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install ".[dev]"
-          # ФИКС: Переустанавливаем pynacl ПОВЕРХ, чтобы гарантировать сборку с libsodium
           pip install --no-cache-dir --force-reinstall --no-binary :all: pynacl
 
       - name: Lint
@@ -46,16 +45,7 @@ jobs:
           mypy src
 
       - name: Unit tests
-        run: |
-          # ФИКС для 3.11: Запускаем тесты БЕЗ сбора покрытия, чтобы избежать бага с WindowsPath
-          if [ "${{ matrix.python-version }}" == "3.11" ]; then
-            pytest
-          # ФИКС для 3.12: Игнорируем тест, который ломает hypothesis
-          elif [ "${{ matrix.python-version }}" == "3.12" ]; then
-            pytest --cov=src --cov-report=xml --ignore=tests/test_vdf_property.py
-          else
-            pytest --cov=src --cov-report=xml
-          fi
+        run: pytest --cov=src --cov-report=xml
 
       - name: Build PQ wheels
         if: matrix.python-version == '3.13'
@@ -67,7 +57,6 @@ jobs:
           path: dist/*_pq*.whl
 
       - name: Upload coverage to Codecov
-        if: matrix.python-version != '3.11'
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

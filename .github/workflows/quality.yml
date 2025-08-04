@@ -14,179 +14,83 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
+        with: { python-version: "3.13" }
       - name: Install libsodium-dev
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
-
       - name: Install dev-deps
         run: |
           pip install -e .[dev]
           pip install --no-cache-dir --force-reinstall --no-binary :all: pynacl
-
       - name: Pre-commit
         run: pre-commit run --all-files
-
       - name: Pytest
         run: ZILANT_ALLOW_ROOT=1 pytest -q
 
-  #────────────────────────────── Perf tests ──────────────────────────────
   perf:
     needs: quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
+        with: { python-version: "3.13" }
       - name: Install libsodium-dev
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
-
       - name: Install dev-deps
         run: |
-          pip uninstall -y pynacl || true
-          pip install --no-cache-dir --no-binary :all: --force-reinstall pynacl
           pip install -e .[dev]
-
+          pip install --no-cache-dir --force-reinstall --no-binary :all: pynacl
       - run: SKIP_FUZZ=1 ZILANT_ALLOW_ROOT=1 pytest -q -m perf --disable-warnings --maxfail=1
 
-  #────────────────────────────── Large-file tests ──────────────────────────────
   large-file-test:
     needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
+        with: { python-version: "3.13" }
       - name: Install libsodium-dev
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
-
       - name: Install dev-deps
         run: |
-          pip uninstall -y pynacl || true
-          pip install --no-cache-dir --no-binary :all: --force-reinstall pynacl
           pip install -e .[dev]
-
+          pip install --no-cache-dir --force-reinstall --no-binary :all: pynacl
       - run: pytest -q tests/test_stream_large.py tests/test_stream_resume.py
 
-  # ... (остальные jobs без тестов можно не трогать, но для единообразия я поправлю все)
-
-  #────────────────────────────── CLI-polish tests ──────────────────────────────
   cli-polish:
     needs: quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
+        with: { python-version: "3.13" }
       - name: Install libsodium-dev
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
-
       - name: Install dev-deps
         run: |
-          pip uninstall -y pynacl || true
-          pip install --no-cache-dir --no-binary :all: --force-reinstall pynacl
           pip install -e .[dev]
-
+          pip install --no-cache-dir --force-reinstall --no-binary :all: pynacl
       - run: pytest -q tests/test_cli_observability.py
 
-  #────────────────────────────── Build docs ──────────────────────────────
-  docs:
-    needs: quality
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install docs-deps
-        run: pip install -e .[docs]
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "18"
-
-      - name: Install Mermaid-CLI
-        run: npm install -g @mermaid-js/mermaid-cli
-
-      - name: Install Chrome deps
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y \
-            libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 \
-            libxext6 libxfixes3 libxi6 libxrandr2 libxtst6 \
-            libnss3 libatk1.0-0 libgtk-3-0 libpangocairo-1.0-0
-
-      - name: Create puppeteer-config.json
-        run: |
-          mkdir -p docs
-          cat > docs/puppeteer-config.json << 'EOF'
-          { "args": ["--no-sandbox", "--disable-setuid-sandbox"] }
-          EOF
-
-      - name: Generate Mermaid diagrams
-        run: |
-          npx mmdc \
-            -p docs/puppeteer-config.json \
-            -i docs/architecture/key_lifecycle.mmd \
-            -o docs/_static/key_lifecycle.svg
-
-      - name: Build HTML docs
-        working-directory: docs
-        run: make html
-
-  #────────────────────────────── Build + Whitepaper + Artefacts ──────────────────────────────
   build-pq:
     needs: [ quality, perf ]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository (with submodules)
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
+      - uses: actions/checkout@v4
+        with: { submodules: recursive, fetch-depth: 0 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
       - name: Install libsodium-dev
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
-
       - name: Install build deps
         run: |
-          pip uninstall -y pynacl || true
-          pip install --no-cache-dir --no-binary :all: --force-reinstall pynacl
           pip install -e .[dev] build pyyaml
-
+          pip install --no-cache-dir --force-reinstall --no-binary :all: pynacl
       - name: Build PQ wheels
         run: python tools/build_pq_wheels.py
-
-      - name: Install Pandoc & XeLaTeX
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y pandoc texlive-xetex
-
-      - name: Prepare THREATS placeholder
-        run: cp docs/THREATS.rst docs/THREATS.md
-
-      - name: Generate Whitepaper
-        run: python tools/gen_whitepaper.py
-
-      - name: Upload PQ wheels
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: pq-wheels
           path: dist/*.whl
