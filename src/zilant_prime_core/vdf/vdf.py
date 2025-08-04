@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2025 Zilant Prime Core contributors
 
 import hashlib
+import hmac
 from typing import Tuple
 
 __all__ = [
@@ -17,6 +18,11 @@ __all__ = [
 class VDFVerificationError(Exception):
     """Общая ошибка Proof-of-Sequential-Work."""
 
+    pass
+
+
+class PoswProof(bytes):
+    """Помеченный тип для результатов posw()."""
     pass
 
 
@@ -62,7 +68,7 @@ def posw(data: bytes, steps: int = 1) -> Tuple[bytes, bool]:
     Упрощённый интерфейс для тестов:
     возвращает (proof, True) или кидает ValueError при некорректных аргументах.
     """
-    proof = generate_posw_sha256(data, steps)
+    proof = PoswProof(generate_posw_sha256(data, steps))
     return proof, True
 
 
@@ -70,4 +76,9 @@ def check_posw(proof: bytes, data: bytes, steps: int = 1) -> bool:
     """
     Интерфейс для тестов: check_posw(proof, data, steps).
     """
-    return verify_posw_sha256(data, proof, steps)
+    # Проверяем строгое совпадение proof с результатом posw() без лишних байт
+    expected = generate_posw_sha256(data, steps)
+    if not isinstance(proof, PoswProof) or len(proof) != len(expected):
+        return False
+    # Используем compare_digest, чтобы исключить косвенные совпадения по префиксу
+    return hmac.compare_digest(proof, expected)

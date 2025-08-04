@@ -38,9 +38,11 @@ def encrypt_chunk(key: bytes, nonce: bytes, data: bytes, aad: bytes = b"") -> by
     if _NativeAEAD is not None:
         ct = _NativeAEAD(key).encrypt(nonce, data, aad)
     else:
-        from nacl.bindings import crypto_aead_xchacha20poly1305_ietf_encrypt
+        # Fallback: схлопываем 24-байтовый nonce до 12 байт и используем ChaCha20Poly1305
+        from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 
-        ct = crypto_aead_xchacha20poly1305_ietf_encrypt(data, aad, nonce, key)
+        nonce12 = hashlib.blake2b(nonce, digest_size=12).digest()
+        ct = ChaCha20Poly1305(key).encrypt(nonce12, data, aad)
     return cast(bytes, ct)
 
 
@@ -52,9 +54,10 @@ def decrypt_chunk(key: bytes, nonce: bytes, cipher: bytes, aad: bytes = b"") -> 
     if _NativeAEAD is not None:
         pt = _NativeAEAD(key).decrypt(nonce, cipher, aad)
     else:
-        from nacl.bindings import crypto_aead_xchacha20poly1305_ietf_decrypt
+        from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 
-        pt = crypto_aead_xchacha20poly1305_ietf_decrypt(cipher, aad, nonce, key)
+        nonce12 = hashlib.blake2b(nonce, digest_size=12).digest()
+        pt = ChaCha20Poly1305(key).decrypt(nonce12, cipher, aad)
     return cast(bytes, pt)
 
 

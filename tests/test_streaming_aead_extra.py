@@ -162,14 +162,8 @@ def test_invalid_mac_unpack_stream(tmp_path):
 
 
 def test_encrypt_decrypt_chunk_fallback(monkeypatch):
-    # Падение в fallback-ветку, когда _NativeAEAD = None
+    """Fallback ветка теперь использует ChaCha20Poly1305 без PyNaCl."""
     monkeypatch.setattr(streaming_aead, "_NativeAEAD", None)
-
-    # Эмулируем модуль nacl.bindings
-    fake = types.ModuleType("nacl.bindings")
-    fake.crypto_aead_xchacha20poly1305_ietf_encrypt = lambda data, aad, nonce, key: b"CT" + data
-    fake.crypto_aead_xchacha20poly1305_ietf_decrypt = lambda ct, aad, nonce, key: ct[2:]
-    sys.modules["nacl.bindings"] = fake
 
     key = b"\x00" * 32
     nonce = b"\x01" * streaming_aead.NONCE_SZ
@@ -177,8 +171,6 @@ def test_encrypt_decrypt_chunk_fallback(monkeypatch):
     aad = b"AAD"
 
     ct = streaming_aead.encrypt_chunk(key, nonce, data, aad=aad)
-    assert ct == b"CT" + data
-
     pt = streaming_aead.decrypt_chunk(key, nonce, ct, aad=aad)
     assert pt == data
 
