@@ -28,16 +28,7 @@ def test_cli_timelock(tmp_path, monkeypatch):
     runner = CliRunner()
     res1 = runner.invoke(
         cli,
-        [
-            "timelock",
-            "lock",
-            "--delay",
-            "5",
-            "--in-file",
-            str(src),
-            "--out-file",
-            str(locked),
-        ],
+        ["timelock", "lock", "--delay", "5", "--in-file", str(src), "--out-file", str(locked)],
     )
     assert res1.exit_code == 0
     res2 = runner.invoke(

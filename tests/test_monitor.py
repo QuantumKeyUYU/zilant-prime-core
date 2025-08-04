@@ -28,11 +28,7 @@ def test_handler_on_modified(monkeypatch, tmp_path):
     monkeypatch.setattr(monitor, "rotate_key", lambda key: called.setdefault("rotate_key", True))
     monkeypatch.setattr(monitor, "record_event", lambda ev: called.setdefault("record_event", True))
     monkeypatch.setattr(monitor, "prove_intact", lambda dg: called.setdefault("prove_intact", True))
-    monkeypatch.setattr(
-        monitor,
-        "maybe_self_destruct",
-        lambda p: called.setdefault("maybe_self_destruct", True),
-    )
+    monkeypatch.setattr(monitor, "maybe_self_destruct", lambda p: called.setdefault("maybe_self_destruct", True))
 
     handler = monitor._Handler(tmp_path / "file.txt")
 

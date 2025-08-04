@@ -21,16 +21,7 @@ def test_unpack_yaml(tmp_path):
     cont = src.with_suffix(".zil")
     res = CliRunner().invoke(
         cli,
-        [
-            "--output",
-            "yaml",
-            "unpack",
-            str(cont),
-            "-p",
-            "pw",
-            "-d",
-            str(tmp_path / "out"),
-        ],
+        ["--output", "yaml", "unpack", str(cont), "-p", "pw", "-d", str(tmp_path / "out")],
     )
     assert res.exit_code == 0
     assert "path:" in res.output

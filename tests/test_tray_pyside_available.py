@@ -8,10 +8,7 @@ import pytest
 from unittest.mock import MagicMock
 
 if not importlib.util.find_spec("PySide6.QtWidgets"):
-    pytest.skip(
-        "PySide6.QtWidgets is not available, skipping tests that require it.",
-        allow_module_level=True,
-    )
+    pytest.skip("PySide6.QtWidgets is not available, skipping tests that require it.", allow_module_level=True)
 
 pytestmark = pytest.mark.qt
 

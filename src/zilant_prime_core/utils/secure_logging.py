@@ -52,9 +52,7 @@ class SecureLogger:
             except Exception:
                 pass
 
-    def read_logs(
-        self,
-    ) -> list[Union[Tuple[str, str], Tuple[str, str, dict[str, Any]]]]:  # pragma: no cover
+    def read_logs(self) -> list[Union[Tuple[str, str], Tuple[str, str, dict[str, Any]]]]:  # pragma: no cover
         out: list[Union[Tuple[str, str], Tuple[str, str, dict[str, Any]]]] = []
         if not os.path.exists(self.log_path):
             return out

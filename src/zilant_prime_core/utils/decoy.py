@@ -66,11 +66,7 @@ def generate_decoy_files(
     """Создать `count` decoy-файлов в каталоге `directory`."""
     directory.mkdir(parents=True, exist_ok=True)
     return [
-        generate_decoy_file(
-            directory / f"decoy_{secrets.token_hex(4)}.zil",
-            size=size,
-            expire_seconds=expire_seconds,
-        )
+        generate_decoy_file(directory / f"decoy_{secrets.token_hex(4)}.zil", size=size, expire_seconds=expire_seconds)
         for _ in range(max(0, count))
     ]
 

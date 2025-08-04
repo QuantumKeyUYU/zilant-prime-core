@@ -67,11 +67,7 @@ def test_pack_and_write_fail(tmp_path, cap_actions, monkeypatch):
     # Падение pack → self_heal_pack_failed + False
     hdr = {"heal_level": 0, "heal_history": []}
     p = make_file(tmp_path, json.dumps(hdr).encode())
-    monkeypatch.setattr(
-        heal_mod,
-        "pack",
-        lambda m, payload, key: (_ for _ in ()).throw(RuntimeError("oops")),
-    )
+    monkeypatch.setattr(heal_mod, "pack", lambda m, payload, key: (_ for _ in ()).throw(RuntimeError("oops")))
     ok = heal_container(p, b"k" * 32, rng_seed=b"s" * 32)
     assert ok is False
     assert any(a == "self_heal_pack_failed" for a, _ in cap_actions)
@@ -100,11 +96,7 @@ def test_proof_fail_does_not_abort(tmp_path, cap_actions, monkeypatch):
     # Если prove_intact падает — self_heal_proof_failed, но heal возвращает True
     hdr = {"heal_level": 0, "heal_history": []}
     p = make_file(tmp_path, json.dumps(hdr).encode())
-    monkeypatch.setattr(
-        heal_mod,
-        "prove_intact",
-        lambda d: (_ for _ in ()).throw(RuntimeError("bad proof")),
-    )
+    monkeypatch.setattr(heal_mod, "prove_intact", lambda d: (_ for _ in ()).throw(RuntimeError("bad proof")))
     # Stub pack/write to no-op
     monkeypatch.setattr(heal_mod, "atomic_write", lambda path, d: None)
     monkeypatch.setattr(heal_mod, "pack", lambda m, payload, key: b"blob")

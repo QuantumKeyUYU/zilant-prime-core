@@ -75,11 +75,7 @@ def test_pack_internal_exception(monkeypatch, tmp_path, runner):
 def test_pack_cli_raises_fileexists(monkeypatch, tmp_path, runner):
     src = tmp_path / "file.txt"
     src.write_text("x")
-    monkeypatch.setattr(
-        cli_mod,
-        "_pack_bytes",
-        lambda *a, **k: (_ for _ in ()).throw(FileExistsError("fail")),
-    )
+    monkeypatch.setattr(cli_mod, "_pack_bytes", lambda *a, **k: (_ for _ in ()).throw(FileExistsError("fail")))
     res = runner.invoke(cli_mod.cli, ["pack", str(src), "-p", "pwd"])
     assert res.exit_code == 1
     assert "already exists" in res.output
@@ -119,11 +115,7 @@ def test_unpack_container_too_small(monkeypatch, tmp_path, runner):
 def test_unpack_internal_error(monkeypatch, tmp_path, runner):
     cont = tmp_path / "f.zil"
     cont.write_bytes(b"file\nx")
-    monkeypatch.setattr(
-        cli_mod,
-        "_unpack_bytes",
-        lambda *a, **k: (_ for _ in ()).throw(Exception("bang")),
-    )
+    monkeypatch.setattr(cli_mod, "_unpack_bytes", lambda *a, **k: (_ for _ in ()).throw(Exception("bang")))
     res = runner.invoke(cli_mod.cli, ["unpack", str(cont), "-p", "pwd"])
     assert res.exit_code == 1
     assert "Unpack error: bang" in res.output
@@ -152,11 +144,7 @@ def test_unpack_cleans_existing_file(tmp_path, runner):
 def test_unpack_other_value_error(monkeypatch, tmp_path, runner):
     cont = tmp_path / "f.zil"
     cont.write_bytes(b"file\nx")
-    monkeypatch.setattr(
-        cli_mod,
-        "_unpack_bytes",
-        lambda *a, **k: (_ for _ in ()).throw(ValueError("boom")),
-    )
+    monkeypatch.setattr(cli_mod, "_unpack_bytes", lambda *a, **k: (_ for _ in ()).throw(ValueError("boom")))
     res = runner.invoke(cli_mod.cli, ["unpack", str(cont), "-p", "pwd"])
     assert res.exit_code == 1
     assert "Unpack error: boom" in res.output
@@ -172,11 +160,7 @@ def test_unpack_cli_raises_fileexists(monkeypatch, tmp_path, runner):
     cont = tmp_path / "f.zil"
     cont.write_bytes(b"name\ncontent")
     # monkey-patch чтобы _unpack_bytes сразу упал с FileExistsError
-    monkeypatch.setattr(
-        cli_mod,
-        "_unpack_bytes",
-        lambda *a, **k: (_ for _ in ()).throw(FileExistsError("fail")),
-    )
+    monkeypatch.setattr(cli_mod, "_unpack_bytes", lambda *a, **k: (_ for _ in ()).throw(FileExistsError("fail")))
     res = runner.invoke(cli_mod.cli, ["unpack", str(cont), "-p", "pwd"])
     assert res.exit_code == 1
     # убедимся, что ветка _abort("Destination path already exists") сработала

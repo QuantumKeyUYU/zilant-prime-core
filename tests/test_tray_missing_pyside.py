@@ -80,11 +80,7 @@ def test_run_tray_no_suitable_exec_method(monkeypatch, caplog, _reload_tray_modu
         del mock_app_instance_without_exec.exec
     if hasattr(mock_app_instance_without_exec, "exec_"):
         del mock_app_instance_without_exec.exec_
-    monkeypatch.setattr(
-        tray_module,
-        "QApplication",
-        MagicMock(return_value=mock_app_instance_without_exec),
-    )
+    monkeypatch.setattr(tray_module, "QApplication", MagicMock(return_value=mock_app_instance_without_exec))
     mock_quit_action_instance = MagicMock()
     mock_quit_action_instance.triggered.connect = MagicMock()
     monkeypatch.setattr(tray_module, "QAction", MagicMock(return_value=mock_quit_action_instance))
@@ -103,11 +99,7 @@ def test_run_tray_exec_loop_failure(monkeypatch, caplog, _reload_tray_module):
     tray_module = _reload_tray_module
     mock_app_instance_with_failing_exec = MagicMock()
     mock_app_instance_with_failing_exec.exec.side_effect = Exception("Exec loop failed")
-    monkeypatch.setattr(
-        tray_module,
-        "QApplication",
-        MagicMock(return_value=mock_app_instance_with_failing_exec),
-    )
+    monkeypatch.setattr(tray_module, "QApplication", MagicMock(return_value=mock_app_instance_with_failing_exec))
     mock_quit_action_instance = MagicMock()
     mock_quit_action_instance.triggered.connect = MagicMock()
     monkeypatch.setattr(tray_module, "QAction", MagicMock(return_value=mock_quit_action_instance))
@@ -156,11 +148,7 @@ def test_run_tray_active_fs_clear_failure(monkeypatch, caplog, _reload_tray_modu
     monkeypatch.setattr(tray_module, "QAction", MagicMock(return_value=MagicMock(triggered=MagicMock())))
     mock_fs_no_destroy = MagicMock(spec=object)
     tray_module.ACTIVE_FS.append(mock_fs_no_destroy)
-    monkeypatch.setattr(
-        tray_module.ACTIVE_FS,
-        "clear",
-        MagicMock(side_effect=Exception("ACTIVE_FS clear failed")),
-    )
+    monkeypatch.setattr(tray_module.ACTIVE_FS, "clear", MagicMock(side_effect=Exception("ACTIVE_FS clear failed")))
     with caplog.at_level(logging.WARNING):
         tray_module.run_tray("icon.png")
     assert "[tray] ACTIVE_FS.clear() failed: ACTIVE_FS clear failed" in caplog.text
