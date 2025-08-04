@@ -21,12 +21,12 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
       - name: Install dev-deps
         run: |
+          pip install --no-cache-dir --no-binary :all: pynacl
           pip install -e .[dev]
-          pip install --no-cache-dir --force-reinstall --no-binary :all: pynacl
-      - name: Pre-commit
-        run: pre-commit run --all-files
-      - name: Pytest
-        run: ZILANT_ALLOW_ROOT=1 pytest -q
+      - name: Run checks
+        run: |
+          pre-commit run --all-files
+          ZILANT_ALLOW_ROOT=1 pytest -q
 
   perf:
     needs: quality
@@ -39,8 +39,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
       - name: Install dev-deps
         run: |
+          pip install --no-cache-dir --no-binary :all: pynacl
           pip install -e .[dev]
-          pip install --no-cache-dir --force-reinstall --no-binary :all: pynacl
       - run: SKIP_FUZZ=1 ZILANT_ALLOW_ROOT=1 pytest -q -m perf --disable-warnings --maxfail=1
 
   large-file-test:
@@ -55,8 +55,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
       - name: Install dev-deps
         run: |
+          pip install --no-cache-dir --no-binary :all: pynacl
           pip install -e .[dev]
-          pip install --no-cache-dir --force-reinstall --no-binary :all: pynacl
       - run: pytest -q tests/test_stream_large.py tests/test_stream_resume.py
 
   cli-polish:
@@ -70,8 +70,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
       - name: Install dev-deps
         run: |
+          pip install --no-cache-dir --no-binary :all: pynacl
           pip install -e .[dev]
-          pip install --no-cache-dir --force-reinstall --no-binary :all: pynacl
       - run: pytest -q tests/test_cli_observability.py
 
   build-pq:
@@ -86,8 +86,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
       - name: Install build deps
         run: |
+          pip install --no-cache-dir --no-binary :all: pynacl
           pip install -e .[dev] build pyyaml
-          pip install --no-cache-dir --force-reinstall --no-binary :all: pynacl
       - name: Build PQ wheels
         run: python tools/build_pq_wheels.py
       - uses: actions/upload-artifact@v4
