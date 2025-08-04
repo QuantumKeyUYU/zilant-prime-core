@@ -31,7 +31,11 @@ def test_pack_missing_password(tmp_path):
 def test_pack_metadata_error(tmp_path, monkeypatch):
     src = tmp_path / "a.txt"
     src.write_text("A")
-    monkeypatch.setattr(cli_mod, "_pack_bytes", lambda *args, **kw: (_ for _ in ()).throw(MetadataError("bad")))
+    monkeypatch.setattr(
+        cli_mod,
+        "_pack_bytes",
+        lambda *args, **kw: (_ for _ in ()).throw(MetadataError("bad")),
+    )
     result = runner.invoke(cli_mod.cli, ["pack", str(src), "-p", "pw"])
     assert result.exit_code == 1
     assert "bad" in result.output
@@ -58,7 +62,11 @@ def test_unpack_missing_password(tmp_path):
 def test_unpack_unpack_error(monkeypatch, tmp_path):
     arc = tmp_path / "z.zil"
     arc.write_bytes(b"\n")
-    monkeypatch.setattr(cli_mod, "_unpack_bytes", lambda *a, **k: (_ for _ in ()).throw(Exception("oops")))
+    monkeypatch.setattr(
+        cli_mod,
+        "_unpack_bytes",
+        lambda *a, **k: (_ for _ in ()).throw(Exception("oops")),
+    )
     result = runner.invoke(cli_mod.cli, ["unpack", str(arc), "-p", "pw", "-d", str(tmp_path / "o")])
     assert result.exit_code == 1
     assert "Unpack error" in result.output

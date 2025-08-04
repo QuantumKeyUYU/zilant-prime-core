@@ -43,7 +43,11 @@ def test_mac_address_exception(monkeypatch):
 
 def test_smbios_uuid_exception(monkeypatch):
     monkeypatch.setattr(platform, "system", lambda: "Windows")
-    monkeypatch.setattr(subprocess, "check_output", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("fail")))
+    monkeypatch.setattr(
+        subprocess,
+        "check_output",
+        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("fail")),
+    )
     factors = collect_hw_factors()
     assert factors["smbios_uuid"] == ""
 
@@ -73,14 +77,22 @@ def test_disk_serial_windows(monkeypatch):
 
 def test_disk_serial_windows_exception(monkeypatch):
     monkeypatch.setattr(platform, "system", lambda: "Windows")
-    monkeypatch.setattr(subprocess, "check_output", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("fail")))
+    monkeypatch.setattr(
+        subprocess,
+        "check_output",
+        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("fail")),
+    )
     factors = collect_hw_factors()
     assert factors["disk_serial"] == ""
 
 
 def test_disk_serial_linux_exception(monkeypatch):
     monkeypatch.setattr(platform, "system", lambda: "Linux")
-    monkeypatch.setattr(subprocess, "check_output", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("fail")))
+    monkeypatch.setattr(
+        subprocess,
+        "check_output",
+        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("fail")),
+    )
     factors = collect_hw_factors()
     assert factors["disk_serial"] == ""
 

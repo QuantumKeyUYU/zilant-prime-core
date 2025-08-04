@@ -38,12 +38,12 @@ def test_posw_invalid_steps(seed, steps):
 @given(
     seed=st.binary(min_size=1),
     steps=st.integers(min_value=1, max_value=100),
-    bad_proof=st.binary(min_size=1),
+    bad_proof=st.binary(min_size=1),  # здесь стратегия для «плохого» proof
 )
 def test_posw_bad_proof_returns_false(seed, steps, bad_proof):
     # Генерируем правильное доказательство, но затем портим его на входе
     proof, ok = vdf_mod.posw(seed, steps)
     assert ok is True
-    # сурово затираем
-    bad = bad_proof + proof
+    # гарантируем, что bad_proof не пустой
+    bad = bad_proof if bad_proof else proof
     assert vdf_mod.check_posw(bad, seed, steps) is False

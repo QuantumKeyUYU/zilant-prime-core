@@ -48,7 +48,11 @@ def get_logger(
 
 
 def get_file_logger(
-    name: str, file_path: str, *, secure: Optional[bool] = None, log_path: Optional[str] = None
+    name: str,
+    file_path: str,
+    *,
+    secure: Optional[bool] = None,
+    log_path: Optional[str] = None,
 ) -> Union[logging.Logger, SecureLogger]:
     """
     Возвращает файловый логгер:

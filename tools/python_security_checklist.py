@@ -47,12 +47,39 @@ def check_file(path: Path) -> list[Finding]:
                 name = f"{base}.{name}" if base else func.attr
 
             if name in {"eval", "exec"}:
-                findings.append(Finding(path, node.lineno, f"use of {name}", "high", "Avoid dynamic execution of code"))
-            elif name in {"pickle.load", "pickle.loads", "pickle.dump", "pickle.dumps"}:
-                findings.append(Finding(path, node.lineno, f"{name} call", "high", "Prefer json or other safe formats"))
-            elif name in {"os.system", "subprocess.call", "subprocess.Popen", "subprocess.run"}:
                 findings.append(
-                    Finding(path, node.lineno, f"{name} call", "medium", "Validate input and avoid shell=True")
+                    Finding(
+                        path,
+                        node.lineno,
+                        f"use of {name}",
+                        "high",
+                        "Avoid dynamic execution of code",
+                    )
+                )
+            elif name in {"pickle.load", "pickle.loads", "pickle.dump", "pickle.dumps"}:
+                findings.append(
+                    Finding(
+                        path,
+                        node.lineno,
+                        f"{name} call",
+                        "high",
+                        "Prefer json or other safe formats",
+                    )
+                )
+            elif name in {
+                "os.system",
+                "subprocess.call",
+                "subprocess.Popen",
+                "subprocess.run",
+            }:
+                findings.append(
+                    Finding(
+                        path,
+                        node.lineno,
+                        f"{name} call",
+                        "medium",
+                        "Validate input and avoid shell=True",
+                    )
                 )
             elif isinstance(func, ast.Name) and func.id == "open":
                 mode = None
@@ -63,7 +90,13 @@ def check_file(path: Path) -> list[Finding]:
                         mode = str(kw.value.value)
                 if mode and any(ch in mode for ch in ("w", "a")):
                     findings.append(
-                        Finding(path, node.lineno, "open() for writing", "low", "Ensure paths are validated")
+                        Finding(
+                            path,
+                            node.lineno,
+                            "open() for writing",
+                            "low",
+                            "Ensure paths are validated",
+                        )
                     )
 
     return findings

@@ -81,7 +81,10 @@ def unpack(container: bytes | Path, output_dir: str | Path, password: str) -> Pa
     salt = raw[pos : pos + DEFAULT_SALT_LENGTH]
     pos += DEFAULT_SALT_LENGTH
 
-    _require(len(raw) >= pos + DEFAULT_NONCE_LENGTH, "Неправильный формат контейнера (nonce).")
+    _require(
+        len(raw) >= pos + DEFAULT_NONCE_LENGTH,
+        "Неправильный формат контейнера (nonce).",
+    )
     nonce = raw[pos : pos + DEFAULT_NONCE_LENGTH]
     pos += DEFAULT_NONCE_LENGTH
 

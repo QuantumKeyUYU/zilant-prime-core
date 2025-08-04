@@ -28,7 +28,15 @@ def _export(runner: CliRunner, key_file: Path, shares: int, threshold: int, out:
 def _import(runner: CliRunner, directory: Path, out_file: Path) -> CliRunner:
     return runner.invoke(
         cli,
-        ["key", "shard", "import", "--input-dir", str(directory), "--output-file", str(out_file)],
+        [
+            "key",
+            "shard",
+            "import",
+            "--input-dir",
+            str(directory),
+            "--output-file",
+            str(out_file),
+        ],
     )
 
 
