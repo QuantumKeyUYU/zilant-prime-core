@@ -1,57 +1,56 @@
-# .github/workflows/ci.yml
 name: CI
 
 on:
-  push:      { branches: [main] }
-  pull_request: { branches: [main] }
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
 
-permissions:
-  contents: read
+env:
+  # временно исключаем флейковый property-test VDF
+  PYTEST_ADDOPTS: "-m 'not flaky'"
 
 jobs:
   lint_and_test:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
+
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
 
     steps:
-    - uses: actions/checkout@v4
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
 
-    # ─── системные библиотеки ───
-    - name: Install system libs
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends \
-          build-essential python3-dev pkg-config \
-          libsodium-dev                                 # ← xchacha20poly1305 lives here
+      - name: 🛠️  Install system libs
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            build-essential pkg-config libsodium-dev libzstd-dev \
+            libbz2-dev liblzma-dev
 
-    # ─── Python + кеш ───
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: pip
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
 
-    # ─── Зависимости (ключевая часть) ───
-    - name: Install dependencies
-      env:
-        SODIUM_INSTALL: "system"                       # <-- заставляем PyNaCl линковаться с system-libsodium
-      run: |
-        python -m pip install --upgrade pip
-        # 1. cryptography с XChaCha (до 43)
-        pip install "cryptography<43"
-        # 2. PyNaCl из исходников → получаем xchacha-binding’и
-        pip install --force-reinstall --no-binary=pynacl pynacl==1.5.0
-        # 3. все остальные пакеты
-        pip install -r requirements.txt -r requirements-dev.txt
-        pip install -e .
+      - name: 📦 Install project dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # pin to <43: cryptography 45 ломает бинарные колёса PyPI
+          pip install "cryptography<43"
+          pip install -r requirements.txt -r requirements-dev.txt
+          # PyNaCl — только из исходников, чтобы слинковалось с system libsodium
+          pip install --no-binary :all: pynacl
+          # локальная установка проекта (C-extensions соберутся в-месте)
+          pip install -e .
 
-    # ─── Линтеры / форматирование ───
-    - name: pre-commit (lint + format)
-      run: pre-commit run --all-files --show-diff-on-failure
+      - name: ✅ pre-commit (format + lint + type)
+        # собственная конфигурация pre-commit в репозитории
+        run: pre-commit run --all-files --show-diff-on-failure
 
-    # ─── Тест-сюит ───
-    - name: Run test-suite
-      # VDF-property тест пока flaky — отрубим
-      run: pytest -q -k "not test_vdf_property" --durations=15
+      - name: 🧪 Run full test-suite
+        run: pytest -q

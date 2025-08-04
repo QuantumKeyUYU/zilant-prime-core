@@ -1,75 +1,44 @@
-# .github/workflows/quality.yml
-#
-# Полный «медленный» прогон:
-#   • собираем PyNaCl против системного libsodium  ➜  xchacha работает
-#   • пин cryptography<43                         ➜  избегаем ImportError’а
-#   • отключаем xdist на 3.13                     ➜  нет крашей коллектора
-#   • пропускаем flaky VDF-property тест          ➜  не рвёт билд
-#   • собираем coverage (optionally)
-
 name: Quality / CI pipeline
 
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    types: [opened, synchronize, reopened]
 
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
-    # ─────────── checkout ───────────
-    - uses: actions/checkout@v4
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
 
-    # ─────────── system libs ───────────
-    - name: Install system libs
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends \
-          libsodium-dev build-essential pkg-config
+      - name: 🛠️  System libs
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y build-essential pkg-config libsodium-dev libzstd-dev
 
-    # ─────────── Python & deps ───────────
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"      # стабильно, быстрее 3.13
-        cache: pip
+      - name: 🐍 Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
 
-    - name: Install dependencies
-      env:
-        # PyNaCl соберётся из исходников и подтянет system-libsodium
-        SODIUM_INSTALL: "system"
-      run: |
-        python -m pip install --upgrade pip
-        # совместимо с нашим pin’ом
-        pip install "cryptography<43"
-        # форсируем сборку PyNaCl-source с xchacha-binding’ами
-        pip install --force-reinstall --no-binary=pynacl pynacl==1.5.0
-        # основные и dev-зависимости
-        pip install -r requirements.txt -r requirements-dev.txt
-        # сам пакет в editable-режиме
-        pip install -e .
+      - name: 📦 Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+          pip install --no-binary :all: pynacl
+          pip install -e .
 
-    # ─────────── быстрый линт ───────────
-    - name: Ruff + MyPy quick-check
-      run: |
-        ruff src tests
-        mypy src
+      # ─────────── быстрые статические проверки ───────────
+      - name: Ruff + MyPy quick-check
+        run: |
+          ruff check src tests           # ← исправлено: команда `check`
+          mypy --install-types --non-interactive src
 
-    # ─────────── полный тест-ран ───────────
-    - name: Run full test-suite
-      #  • no:xdist  ➜  убираем multiprocessing
-      #  • -k "not test_vdf_property"  ➜  пропускаем flaky-VDF
-      run: |
-        pytest -q -p no:xdist \
-               -k "not test_vdf_property" \
-               --durations=25 \
-               --cov=src --cov-report=xml
-
-    # ─────────── (необязательно) выгрузка coverage ───────────
-    # - name: Upload coverage to Codecov/GHA-artifact
-    #   uses: codecov/codecov-action@v4
-    #   with:
-    #     file: ./coverage.xml
+      # ──────────────────────────── тесты ────────────────────────────
+      - name: Run test-suite
+        run: pytest -q
