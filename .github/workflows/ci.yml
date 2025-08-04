@@ -35,8 +35,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # ФИНАЛЬНЫЙ ФИКС для PyNaCl: принудительная переустановка из исходников
-          pip install --force-reinstall --no-binary :all: --no-cache-dir pynacl
+          # ФИКС: Сначала удаляем pynacl, если он криво встал, потом ставим из исходников
+          pip uninstall -y pynacl || true
+          pip install --no-cache-dir --no-binary :all: --force-reinstall pynacl
           pip install ".[dev]"
 
       - name: Lint
@@ -45,11 +46,11 @@ jobs:
           black --check src tests
           mypy src
 
-      - name: Unit tests with coverage
+      - name: Unit tests
         run: |
-          # ФИНАЛЬНЫЙ ФИКС для 3.11: Игнорируем тест для Windows, который ломает pytest
+          # ФИКС для 3.11: Запускаем тесты БЕЗ сбора покрытия, чтобы избежать бага с WindowsPath
           if [ "${{ matrix.python-version }}" == "3.11" ]; then
-            pytest --ignore=tests/test_zilfs.py
+            pytest
           # ФИКС для 3.12: Игнорируем тест, который ломает hypothesis
           elif [ "${{ matrix.python-version }}" == "3.12" ]; then
             pytest --cov=src --cov-report=xml --ignore=tests/test_vdf_property.py
@@ -58,7 +59,6 @@ jobs:
           fi
 
       - name: Build PQ wheels
-        # Запускаем только на одной версии, чтобы не делать лишнюю работу
         if: matrix.python-version == '3.13'
         run: python tools/build_pq_wheels.py
       - uses: actions/upload-artifact@v4
@@ -68,10 +68,11 @@ jobs:
           path: dist/*_pq*.whl
 
       - name: Upload coverage to Codecov
-        if: matrix.python-version != '3.11' # Не загружаем покрытие, если не собирали
+        if: matrix.python-version != '3.11'
         uses: codecov/codecov-action@v4
         with:
-          token: ${{ secrets.CODECOV_TOKEN }} # На всякий случай добавим токен
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true # Добавим, чтобы видеть ошибки загрузки
 
   trivy-scan:
     name: Trivy SCA / CVE scan
