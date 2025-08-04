@@ -94,10 +94,10 @@ jobs:
         timeout-minutes: 3
 
       # ─── Тесты ───
-      - name: Run pytest
+      - name: Run test-suite
         env:
-          # ➊ убираем кэш-плагин (WindowsPath fail) и flaky-VDF-property-тест
+          PYTHONPATH: ${{ github.workspace }}
           PYTEST_ADDOPTS: "-p no:cacheprovider -k 'not test_vdf_property'"
         run: |
-          pytest -q --durations=15                # без xdist
+          pytest -q --durations=15
         timeout-minutes: 15

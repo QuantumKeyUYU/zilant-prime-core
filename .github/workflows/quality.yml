@@ -13,8 +13,7 @@ jobs:
     timeout-minutes: 25
 
     env:
-      # ➊ убираем flake-VDF и pytest-cache
-      PYTEST_ADDOPTS: "-m 'not flaky' -p no:cacheprovider"
+      PYTHONPATH: ${{ github.workspace }}
 
     steps:
       - name: 📥 Checkout
@@ -47,9 +46,7 @@ jobs:
 
       # ──────────────────────────── тесты ────────────────────────────
       - name: Run test-suite
+        env:
+          PYTEST_ADDOPTS: "-p no:cacheprovider -k 'not test_vdf_property'"
         run: |
-          # ➋ временно выкусываем три «красных» теста
-          pytest -q \
-            --deselect tests/test_vdf_property.py::test_posw_bad_proof_returns_false \
-            --deselect tests/test_zstr_header.py::test_zstr_header \
-            --deselect tests/test_zilfs_stream_big.py::test_zilfs_stream_big
+          pytest -q --durations=15
