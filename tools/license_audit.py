@@ -91,7 +91,12 @@ def evaluate_status(license_name: str) -> str:
 
 
 def generate_report(deps: dict[str, str]) -> None:
-    lines = ["# Dependency license report", "", "| Package | Version | License | Status |", "|---|---|---|---|"]
+    lines = [
+        "# Dependency license report",
+        "",
+        "| Package | Version | License | Status |",
+        "|---|---|---|---|",
+    ]
     for pkg, ver in sorted(deps.items()):
         lic = fetch_license(pkg)
         status = evaluate_status(lic)

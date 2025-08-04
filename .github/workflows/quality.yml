@@ -21,8 +21,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
       - name: Install dev-deps
         run: |
-          pip install --no-cache-dir --no-binary :all: pynacl
-          pip install -e .[dev]
+          pip install --no-cache-dir --no-binary :all: "pynacl>=1.5"
+          pip install -e .[dev] "hypothesis>=6.104" "pytest-cov>=5.0" "coverage>=7.4"
       - name: Run checks
         run: |
           pre-commit run --all-files
@@ -39,8 +39,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
       - name: Install dev-deps
         run: |
-          pip install --no-cache-dir --no-binary :all: pynacl
-          pip install -e .[dev]
+          pip install --no-cache-dir --no-binary :all: "pynacl>=1.5"
+          pip install -e .[dev] "hypothesis>=6.104" "pytest-cov>=5.0" "coverage>=7.4"
       - run: SKIP_FUZZ=1 ZILANT_ALLOW_ROOT=1 pytest -q -m perf --disable-warnings --maxfail=1
 
   large-file-test:
@@ -55,8 +55,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
       - name: Install dev-deps
         run: |
-          pip install --no-cache-dir --no-binary :all: pynacl
-          pip install -e .[dev]
+          pip install --no-cache-dir --no-binary :all: "pynacl>=1.5"
+          pip install -e .[dev] "hypothesis>=6.104" "pytest-cov>=5.0" "coverage>=7.4"
       - run: pytest -q tests/test_stream_large.py tests/test_stream_resume.py
 
   cli-polish:
@@ -70,8 +70,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
       - name: Install dev-deps
         run: |
-          pip install --no-cache-dir --no-binary :all: pynacl
-          pip install -e .[dev]
+          pip install --no-cache-dir --no-binary :all: "pynacl>=1.5"
+          pip install -e .[dev] "hypothesis>=6.104" "pytest-cov>=5.0" "coverage>=7.4"
       - run: pytest -q tests/test_cli_observability.py
 
   build-pq:
@@ -86,8 +86,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libsodium-dev
       - name: Install build deps
         run: |
-          pip install --no-cache-dir --no-binary :all: pynacl
-          pip install -e .[dev] build pyyaml
+          pip install --no-cache-dir --no-binary :all: "pynacl>=1.5"
+          pip install -e .[dev] "hypothesis>=6.104" "pytest-cov>=5.0" "coverage>=7.4"
       - name: Build PQ wheels
         run: python tools/build_pq_wheels.py
       - uses: actions/upload-artifact@v4

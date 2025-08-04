@@ -48,7 +48,10 @@ def analyze_file(path: Path) -> list[dict[str, str]]:
                         }
                     )
             # Check API functions (public, not starting with _ and outside CLI files)
-            elif path.parts[1] != "zilant_prime_core" or path.name not in {"cli.py", "cli_commands.py"}:
+            elif path.parts[1] != "zilant_prime_core" or path.name not in {
+                "cli.py",
+                "cli_commands.py",
+            }:
                 if not name.startswith("_"):
                     doc = ast.get_docstring(node)
                     if not doc or len(doc.strip()) < 10:

@@ -114,7 +114,10 @@ def _cleanup_old_file(container: Path) -> None:
 
 
 # ──────────────────────────────── CLI root ────────────────────────────────
-@click.group(context_settings={"help_option_names": ["-h", "--help"]}, invoke_without_command=True)
+@click.group(
+    context_settings={"help_option_names": ["-h", "--help"]},
+    invoke_without_command=True,
+)
 @click.option("--metrics-port", type=int, metavar="PORT", help="Expose metrics on PORT")
 @click.option("--vault-key", type=binascii.unhexlify, metavar="HEX", help="AES key for Vault")
 @click.option(
@@ -169,7 +172,11 @@ def key() -> None:
 
 @key.command("rotate")
 @click.option("--days", type=int, required=True, metavar="DAYS", help="Rotation interval in days")
-@click.option("--in-key", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option(
+    "--in-key",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
 @click.option("--out-key", type=click.Path(dir_okay=False, path_type=Path), required=True)
 @click.pass_context
 @metrics.record_cli("key_rotate")
@@ -242,7 +249,13 @@ def cmd_pack(  # noqa: C901  (covered by extensive tests)
         start = time.perf_counter()
         with metrics.track("pack"):
             extras = (
-                {"owner": "anonymous", "timestamp": "1970-01-01T00:00:00Z", "origin": "N/A"} if fake_metadata else None
+                {
+                    "owner": "anonymous",
+                    "timestamp": "1970-01-01T00:00:00Z",
+                    "origin": "N/A",
+                }
+                if fake_metadata
+                else None
             )
             if pq_pub or fake_metadata:
                 pack_file(
@@ -565,7 +578,11 @@ def timelock() -> None:
 
 @timelock.command("lock")
 @click.option("--delay", type=int, required=True, metavar="SECONDS")
-@click.option("--in-file", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option(
+    "--in-file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
 @click.option("--out-file", type=click.Path(dir_okay=False, path_type=Path), required=True)
 def cmd_timelock_lock(delay: int, in_file: Path, out_file: Path) -> None:
     """Lock IN_FILE for the given DELAY."""
@@ -576,7 +593,11 @@ def cmd_timelock_lock(delay: int, in_file: Path, out_file: Path) -> None:
 
 
 @timelock.command("unlock")
-@click.option("--in-file", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option(
+    "--in-file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
 @click.option("--out-file", type=click.Path(dir_okay=False, path_type=Path), required=True)
 def cmd_timelock_unlock(in_file: Path, out_file: Path) -> None:
     """Unlock IN_FILE previously locked via :func:`lock`."""
@@ -609,7 +630,11 @@ def attest() -> None:
 
 
 @attest.command("simulate")
-@click.option("--in-file", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option(
+    "--in-file",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
 @click.pass_context
 def cmd_attest_simulate(ctx: click.Context, in_file: Path) -> None:
     """Simulate TPM attestation of IN_FILE."""

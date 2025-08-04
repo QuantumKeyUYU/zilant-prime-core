@@ -100,7 +100,13 @@ def shard_cmd() -> None:
 
 @shard_cmd.command("export")
 @click.option("--master-key", type=click.Path(exists=True, dir_okay=False, path_type=Path))
-@click.option("--threshold", type=int, required=True, metavar="N", help="Minimum shares needed to recover")
+@click.option(
+    "--threshold",
+    type=int,
+    required=True,
+    metavar="N",
+    help="Minimum shares needed to recover",
+)
 @click.option("--shares", type=int, required=True, metavar="M", help="Total number of shares")
 @click.option("--output-dir", type=click.Path(file_okay=False, path_type=Path), required=True)
 @click.pass_context
@@ -134,7 +140,11 @@ def shard_export_cmd(
 
 
 @shard_cmd.command("import")
-@click.option("--input-dir", type=click.Path(exists=True, file_okay=False, path_type=Path), required=True)
+@click.option(
+    "--input-dir",
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    required=True,
+)
 @click.option("--output-file", type=click.Path(dir_okay=False, path_type=Path), required=True)
 @click.pass_context
 @metrics.record_cli("shard_import")
@@ -193,7 +203,13 @@ def stream_pack_cmd(ctx: click.Context, src: Path, dst: Path, key: Path, threads
 @click.option("--threads", type=int, default=0, show_default=True)
 @click.option("--progress/--no-progress", default=False, show_default=True)
 @click.option("--verify-only", is_flag=True, default=False)
-@click.option("--offset", type=int, default=0, show_default=True, help="Skip first OFFSET bytes of ciphertext")
+@click.option(
+    "--offset",
+    type=int,
+    default=0,
+    show_default=True,
+    help="Skip first OFFSET bytes of ciphertext",
+)
 @click.pass_context
 @metrics.record_cli("stream_unpack")
 def stream_unpack_cmd(
@@ -250,8 +266,16 @@ def hpke_cmd() -> None:
 @hpke_cmd.command("encrypt")
 @click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.argument("dst", type=click.Path(dir_okay=False, path_type=Path))
-@click.option("--pq-pub", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
-@click.option("--x-pub", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option(
+    "--pq-pub",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
+@click.option(
+    "--x-pub",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
 @click.pass_context
 @metrics.record_cli("hpke_encrypt")
 def hpke_encrypt_cmd(
@@ -273,8 +297,16 @@ def hpke_encrypt_cmd(
 @hpke_cmd.command("decrypt")
 @click.argument("src", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 @click.argument("dst", type=click.Path(dir_okay=False, path_type=Path))
-@click.option("--pq-sk", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
-@click.option("--x-sk", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True)
+@click.option(
+    "--pq-sk",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
+@click.option(
+    "--x-sk",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+)
 @click.pass_context
 @metrics.record_cli("hpke_decrypt")
 def hpke_decrypt_cmd(

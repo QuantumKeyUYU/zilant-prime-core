@@ -15,7 +15,11 @@ PATTERNS = [
     (re.compile(r"AKIA[0-9A-Z]{16}"), "high", "Possible AWS access key"),
     (re.compile(r"ghp_[A-Za-z0-9]{36}"), "high", "GitHub token"),
     (re.compile(r"eyJ[A-Za-z0-9._-]{20,}"), "medium", "Likely JWT token"),
-    (re.compile(r"-----BEGIN(?: RSA)? PRIVATE KEY-----"), "critical", "Private key material"),
+    (
+        re.compile(r"-----BEGIN(?: RSA)? PRIVATE KEY-----"),
+        "critical",
+        "Private key material",
+    ),
     (re.compile(r"(?i)password\s*=\s*['\"]?[^'\"\n]+"), "medium", "Hardcoded password"),
     (re.compile(r"(?i)secret"), "low", "Contains word 'secret'"),
     (re.compile(r"(?i)token"), "low", "Contains word 'token'"),

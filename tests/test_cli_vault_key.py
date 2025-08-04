@@ -23,7 +23,11 @@ class DummyClient(VaultClient):
 @pytest.fixture(autouse=True)
 def patch_client(monkeypatch):
     monkeypatch.setattr("zilant_prime_core.cli.VaultClient", DummyClient)
-    monkeypatch.setattr(hvac, "Client", lambda url, token: type("C", (), {"is_authenticated": lambda self: True})())
+    monkeypatch.setattr(
+        hvac,
+        "Client",
+        lambda url, token: type("C", (), {"is_authenticated": lambda self: True})(),
+    )
     monkeypatch.setattr(cli_mod, "pack_file", lambda *a, **k: None)
     yield
 
@@ -35,7 +39,15 @@ def test_vault_key_parsing(monkeypatch, tmp_path):
     monkeypatch.setattr(
         sys,
         "argv",
-        ["zilant", "--vault-key", hex_key, "pack", str(dummy_file), "--vault-path", "x"],
+        [
+            "zilant",
+            "--vault-key",
+            hex_key,
+            "pack",
+            str(dummy_file),
+            "--vault-path",
+            "x",
+        ],
     )
     with pytest.raises(SystemExit):
         cli_mod.cli()

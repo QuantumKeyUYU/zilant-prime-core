@@ -305,7 +305,11 @@ def snapshot_container(container: Path, key: bytes, label: str) -> Path:
         pack_dir(d, out, key)
         _rewrite_metadata(
             out,
-            {"label": label, "latest_snapshot_id": label, "snapshots": {**snaps, label: ts}},
+            {
+                "label": label,
+                "latest_snapshot_id": label,
+                "snapshots": {**snaps, label: ts},
+            },
             key,
         )
     _rewrite_metadata(
