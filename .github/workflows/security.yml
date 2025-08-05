@@ -1,0 +1,62 @@
+# .github/workflows/security-suite.yml
+
+name: Security Suite
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  sast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static code analysis (Semgrep)
+        run: |
+          pip install semgrep
+          semgrep --config .semgrep/custom/ --error
+
+  depscan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependency scan (Trivy)
+        run: |
+          wget -qO- https://github.com/aquasecurity/trivy/releases/latest/download/trivy_Linux-64bit.tar.gz | tar xz
+          sudo mv trivy /usr/local/bin/
+          trivy fs --exit-code 1 --scanners vuln --severity CRITICAL,HIGH .
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan secrets (Gitleaks)
+        run: |
+          wget -qO gitleaks https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64
+          chmod +x gitleaks
+          sudo mv gitleaks /usr/local/bin/
+          gitleaks detect --source . --exit-code 1
+
+  custom-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install requirements
+        run: |
+          pip install -r requirements.txt -r requirements-dev.txt
+      - name: Run custom security tests
+        run: pytest tests/security/ --maxfail=1 --disable-warnings -q
+
+  sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate SBOM (CycloneDX)
+        run: |
+          pip install cyclonedx-bom
+          cyclonedx-py -o sbom.xml
