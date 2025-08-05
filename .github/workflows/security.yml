@@ -1,62 +1,79 @@
-# .github/workflows/security-suite.yml
-
 name: Security Suite
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
+  # 1. Статический анализ Semgrep
   sast:
+    name: Static code analysis (Semgrep)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Static code analysis (Semgrep)
-        run: |
-          pip install semgrep
-          semgrep --config .semgrep/custom/ --error
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v2
+        with:
+          config: .semgrep/custom
 
+  # 2. Скан зависимостей Trivy
   depscan:
+    name: Dependency scan (Trivy)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Dependency scan (Trivy)
+      - name: Install Trivy
         run: |
-          wget -qO- https://github.com/aquasecurity/trivy/releases/latest/download/trivy_Linux-64bit.tar.gz | tar xz
+          wget -qO- https://github.com/aquasecurity/trivy/releases/latest/download/trivy_$(uname -s)_$(uname -m).tar.gz \
+            | tar xz trivy
           sudo mv trivy /usr/local/bin/
-          trivy fs --exit-code 1 --scanners vuln --severity CRITICAL,HIGH .
+      - name: Run Trivy vulnerability scan
+        run: trivy fs --exit-code 1 --severity HIGH,CRITICAL .
 
+  # 3. Скан секретов Gitleaks
   secrets:
+    name: Scan secrets (Gitleaks)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Scan secrets (Gitleaks)
+      - name: Install Gitleaks
         run: |
-          wget -qO gitleaks https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64
+          wget -qO gitleaks \
+            https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_$(uname -s)_amd64
           chmod +x gitleaks
-          sudo mv gitleaks /usr/local/bin/
-          gitleaks detect --source . --exit-code 1
+      - name: Run Gitleaks detection
+        run: ./gitleaks detect -v --exit-code 1
 
+  # 4. Наши кастомные тесты (Semgrep-правила)
   custom-tests:
+    name: Run custom Semgrep tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-      - name: Install requirements
-        run: |
-          pip install -r requirements.txt -r requirements-dev.txt
-      - name: Run custom security tests
-        run: pytest tests/security/ --maxfail=1 --disable-warnings -q
+          python-version: '3.x'
+      - name: Install dev dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Run pytest on Semgrep rules
+        run: pytest tests/test_semgrep_rules.py --maxfail=1 --disable-warnings -q
 
+  # 5. Генерация SBOM (CycloneDX)
   sbom:
+    name: Generate SBOM (CycloneDX)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Generate SBOM (CycloneDX)
-        run: |
-          pip install cyclonedx-bom
-          cyclonedx-py -o sbom.xml
+      - name: Install CycloneDX Bom
+        run: pip install cyclonedx-bom
+      - name: Generate SBOM from requirements
+        run: cyclonedx-py requirements -o sbom.xml
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom
+          path: sbom.xml
