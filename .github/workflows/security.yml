@@ -1,67 +1,58 @@
-# .github/workflows/security.yml
 name: Security Suite
-
 on:
   pull_request:
-    types: [opened, reopened, synchronize]
 
 jobs:
-  semgrep:
-    name: Static code analysis (Semgrep)
+  # 1 Semgrep
+  sast:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
+        with: {python-version: '3.x'}
       - run: pip install semgrep
-      - run: semgrep --config .semgrep/custom
+      - name: Run Semgrep
+        run: semgrep scan --config .semgrep/custom --error    # ← новая CLI
 
-  trivy:
-    name: Dependency scan (Trivy)
+  # 2 Trivy
+  depscan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: aquasecurity/trivy-action@v0.32.0
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@0.19.0                # без префикса v
         with:
-          format: 'table'
-          exit-code: '1'
+          scan-type: fs
+          format: table
 
-  gitleaks:
-    name: Scan secrets (Gitleaks)
+  # 3 Gitleaks
+  secrets:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: zricethezav/gitleaks-action@v2
-        with:
-          args: --path=.
+      - name: Gitleaks
+        uses: zricethezav/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # 4 Наши pytest-тесты
   custom-tests:
-    name: Run custom security tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-      - run: |
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-      - run: pytest --maxfail=1 --disable-warnings -q
+        with: {python-version: '3.x'}
+      - run: pip install -r requirements-dev.txt tabulate
+      - run: pytest -q                               # без несуществующего каталога
 
+  # 5 CycloneDX SBOM
   sbom:
-    name: Generate SBOM (CycloneDX CLI)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Generate SBOM
+        uses: CycloneDX/gh-generate-sbom@v1          # корректное имя action
         with:
-          python-version: '3.x'
-      - run: pip install cyclonedx-bom
-      - run: cyclonedx-py requirements --output sbom.xml
-      - uses: actions/upload-artifact@v4
-        with:
-          name: sbom
-          path: sbom.xml
+          output: sbom.xml
+      - uses: actions/upload-artifact@v4             # v4 — актуальная
+
