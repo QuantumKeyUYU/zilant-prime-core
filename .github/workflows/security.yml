@@ -1,58 +1,84 @@
-name: Security Suite
+name: Security
+
 on:
   pull_request:
+  push:
+    branches:
+      - main
+      - 'release/**'
 
 jobs:
-  # 1 Semgrep
   sast:
+    name: Static code analysis (Semgrep)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: {python-version: '3.x'}
-      - run: pip install semgrep
-      - name: Run Semgrep
-        run: semgrep scan --config .semgrep/custom --error    # ← новая CLI
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  # 2 Trivy
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep
+        run: semgrep scan --config .semgrep/custom/ --error
+
   depscan:
+    name: Dependency scan (Trivy)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Trivy scan
-        uses: aquasecurity/trivy-action@0.19.0                # без префикса v
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v1
         with:
           scan-type: fs
-          format: table
 
-  # 3 Gitleaks
   secrets:
+    name: Scan secrets (Gitleaks)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Gitleaks
+
+      - name: Gitleaks scan
         uses: zricethezav/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # 4 Наши pytest-тесты
-  custom-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: {python-version: '3.x'}
-      - run: pip install -r requirements-dev.txt tabulate
-      - run: pytest -q                               # без несуществующего каталога
-
-  # 5 CycloneDX SBOM
-  sbom:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Generate SBOM
-        uses: CycloneDX/gh-generate-sbom@v1          # корректное имя action
         with:
-          output: sbom.xml
-      - uses: actions/upload-artifact@v4             # v4 — актуальная
+          args: --report-format sarif --report-path results.sarif
+
+  custom-tests:
+    name: Run custom security tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run pytest
+        run: pytest --maxfail=1 --disable-warnings -q
+
+  sbom:
+    name: Generate SBOM (CycloneDX)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate SBOM
+        uses: cyclonedx/gh-action-generate-sbom@v1
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom.xml
+          path: sbom.xml
 
