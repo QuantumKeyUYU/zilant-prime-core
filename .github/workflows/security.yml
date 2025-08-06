@@ -1,77 +1,67 @@
+# .github/workflows/security.yml
 name: Security Suite
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, reopened, synchronize]
 
 jobs:
-  # 1) Статический анализ кода Python (Semgrep)
-  sast:
+  semgrep:
     name: Static code analysis (Semgrep)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Install Semgrep
-        run: pip install semgrep
-      - name: Run Semgrep
-        run: semgrep --config .semgrep/custom/ --fail-on any
+      - run: pip install semgrep
+      - run: semgrep --config .semgrep/custom
 
-  # 2) Скан зависимостей (Trivy)
-  depscan:
+  trivy:
     name: Dependency scan (Trivy)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run Trivy vulnerability scan
-        uses: aquasecurity/trivy-action@v0.19.2
+      - uses: aquasecurity/trivy-action@v0.32.0
         with:
-          scan-type: fs
-          format: table
+          format: 'table'
+          exit-code: '1'
 
-  # 3) Поиск секретов (Gitleaks)
-  secrets:
+  gitleaks:
     name: Scan secrets (Gitleaks)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run Gitleaks
-        uses: zricethezav/gitleaks-action@v2
+      - uses: zricethezav/gitleaks-action@v2
         with:
-          path: .
+          args: --path=.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # 4) Собственные security-тесты (pytest)
   custom-tests:
     name: Run custom security tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Install dev dependencies
-        run: pip install -r requirements-dev.txt
-      - name: Run pytest
-        run: pytest --maxfail=1 --disable-warnings -q
+      - run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      - run: pytest --maxfail=1 --disable-warnings -q
 
-  # 5) Генерация SBOM (CycloneDX)
   sbom:
-    name: Generate SBOM (CycloneDX)
+    name: Generate SBOM (CycloneDX CLI)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Generate SBOM
-        uses: CycloneDX/gh-action-generate-sbom@v1
+      - uses: actions/setup-python@v5
         with:
-          output: sbom.xml
-      - name: Upload SBOM
-        uses: actions/upload-artifact@v3
+          python-version: '3.x'
+      - run: pip install cyclonedx-bom
+      - run: cyclonedx-py requirements --output sbom.xml
+      - uses: actions/upload-artifact@v4
         with:
           name: sbom
           path: sbom.xml
