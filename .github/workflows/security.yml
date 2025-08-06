@@ -1,0 +1,84 @@
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'release/**'
+
+jobs:
+  sast:
+    name: Static code analysis (Semgrep)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep
+        run: semgrep scan --config .semgrep/custom/ --error
+
+  depscan:
+    name: Dependency scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v1
+        with:
+          scan-type: fs
+
+  secrets:
+    name: Scan secrets (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Gitleaks scan
+        uses: zricethezav/gitleaks-action@v2
+        with:
+          args: --report-format sarif --report-path results.sarif
+
+  custom-tests:
+    name: Run custom security tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run pytest
+        run: pytest --maxfail=1 --disable-warnings -q
+
+  sbom:
+    name: Generate SBOM (CycloneDX)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate SBOM
+        uses: cyclonedx/gh-action-generate-sbom@v1
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom.xml
+          path: sbom.xml
+
