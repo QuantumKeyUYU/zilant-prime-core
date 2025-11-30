@@ -61,7 +61,7 @@ htmlcov/
 
 # Mypy (static type checker)
 .mypy_cache/
-.dmypy.json # MyPy daemon cache
+.dmypy.json  # MyPy daemon cache
 
 # ---------------------------------------------------------------
 # IDE and OS specific ignores
@@ -90,7 +90,7 @@ desktop.ini        # Windows
 # Игнорируем различные файлы логов и базы данных (если они не отслеживаются явно)
 *.log
 *.sqlite3
-db.sqlite3 # Часто используемое имя для SQLite базы данных в проектах
+db.sqlite3  # Часто используемое имя для SQLite базы данных в проектах
 
 # Pre-commit cache (hooks), but NOT the config file!
 # Игнорируем кеш pre-commit хуков, но не сам файл конфигурации (.pre-commit-config.yaml)
@@ -99,13 +99,29 @@ db.sqlite3 # Часто используемое имя для SQLite базы �
 # Specific project output directories
 # Игнорируем сгенерированные файлы или временные директории вашего проекта
 docs/_build/
-docs/_static/key_lifecycle.png # Если это сгенерированный файл
-.zilant_log
-docs/.zilant_log
+docs/_static/key_lifecycle.png  # Если это сгенерированный файл
 ui/dist/
 
-# If you use Node.js for frontend in ui/
-# node_modules/
+# ---------------------------------------------------------------
+# Zilant-specific generated artifacts (reports, logs, keys)
+# ---------------------------------------------------------------
+
+# Логи и журналы Zilant
+.zilant_log*
+docs/.zilant_log*
+audit-ledger.jsonl
+
+# Отчёты сканеров / временные артефакты
+bandit-report.txt
+gype-report.json
+sbom.json
+security_compliance_report.md
+sums*.txt
+sum*.txt
+
+# Ключи cosign никогда не должны попадать в репозиторий
+.github/cosign.key
+.github/cosign.pub
 
 # ---------------------------------------------------------------
 # Optional / Other common ignores (uncomment if applicable)
