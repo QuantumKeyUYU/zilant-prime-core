@@ -1,9 +1,8 @@
 import json
 import os
+import pytest
 import subprocess
 from pathlib import Path
-
-import pytest
 
 RULE_DIR = Path(__file__).resolve().parents[1] / ".semgrep" / "custom"
 
@@ -62,10 +61,7 @@ def test_pq_key_none(tmp_path):
 
 
 def test_vdf_invalid_steps(tmp_path):
-    src = (
-        "from zilant_prime_core.vdf import generate_posw_sha256\n"
-        "generate_posw_sha256(b'd', 0)\n"
-    )
+    src = "from zilant_prime_core.vdf import generate_posw_sha256\n" "generate_posw_sha256(b'd', 0)\n"
     fixed, out = _run_semgrep("vdf-invalid-steps.yml", src, tmp_path, autofix=True)
     _ensure_results(out, "vdf-invalid-steps.yml")
     assert "generate_posw_sha256(b'd', 1)" in fixed
